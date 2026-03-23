@@ -4,6 +4,7 @@ import { useColorScheme } from 'react-native';
 import { ScannerScreen } from './components/scanner/CameraView';
 import { ScanResultSheet } from './components/scanner/ScanResultSheet';
 import { TabBar } from './components/ui/TabBar';
+import { HistoryScreen } from './components/ui/HistoryScreen';
 import { QRCodeData } from './constants/types';
 import { lightTheme, darkTheme } from './constants/theme';
 
@@ -45,7 +46,9 @@ export default function App() {
       )}
       
       {activeTab === 'history' && (
-        <View style={[styles.tabContent, styles.placeholder, { backgroundColor: theme.background }]} />
+        <View style={styles.tabContent}>
+          <HistoryScreen />
+        </View>
       )}
 
       <TabBar activeTab={activeTab} onTabChange={setActiveTab} />

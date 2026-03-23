@@ -137,7 +137,7 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
         }}
       />
 
-      <Reticle locked={scanned} />
+      {!scanned && <Reticle locked={false} />}
 
       {/* DEBUG OVERLAY - shows what's happening */}
       <View style={s.debugOverlay}>
@@ -190,7 +190,7 @@ const s = StyleSheet.create({
   pill: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' },
   titlePill: { backgroundColor: 'rgba(0,0,0,0.45)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
   titleTxt: { fontSize: 15, fontWeight: '600', color: '#FFF' },
-  bottom: { position: 'absolute', bottom: 110, left: 0, right: 0, alignItems: 'center', gap: 14 },
+  bottom: { position: 'absolute', bottom: 150, left: 0, right: 0, alignItems: 'center', gap: 14 },
   hint: { fontSize: 13, color: 'rgba(255,255,255,0.5)', textAlign: 'center' },
   photosBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(255,255,255,0.1)', paddingHorizontal: 20, paddingVertical: 11, borderRadius: 22, borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)' },
   photosTxt: { fontSize: 14, fontWeight: '500', color: 'rgba(255,255,255,0.85)' },
