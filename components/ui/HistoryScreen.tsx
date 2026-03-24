@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,9 +6,11 @@ import {
   StyleSheet,
   Pressable,
   Alert,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useHistoryStore } from '../../store/useHistoryStore';
+import { HistoryItem } from '../../constants/types';
 
 const TYPE_ICONS: Record<string, string> = {
   url: '🔗',
@@ -20,6 +22,16 @@ const TYPE_ICONS: Record<string, string> = {
   barcode: '🛒',
   sms: '💬',
   vcard: '👤',
+};
+
+// Helper to extract domain from URL
+const getDomainFromUrl = (url: string) => {
+  try {
+    const parsedUrl = new URL(url);
+    return parsedUrl.hostname;
+  } catch (e) {
+    return null;
+  }
 };
 
 export function HistoryScreen() {
@@ -74,25 +86,38 @@ export function HistoryScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: 120 }}
         renderItem={({ item }) => (
-          <Pressable
-            style={s.item}
-            onLongPress={() => handleRemoveItem(item.id)}
-          >
-            <Text style={s.icon}>{TYPE_ICONS[item.type] ?? '📋'}</Text>
-            <View style={s.itemContent}>
-              <Text style={s.itemType}>{item.type?.toUpperCase() ?? 'SCAN'}</Text>
-              <Text style={s.itemValue} numberOfLines={2}>
-                {item.rawValue}
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={16} color="#888" />
-          </Pressable>
+          <HistoryItemComponent item={item} />
         )}
         ItemSeparatorComponent={() => <View style={s.separator} />}
       />
     </View>
   );
 }
+
+const HistoryItemComponent = ({ item }: { item: HistoryItem }) => {
+  const [imgError, setImgError] = useState(false);
+  const domain = getDomainFromUrl(item.rawValue);
+
+  return (
+    <View style={s.historyCard}>
+      <View style={s.iconContainer}>
+        {domain && !imgError ? (
+          <Image 
+            source={{ uri: `https://www.google.com/s2/favicons?domain=${domain}&sz=128` }}
+            style={s.logoImage}
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <Ionicons name="link" size={24} color="#555" />
+        )}
+      </View>
+      <View style={s.textContainer}>
+        <Text style={s.dataText} numberOfLines={1}>{item.rawValue}</Text>
+        <Text style={s.dateText}>{new Date(item.timestamp).toLocaleDateString()}</Text>
+      </View>
+    </View>
+  );
+};
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F5F5F7' },
@@ -136,7 +161,7 @@ const s = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: 32,
   },
-  item: {
+  historyCard: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
@@ -144,19 +169,26 @@ const s = StyleSheet.create({
     gap: 12,
     backgroundColor: '#FFF',
   },
-  icon: { fontSize: 24, width: 32, textAlign: 'center' },
-  itemContent: { flex: 1 },
-  itemType: { 
-    fontSize: 11, 
-    fontWeight: '600', 
-    letterSpacing: 0.5, 
-    marginBottom: 2,
-    color: '#666',
+  iconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    overflow: 'hidden',
   },
-  itemValue: { 
-    fontSize: 14, 
-    lineHeight: 20,
+  logoImage: {
+    width: 32,
+    height: 32,
+  },
+  textContainer: {
+    flex: 1,
+  },
+  dataText: {
+    fontSize: 14,
     color: '#000',
+  },
+  dateText: {
+    fontSize: 12,
+    color: '#666',
   },
   separator: {
     height: 1,
