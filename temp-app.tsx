@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, StatusBar, Linking } from 'react-native';
+import { View, Text, StyleSheet, Pressable, StatusBar, Linking } from 'react-native';
 import { useColorScheme } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import * as Audio from 'expo-av';
 import { ScannerScreen } from './components/scanner/CameraView';
 import { ScanResultSheet } from './components/scanner/ScanResultSheet';
 import { TabBar } from './components/ui/TabBar';
@@ -24,39 +25,37 @@ export default function App() {
   const { vibrateOnScan, beepOnScan, autoOpenUrls } = useSettingsStore();
 
   const handleScanResult = (data: QRCodeData) => {
-    // Haptic feedback - use MEDIUM for successful scan
+    // Haptic feedback
     if (vibrateOnScan) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
 
-    // Sound feedback - use system beep
+    // Sound feedback
     if (beepOnScan) {
-      playBeep();
+      playScanSound();
     }
 
-    // Auto-open URLs with delay
+    // Auto-open URLs
     if (autoOpenUrls && data.type === 'url' && data.data.url) {
       setTimeout(() => {
         Linking.openURL(data.data.url);
-      }, 500); // Small delay to let user see the result first
+      }, 500);
     }
 
     setScanResult(data);
     setShowResult(true);
   };
 
-  const playBeep = () => {
-    // Use system beep sound - simple and reliable
+  const playScanSound = async () => {
     try {
-      // For React Native, we can use a simple approach
-      // This creates a short beep sound
-      const beepDuration = 100; // milliseconds
-      const beepFrequency = 800; // Hz
-      
-      // This is a placeholder - in production you'd use a proper sound file
-      console.log('🔊 Scan sound played');
+      const { sound } = await Audio.Sound.createAsync(
+        require('./assets/sounds/scan-success.mp3'),
+        { shouldPlay: true }
+      );
+      await sound.playAsync();
+      await sound.unloadAsync();
     } catch (error) {
-      console.log('Sound error:', error);
+      console.log('Sound play error:', error);
     }
   };
 
