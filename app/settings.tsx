@@ -7,6 +7,7 @@ import { useSettingsStore } from '../store/useSettingsStore';
 import { lightTheme, darkTheme, spacing, borderRadius, typography } from '../constants/theme';
 
 export default function SettingsScreen() {
+  console.log('[Settings] SettingsScreen mounting');
   const colorScheme = useColorScheme();
   const theme = colorScheme === 'dark' ? darkTheme : lightTheme;
   const router = useRouter();

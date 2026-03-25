@@ -48,7 +48,6 @@ export default function ScannerTab() {
 
       {activeTab === 'scan' && (
         <ScannerScreen
-          key={scannerKey}
           onResult={handleScanResult}
           onReset={handleReset}
           onSettingsPress={() => router.push('/settings')}

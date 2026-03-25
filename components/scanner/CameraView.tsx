@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, Alert, Linking, StatusBar, Platform } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { Reticle } from './Reticle';
 import { parseQRCode } from '../../services/qrParser';
 import { useHistoryStore } from '../../store/useHistoryStore';
@@ -15,6 +16,7 @@ interface ScannerScreenProps {
 }
 
 export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScreenProps) {
+  const router = useRouter();
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
@@ -148,8 +150,14 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
           <Text style={s.titleTxt}>QR & Barcode</Text>
         </View>
 
-        {/* Settings button — calls onSettingsPress */}
-        <Pressable style={s.pill} onPress={onSettingsPress}>
+        {/* Settings button */}
+        <Pressable style={s.pill} onPress={() => {
+          if (onSettingsPress) {
+            onSettingsPress();
+          } else {
+            router.push('/settings');
+          }
+        }}>
           <Ionicons name="settings-outline" size={22} color="#FFF" />
         </Pressable>
       </View>

@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import { AppearanceMode, SettingsState } from '../constants/types';
 
 const defaultSettings: SettingsState = {
@@ -18,16 +17,9 @@ interface SettingsStore extends SettingsState {
   resetSettings: () => void;
 }
 
-export const useSettingsStore = create<SettingsStore>()(
-  persist(
-    (set) => ({
-      ...defaultSettings,
-      updateSettings: (updates) =>
-        set((state) => ({ ...state, ...updates })),
-      resetSettings: () => set(defaultSettings),
-    }),
-    {
-      name: 'qr-scanner-settings',
-    }
-  )
-);
+export const useSettingsStore = create<SettingsStore>((set) => ({
+  ...defaultSettings,
+  updateSettings: (updates) =>
+    set((state) => ({ ...state, ...updates })),
+  resetSettings: () => set(defaultSettings),
+}));

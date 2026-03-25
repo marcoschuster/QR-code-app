@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, StatusBar } from 'react-native';
 import { useColorScheme } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { ScannerScreen } from './components/scanner/CameraView';
 import { ScanResultSheet } from './components/scanner/ScanResultSheet';
 import { TabBar } from './components/ui/TabBar';
 import { HistoryScreen } from './components/ui/HistoryScreen';
+import { SettingsScreen } from './components/ui/SettingsScreen';
 import { QRCodeData } from './constants/types';
 import { lightTheme, darkTheme } from './constants/theme';
 
@@ -16,6 +18,7 @@ export default function App() {
   const [scanResult, setScanResult] = useState<QRCodeData | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [scannerKey, setScannerKey] = useState(0);
+  const [showSettings, setShowSettings] = useState(false);
 
   const handleScanResult = (data: QRCodeData) => {
     setScanResult(data);
@@ -37,6 +40,10 @@ export default function App() {
           <ScannerScreen
             key={scannerKey}
             onResult={handleScanResult}
+            onSettingsPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setShowSettings(true);
+            }}
           />
         </View>
       )}
@@ -61,6 +68,13 @@ export default function App() {
             data={scanResult}
           />
         </View>
+      )}
+
+      {showSettings && (
+        <SettingsScreen 
+          visible={showSettings} 
+          onClose={() => setShowSettings(false)} 
+        />
       )}
     </View>
   );

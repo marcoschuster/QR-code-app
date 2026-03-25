@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Share, Alert, Linking } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable, Share, Alert, Linking, Image } from 'react-native';
 import { useColorScheme } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import * as WebBrowser from 'expo-web-browser';
@@ -25,6 +25,27 @@ interface ScanResultSheetProps {
 export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps) {
   const colorScheme = useColorScheme();
   const theme = colorScheme === 'dark' ? darkTheme : lightTheme;
+  const [faviconError, setFaviconError] = useState(false);
+
+  // Reset favicon error when data changes
+  useEffect(() => {
+    setFaviconError(false);
+  }, [data]);
+
+  // Extract domain from URL for favicon
+  const getDomainFromUrl = (url: string): string | null => {
+    try {
+      const parsedUrl = new URL(url);
+      return parsedUrl.hostname;
+    } catch {
+      return null;
+    }
+  };
+
+  // Get favicon URL
+  const getFaviconUrl = (domain: string): string => {
+    return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+  };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -300,7 +321,25 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Text style={styles.typeIcon}>{getTypeIcon(data.type)}</Text>
+          {/* Favicon for URLs, emoji icon for other types */}
+          {data.type === 'url' ? (
+            <View style={styles.faviconContainer}>
+              {getDomainFromUrl(data.data.url) && !faviconError ? (
+                <Image
+                  source={{ uri: getFaviconUrl(getDomainFromUrl(data.data.url)!) }}
+                  style={styles.favicon}
+                  onError={() => setFaviconError(true)}
+                  resizeMode="contain"
+                />
+              ) : (
+                <View style={styles.faviconFallback}>
+                  <Ionicons name="globe-outline" size={20} color={theme.text.primary} />
+                </View>
+              )}
+            </View>
+          ) : (
+            <Text style={styles.typeIcon}>{getTypeIcon(data.type)}</Text>
+          )}
           <View>
             <Text style={[styles.typeLabel, { color: theme.text.primary }]}>
               {getTypeLabel(data.type)}
@@ -381,6 +420,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
+  },
+  faviconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  favicon: {
+    width: 28,
+    height: 28,
+  },
+  faviconFallback: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   typeIcon: {
     fontSize: 24,
