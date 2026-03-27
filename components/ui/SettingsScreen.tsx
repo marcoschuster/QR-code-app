@@ -4,6 +4,7 @@ import { useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useSettingsStore } from '../../store/useSettingsStore';
+import { useTestAudio } from '../../hooks/useTestAudio';
 import { lightTheme, darkTheme, spacing, borderRadius, typography } from '../../constants/theme';
 
 interface SettingsScreenProps {
@@ -14,6 +15,7 @@ interface SettingsScreenProps {
 export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
   const colorScheme = useColorScheme();
   const theme = colorScheme === 'dark' ? darkTheme : lightTheme;
+  const { playTestSound } = useTestAudio();
   
   const {
     appearance,
@@ -50,7 +52,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     Alert.alert(
       'Clear History',
-      'Are you sure you want to clear all scan history? This action cannot be undone.',
+      'Are you sure you want to delete all saved scans?',
       [
         { text: 'Cancel', style: 'cancel' },
         { 
@@ -77,10 +79,31 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
         { 
           text: 'Reset', 
           style: 'destructive',
-          onPress: resetSettings
+          onPress: () => {
+            resetSettings();
+            Alert.alert('Done', 'All settings have been reset to default values.');
+          }
         },
       ]
     );
+  };
+
+  const handleTestAudio = async () => {
+    console.log('🔊 Testing audio feedback...');
+    await playTestSound();
+  };
+
+  const handleTestHaptic = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    console.log('🔊 Testing haptic...');
+    
+    try {
+      // Test different haptic patterns
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      console.log('🔊 Test haptic played successfully!');
+    } catch (error) {
+      console.log('❌ Test haptic failed:', error);
+    }
   };
 
   return (
@@ -345,6 +368,56 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
                   <View style={[styles.radio, appearance === 'system' && { borderColor: theme.accent }]}>
                     {appearance === 'system' && <View style={[styles.radioDot, { backgroundColor: theme.accent }]} />}
                   </View>
+                </Pressable>
+              </View>
+            </View>
+
+            {/* Debug Section */}
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: theme.text.secondary }]}>
+                DEBUG
+              </Text>
+              <View style={[styles.sectionContent, { backgroundColor: theme.surface }]}>
+                <Pressable
+                  style={styles.settingItem}
+                  onPress={handleTestAudio}
+                >
+                  <View style={styles.settingLeft}>
+                    <View style={[styles.iconWrapper, { backgroundColor: '#34C75920' }]}>
+                      <Ionicons name="volume-high-outline" size={20} color="#34C759" />
+                    </View>
+                    <View>
+                      <Text style={[styles.settingText, { color: theme.text.primary }]}>
+                        Test Audio
+                      </Text>
+                      <Text style={[styles.settingHint, { color: theme.text.secondary }]}>
+                        Play scan success sound
+                      </Text>
+                    </View>
+                  </View>
+                  <Ionicons name="play-outline" size={20} color={theme.text.tertiary} />
+                </Pressable>
+
+                <View style={[styles.divider, { backgroundColor: theme.border }]} />
+
+                <Pressable
+                  style={styles.settingItem}
+                  onPress={handleTestHaptic}
+                >
+                  <View style={styles.settingLeft}>
+                    <View style={[styles.iconWrapper, { backgroundColor: '#FF950020' }]}>
+                      <Ionicons name="phone-portrait-outline" size={20} color="#FF9500" />
+                    </View>
+                    <View>
+                      <Text style={[styles.settingText, { color: theme.text.primary }]}>
+                        Test Haptic
+                      </Text>
+                      <Text style={[styles.settingHint, { color: theme.text.secondary }]}>
+                        Test vibration feedback
+                      </Text>
+                    </View>
+                  </View>
+                  <Ionicons name="pulse-outline" size={20} color={theme.text.tertiary} />
                 </Pressable>
               </View>
             </View>

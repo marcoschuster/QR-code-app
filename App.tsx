@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, StatusBar, Linking } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, StatusBar, Linking, Platform } from 'react-native';
 import { useColorScheme } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { ScannerScreen } from './components/scanner/CameraView';
@@ -29,11 +29,6 @@ export default function App() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
 
-    // Sound feedback - use system beep
-    if (beepOnScan) {
-      playBeep();
-    }
-
     // Auto-open URLs with delay
     if (autoOpenUrls && data.type === 'url' && data.data.url) {
       setTimeout(() => {
@@ -43,21 +38,6 @@ export default function App() {
 
     setScanResult(data);
     setShowResult(true);
-  };
-
-  const playBeep = () => {
-    // Use system beep sound - simple and reliable
-    try {
-      // For React Native, we can use a simple approach
-      // This creates a short beep sound
-      const beepDuration = 100; // milliseconds
-      const beepFrequency = 800; // Hz
-      
-      // This is a placeholder - in production you'd use a proper sound file
-      console.log('🔊 Scan sound played');
-    } catch (error) {
-      console.log('Sound error:', error);
-    }
   };
 
   const handleCloseResult = () => {

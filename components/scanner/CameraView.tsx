@@ -7,6 +7,8 @@ import { Reticle } from './Reticle';
 import { parseQRCode } from '../../services/qrParser';
 import { useHistoryStore } from '../../store/useHistoryStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
+import { useScanAudio } from '../../hooks/useScanAudio';
+import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 
 interface ScannerScreenProps {
@@ -21,12 +23,23 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
   const [scanned, setScanned] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
   const { addItem } = useHistoryStore();
-  const { saveToHistory } = useSettingsStore();
+  const { saveToHistory, beepOnScan, vibrateOnScan } = useSettingsStore();
+  const { playScanSound } = useScanAudio();
 
   // ── Barcode scan handler ───────────────────────────────────────────────────
-  const handleBarcodeScanned = ({ data }: { data: string }) => {
+  const handleBarcodeScanned = async ({ data }: { data: string }) => {
     if (scanned) return;
     setScanned(true);
+
+    // Play audio feedback
+    if (beepOnScan) {
+      await playScanSound();
+    }
+    
+    // Play haptic feedback
+    if (vibrateOnScan) {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
 
     let parsed: any;
     try {
