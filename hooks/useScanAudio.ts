@@ -6,8 +6,8 @@ import { useSettingsStore } from '../store/useSettingsStore';
 export function useScanAudio() {
   const beepOnScan = useSettingsStore((state) => state.beepOnScan);
   
-  // Use beep.wav which has actual content
-  const player = useAudioPlayer(require('../assets/sounds/beep.wav'));
+  // Use the new scan-success.wav with satisfying tone
+  const player = useAudioPlayer(require('../assets/sounds/scan-success.wav'));
 
   const playScanSound = useCallback(async () => {
     if (!beepOnScan) return;

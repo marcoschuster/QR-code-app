@@ -3,8 +3,8 @@ import { useAudioPlayer } from 'expo-audio';
 import * as Haptics from 'expo-haptics';
 
 export function useTestAudio() {
-  // Use beep.wav which has actual content
-  const player = useAudioPlayer(require('../assets/sounds/beep.wav'));
+  // Use the new scan-success.wav with satisfying tone
+  const player = useAudioPlayer(require('../assets/sounds/scan-success.wav'));
 
   const playTestSound = async () => {
     try {
