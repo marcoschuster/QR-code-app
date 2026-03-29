@@ -1,29 +1,68 @@
-// hooks/useScanAudio.ts
-import { useCallback } from 'react';
-import { useAudioPlayer } from 'expo-audio';
+import { useCallback, useRef } from 'react';
+import { AudioPlayer, createAudioPlayer } from 'expo-audio';
 import { useSettingsStore } from '../store/useSettingsStore';
+
+// SINGLETON - one shared player instance across the entire app
+let sharedPlayer: AudioPlayer | null = null;
+let isPreloaded = false;
+let isPlaying = false; // guard against overlapping plays
+
+function getOrCreatePlayer(): AudioPlayer {
+  if (!sharedPlayer) {
+    sharedPlayer = createAudioPlayer(require('../assets/sounds/scan-success.wav'));
+  }
+  return sharedPlayer;
+}
+
+export async function preloadScanSound() {
+  if (isPreloaded) return;
+
+  try {
+    const player = getOrCreatePlayer();
+
+    // Silent prime — forces the audio subsystem to decode + buffer the file
+    player.volume = 0;
+    await player.seekTo(0);
+    await player.play();
+
+    // Wait long enough for a short WAV to fully play through internally
+    await new Promise(resolve => setTimeout(resolve, 400));
+
+    // Park the player in a known idle state so the first real play is instant
+    try { player.pause(); } catch (_) {}
+    isPreloaded = true;
+    console.log('🔊 Audio preloaded successfully');
+  } catch (e) {
+    console.log('Audio preload error:', e);
+  }
+}
 
 export function useScanAudio() {
   const beepOnScan = useSettingsStore((state) => state.beepOnScan);
-  
-  // Use the new scan-success.wav with satisfying tone
-  const player = useAudioPlayer(require('../assets/sounds/scan-success.wav'));
+  const playerRef = useRef<AudioPlayer | null>(null);
+
+  // Use the shared singleton player
+  if (!playerRef.current) {
+    if (!sharedPlayer) {
+      sharedPlayer = createAudioPlayer(require('../assets/sounds/scan-success.wav'));
+    }
+    playerRef.current = sharedPlayer;
+  }
 
   const playScanSound = useCallback(async () => {
     if (!beepOnScan) return;
     
+    const player = playerRef.current!;
+    
     try {
-      // Set maximum volume
       player.volume = 1.0;
-      
-      // Seek to beginning and play
       await player.seekTo(0);
       await player.play();
-      console.log('🔊 Scan sound played - Volume:', player.volume);
+      console.log('🔊 Scan sound played');
     } catch (error) {
       console.error('❌ Scan sound failed:', error);
     }
-  }, [beepOnScan, player]);
+  }, [beepOnScan]);
 
   return { playScanSound };
 }

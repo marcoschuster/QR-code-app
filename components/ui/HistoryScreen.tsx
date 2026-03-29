@@ -106,6 +106,7 @@ const HistoryItemComponent = ({ item }: { item: HistoryItem }) => {
             source={{ uri: `https://www.google.com/s2/favicons?domain=${domain}&sz=128` }}
             style={s.logoImage}
             onError={() => setImgError(true)}
+            resizeMode="contain"
           />
         ) : (
           <Ionicons name="link" size={24} color="#555" />
@@ -170,14 +171,17 @@ const s = StyleSheet.create({
     backgroundColor: '#FFF',
   },
   iconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: '#F2F2F7',
+    alignItems: 'center',
+    justifyContent: 'center',
     overflow: 'hidden',
   },
   logoImage: {
-    width: 32,
-    height: 32,
+    width: 24,
+    height: 24,
   },
   textContainer: {
     flex: 1,
@@ -189,6 +193,7 @@ const s = StyleSheet.create({
   dateText: {
     fontSize: 12,
     color: '#666',
+    marginTop: 2,
   },
   separator: {
     height: 1,

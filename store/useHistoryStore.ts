@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { HistoryItem } from '../constants/types';
 
 // crypto.randomUUID() DOES NOT EXIST in React Native / Hermes engine
@@ -38,6 +39,9 @@ export const useHistoryStore = create<HistoryStore>()(
         })),
       getItem: (id) => get().items.find((i) => i.id === id),
     }),
-    { name: 'qr-scanner-history' }
+    { 
+      name: 'qr-scanner-history',
+      storage: createJSONStorage(() => AsyncStorage),
+    }
   )
 );

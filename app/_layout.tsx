@@ -1,7 +1,13 @@
 import { Stack } from 'expo-router';
-import React from 'react';
+import React, { useEffect } from 'react';
+import { preloadScanSound } from '../hooks/useScanAudio';
 
 export default function RootLayout() {
+  // Preload audio immediately when app starts
+  useEffect(() => {
+    preloadScanSound();
+  }, []);
+
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
