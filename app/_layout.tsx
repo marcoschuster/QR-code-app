@@ -1,11 +1,17 @@
 import { Stack } from 'expo-router';
 import React, { useEffect } from 'react';
-import { preloadScanSound } from '../hooks/useScanAudio';
+import { AppState } from 'react-native';
+import { primeAudio as preloadScanSound } from '../hooks/audioPlayer';
 
 export default function RootLayout() {
-  // Preload audio immediately when app starts
   useEffect(() => {
     preloadScanSound();
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        preloadScanSound();
+      }
+    });
+    return () => sub.remove();
   }, []);
 
   return (
