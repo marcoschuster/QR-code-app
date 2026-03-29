@@ -22,13 +22,26 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
+  const [targetBounds, setTargetBounds] = useState<{origin: {x: number; y: number}; size: {width: number; height: number}} | null>(null);
+  const [isLocking, setIsLocking] = useState(false);
   const { addItem } = useHistoryStore();
   const { saveToHistory, beepOnScan, vibrateOnScan } = useSettingsStore();
   const { playScanSound } = useScanAudio();
 
   // ── Barcode scan handler ───────────────────────────────────────────────────
-  const handleBarcodeScanned = async ({ data }: { data: string }) => {
+  const handleBarcodeScanned = async (result: { data: string; bounds?: {origin: {x: number; y: number}; size: {width: number; height: number}} }) => {
     if (scanned) return;
+
+    // 1. Start the lock animation FIRST
+    if (result.bounds) {
+      setTargetBounds(result.bounds);
+      setIsLocking(true);
+      
+      // 2. Wait for animation to complete before showing result
+      await new Promise(resolve => setTimeout(resolve, 450));
+    }
+
+    // 3. Now set scanned to true (hides camera, shows result)
     setScanned(true);
 
     // Play audio feedback
@@ -43,9 +56,9 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
 
     let parsed: any;
     try {
-      parsed = parseQRCode(data);
+      parsed = parseQRCode(result.data);
     } catch (e) {
-      parsed = { type: 'text', data: { text: data }, rawValue: data };
+      parsed = { type: 'text', data: { text: result.data }, rawValue: result.data };
     }
 
     if (saveToHistory) {
@@ -53,7 +66,7 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
         addItem({
           kind: 'scanned',
           type: parsed.type,
-          rawValue: data,
+          rawValue: result.data,
           parsedData: parsed.data,
           safety: { checked: false, safe: null as boolean | null },
         });
@@ -147,7 +160,7 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
       />
 
       {/* Reticle — hidden once scanned so it vanishes when result sheet opens */}
-      {!scanned && <Reticle />}
+      {!scanned && <Reticle targetBounds={targetBounds} isLocking={isLocking} />}
 
       {/* Top bar */}
       <View style={[s.topBar, { paddingTop: Platform.OS === 'ios' ? 56 : 36 }]}>
@@ -189,6 +202,8 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
             style={s.rescanBtn}
             onPress={() => {
               setScanned(false);
+              setTargetBounds(null);
+              setIsLocking(false);
               onReset?.();
             }}
           >
