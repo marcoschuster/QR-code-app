@@ -2,10 +2,9 @@ import { useCallback, useRef } from 'react';
 import { AudioPlayer, createAudioPlayer } from 'expo-audio';
 import { useSettingsStore } from '../store/useSettingsStore';
 
-// SINGLETON - one shared player instance across the entire app
+// SINGLETON - one shared player instance across entire app
 let sharedPlayer: AudioPlayer | null = null;
 let isPreloaded = false;
-let isPlaying = false; // guard against overlapping plays
 
 function getOrCreatePlayer(): AudioPlayer {
   if (!sharedPlayer) {
@@ -15,8 +14,7 @@ function getOrCreatePlayer(): AudioPlayer {
 }
 
 export async function preloadScanSound() {
-  if (isPreloaded) return;
-
+  if (isPreloaded) return;  
   try {
     const player = getOrCreatePlayer();
 
@@ -27,8 +25,8 @@ export async function preloadScanSound() {
 
     // Wait long enough for a short WAV to fully play through internally
     await new Promise(resolve => setTimeout(resolve, 400));
-
-    // Park the player in a known idle state so the first real play is instant
+    
+    // Park player in a known idle state so the first real play is instant
     try { player.pause(); } catch (_) {}
     isPreloaded = true;
     console.log('🔊 Audio preloaded successfully');

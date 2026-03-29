@@ -7,29 +7,18 @@ import * as Haptics from 'expo-haptics';
 let sharedPlayer: AudioPlayer | null = null;
 
 export function useTestAudio() {
-  const playerRef = useRef<AudioPlayer | null>(null);
+  const player = useAudioPlayer(require('../assets/sounds/scan-success.mp3'));
 
-  // Use the same singleton player as useScanAudio
-  if (!playerRef.current) {
-    if (!sharedPlayer) {
-      sharedPlayer = createAudioPlayer(require('../assets/sounds/scan-success.wav'));
-    }
-    playerRef.current = sharedPlayer;
-  }
-
-  const playTestSound = useCallback(async () => {
+  const playTestSound = async () => {
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      
-      const player = playerRef.current!;
-      player.volume = 1.0;
       await player.seekTo(0);
       await player.play();
-      
-      console.log('🔊 Test sound played successfully');
+      console.log('[Audio] Test sound played successfully');
       return true;
     } catch (error) {
-      console.error('❌ Test sound failed:', error);
+      console.error('[Audio] Test sound failed:', error);
+      // Fallback to haptic only
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       return false;
     }
