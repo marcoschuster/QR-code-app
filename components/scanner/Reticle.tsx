@@ -56,10 +56,11 @@ export function Reticle({ targetBounds, isLocking }: ReticleProps) {
           friction: 8,
           tension: 100,
         }),
-        Animated.timing(animatedColor, {
+        Animated.spring(animatedColor, {
           toValue: 1, // 0 = white, 1 = green
-          duration: 300,
           useNativeDriver: false,
+          friction: 8,
+          tension: 100,
         }),
       ]).start();
     } else {
