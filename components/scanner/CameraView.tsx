@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Alert, Linking, StatusBar, Platform } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Reticle } from './Reticle';
+import { PhotoScanner } from './PhotoScanner';
 import { parseQRCode } from '../../services/qrParser';
 import { useHistoryStore } from '../../store/useHistoryStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
@@ -24,9 +25,14 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
   const [torchOn, setTorchOn] = useState(false);
   const [targetBounds, setTargetBounds] = useState<{origin: {x: number; y: number}; size: {width: number; height: number}} | null>(null);
   const [isLocking, setIsLocking] = useState(false);
+  const [isPickingPhoto, setIsPickingPhoto] = useState(false);
+  const [photoScannerVisible, setPhotoScannerVisible] = useState(false);
+  const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
   const { addItem } = useHistoryStore();
   const { saveToHistory, beepOnScan, vibrateOnScan } = useSettingsStore();
   const { playScanSound } = useScanAudio();
+  const isPhotoFlowActive = isPickingPhoto || photoScannerVisible;
+  const cameraVisible = permission?.granted === true && !isPhotoFlowActive && !scanned;
 
   // ── Barcode scan handler ───────────────────────────────────────────────────
   const handleBarcodeScanned = async (result: { data: string; bounds?: {origin: {x: number; y: number}; size: {width: number; height: number}} }) => {
@@ -82,8 +88,11 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
     }
   };
 
-  // ── Photo scan handler (placeholder — real decode requires expo-image-manipulator) ──
+  // ── Photo scan handler ────────────────────────────────────────────────────────
   const handleScanFromPhotos = async () => {
+    setTorchOn(false);
+    setIsPickingPhoto(true);
+
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
@@ -91,86 +100,119 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
         quality: 1,
       });
       if (result.canceled) return;
-      Alert.alert('Coming Soon', 'Photo QR scanning will be available in the next update.');
+
+      const selectedAsset = result.assets[0];
+      setSelectedImageUri(selectedAsset.uri);
+      setPhotoScannerVisible(true);
+      
     } catch (err) {
-      Alert.alert('Error', 'Failed to open photo library.');
+      console.error('Photo scan error:', err);
+      // Don't show alert if activity is not available
+      try {
+        Alert.alert('Error', 'Failed to open photo library. Please try again.');
+      } catch (alertErr) {
+        console.warn('[CameraView] Could not show alert:', alertErr);
+      }
+    } finally {
+      setIsPickingPhoto(false);
     }
   };
 
-  // ── Permission loading ─────────────────────────────────────────────────────
-  if (permission === null) {
-    return (
-      <View style={s.container}>
-        <StatusBar hidden />
+  // ── Photo scanner handlers ───────────────────────────────────────────────────
+  const handlePhotoScannerClose = () => {
+    setPhotoScannerVisible(false);
+    setSelectedImageUri(null);
+  };
+
+  const handlePhotoScannerResult = (result: any) => {
+    setScanned(true);
+    setTorchOn(false);
+    setTargetBounds(null);
+    setIsLocking(false);
+    onResult(result);
+  };
+
+  const renderCameraFallback = () => {
+    if (cameraVisible || isPhotoFlowActive || scanned) {
+      return null;
+    }
+
+    if (permission === null) {
+      return (
         <View style={s.center}>
           <Ionicons name="camera-outline" size={72} color="rgba(255,255,255,0.3)" />
-          <Text style={s.title}>Requesting Camera…</Text>
+          <Text style={s.title}>Live Camera Scan</Text>
+          <Text style={s.body}>
+            Camera access is only needed for live scanning. You can still scan codes from saved photos below.
+          </Text>
           <Pressable style={s.btn} onPress={requestPermission}>
             <Text style={s.btnTxt}>Grant Permission</Text>
           </Pressable>
         </View>
-      </View>
-    );
-  }
+      );
+    }
 
-  // ── Permission denied ──────────────────────────────────────────────────────
-  if (!permission.granted) {
     return (
-      <View style={s.container}>
-        <StatusBar hidden />
-        <View style={s.center}>
-          <Ionicons name="camera-outline" size={72} color="#FF453A" />
-          <Text style={s.title}>
-            {permission.canAskAgain ? 'Camera Access Needed' : 'Camera Blocked'}
+      <View style={s.center}>
+        <Ionicons name="camera-outline" size={72} color="#FF453A" />
+        <Text style={s.title}>
+          {permission.canAskAgain ? 'Camera Access Needed' : 'Camera Blocked'}
+        </Text>
+        <Text style={s.body}>
+          {permission.canAskAgain
+            ? 'Live scanning needs camera access. Scanning from photos works without it.'
+            : 'Enable camera access in Settings for live scanning, or keep using photo scans without it.'}
+        </Text>
+        <Pressable
+          style={s.btn}
+          onPress={permission.canAskAgain ? requestPermission : () => Linking.openSettings()}
+        >
+          <Text style={s.btnTxt}>
+            {permission.canAskAgain ? 'Allow Camera' : 'Open Settings'}
           </Text>
-          <Text style={s.body}>
-            {permission.canAskAgain
-              ? 'Tap below to allow camera access.'
-              : 'Go to Settings and enable camera access for this app.'}
-          </Text>
-          <Pressable
-            style={s.btn}
-            onPress={permission.canAskAgain ? requestPermission : () => Linking.openSettings()}
-          >
-            <Text style={s.btnTxt}>
-              {permission.canAskAgain ? 'Allow Camera' : 'Open Settings'}
-            </Text>
-          </Pressable>
-        </View>
+        </Pressable>
       </View>
     );
-  }
+  };
 
   // ── Camera ready ───────────────────────────────────────────────────────────
   return (
     <View style={s.container}>
       <StatusBar hidden />
 
-      <CameraView
-        style={StyleSheet.absoluteFill}
-        facing="back"
-        enableTorch={torchOn}
-        onBarcodeScanned={scanned ? undefined : handleBarcodeScanned}
-        barcodeScannerSettings={{
-          barcodeTypes: [
-            'qr', 'ean13', 'ean8', 'upc_a', 'upc_e',
-            'code128', 'code39', 'aztec', 'pdf417', 'datamatrix',
-          ],
-        }}
-      />
+      {cameraVisible && (
+        <CameraView
+          style={StyleSheet.absoluteFill}
+          facing="back"
+          enableTorch={torchOn}
+          onBarcodeScanned={scanned ? undefined : handleBarcodeScanned}
+          barcodeScannerSettings={{
+            barcodeTypes: [
+              'qr', 'ean13', 'ean8', 'upc_a', 'upc_e',
+              'code128', 'code39', 'aztec', 'pdf417', 'datamatrix',
+            ],
+          }}
+        />
+      )}
 
       {/* Reticle — hidden once scanned so it vanishes when result sheet opens */}
-      {!scanned && <Reticle targetBounds={targetBounds} isLocking={isLocking} />}
+      {cameraVisible && !scanned && <Reticle targetBounds={targetBounds} isLocking={isLocking} />}
+
+      {renderCameraFallback()}
 
       {/* Top bar */}
       <View style={[s.topBar, { paddingTop: Platform.OS === 'ios' ? 56 : 36 }]}>
-        <Pressable style={s.pill} onPress={() => setTorchOn(v => !v)}>
-          <Ionicons
-            name={torchOn ? 'flash' : 'flash-off'}
-            size={22}
-            color={torchOn ? '#FFD60A' : '#FFF'}
-          />
-        </Pressable>
+        {cameraVisible ? (
+          <Pressable style={s.pill} onPress={() => setTorchOn(v => !v)}>
+            <Ionicons
+              name={torchOn ? 'flash' : 'flash-off'}
+              size={22}
+              color={torchOn ? '#FFD60A' : '#FFF'}
+            />
+          </Pressable>
+        ) : (
+          <View style={s.pillSpacer} />
+        )}
 
         <View style={s.titlePill}>
           <Text style={s.titleTxt}>QR & Barcode</Text>
@@ -190,14 +232,18 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
 
       {/* Bottom — button sits above the tab bar */}
       <View style={s.bottom}>
-        <Text style={s.hint}>Point at any code to scan</Text>
+        <Text style={s.hint}>
+          {permission?.granted
+            ? 'Point at any code to scan'
+            : 'Scan a code from your photo library without enabling the camera'}
+        </Text>
 
         <Pressable style={s.photosBtn} onPress={handleScanFromPhotos}>
           <Ionicons name="images-outline" size={17} color="rgba(255,255,255,0.8)" />
           <Text style={s.photosTxt}>Scan from Photos</Text>
         </Pressable>
 
-        {scanned && (
+        {permission?.granted && scanned && (
           <Pressable
             style={s.rescanBtn}
             onPress={() => {
@@ -211,6 +257,16 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
           </Pressable>
         )}
       </View>
+
+      {/* Photo Scanner Modal */}
+      {selectedImageUri && (
+        <PhotoScanner
+          visible={photoScannerVisible}
+          imageUri={selectedImageUri}
+          onClose={handlePhotoScannerClose}
+          onResult={handlePhotoScannerResult}
+        />
+      )}
     </View>
   );
 }
@@ -224,6 +280,7 @@ const s = StyleSheet.create({
   btnTxt:     { fontSize: 16, fontWeight: '600', color: '#FFF' },
   topBar:     { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 16 },
   pill:       { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' },
+  pillSpacer: { width: 40, height: 40 },
   titlePill:  { backgroundColor: 'rgba(0,0,0,0.45)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
   titleTxt:   { fontSize: 15, fontWeight: '600', color: '#FFF' },
   // bottom: sits high enough to clear the floating tab bar (height ~80) + its bottom offset (24)
