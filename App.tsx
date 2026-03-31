@@ -1,27 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, StatusBar, Linking, Platform } from 'react-native';
-import { useColorScheme } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, StatusBar, Linking } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { ScannerScreen } from './components/scanner/CameraView';
 import { ScanResultSheet } from './components/scanner/ScanResultSheet';
 import { TabBar } from './components/ui/TabBar';
 import { HistoryScreen } from './components/ui/HistoryScreen';
 import { SettingsScreen } from './components/ui/SettingsScreen';
+import { QrGeneratorContent } from './components/generator/QrGeneratorContent';
 import { QRCodeData } from './constants/types';
-import { lightTheme, darkTheme } from './constants/theme';
 import { useSettingsStore } from './store/useSettingsStore';
 
 export default function App() {
-  const colorScheme = useColorScheme();
-  const theme = colorScheme === 'dark' ? darkTheme : lightTheme;
-
   const [activeTab, setActiveTab] = useState('scan');
   const [scanResult, setScanResult] = useState<QRCodeData | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [scannerKey, setScannerKey] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
 
-  const { vibrateOnScan, beepOnScan, autoOpenUrls } = useSettingsStore();
+  const { vibrateOnScan, autoOpenUrls } = useSettingsStore();
 
   const handleScanResult = (data: QRCodeData) => {
     // Haptic feedback - use MEDIUM for successful scan
@@ -64,7 +60,9 @@ export default function App() {
       )}
       
       {activeTab === 'generate' && (
-        <View style={[styles.tabContent, styles.placeholder, { backgroundColor: theme.background }]} />
+        <View style={styles.tabContent}>
+          <QrGeneratorContent />
+        </View>
       )}
       
       {activeTab === 'history' && (
@@ -102,8 +100,5 @@ const styles = StyleSheet.create({
   },
   tabContent: {
     flex: 1,
-  },
-  placeholder: {
-    backgroundColor: '#F5F5F7',
   },
 });
