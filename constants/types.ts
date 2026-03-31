@@ -14,6 +14,14 @@ export interface HistoryItem {
     threatType?: string;
     checkedAt?: number;
   };
+  // Enhanced time tracking
+  hours?: number;
+  minutes?: number;
+  // For grouping duplicates
+  groupId?: string;
+  scanCount?: number;
+  // Individual scan IDs for duplicates
+  scanIds?: string[];
 }
 
 export interface SafetyResult {
