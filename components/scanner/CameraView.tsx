@@ -4,6 +4,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Reticle } from './Reticle';
+import { PhotoScanner } from './PhotoScanner';
 import { parseQRCode } from '../../services/qrParser';
 import { useHistoryStore } from '../../store/useHistoryStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
@@ -24,6 +25,8 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
   const [torchOn, setTorchOn] = useState(false);
   const [targetBounds, setTargetBounds] = useState<{origin: {x: number; y: number}; size: {width: number; height: number}} | null>(null);
   const [isLocking, setIsLocking] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [showPhotoScanner, setShowPhotoScanner] = useState(false);
   const { addItem } = useHistoryStore();
   const { saveToHistory, beepOnScan, vibrateOnScan } = useSettingsStore();
   const { playScanSound } = useScanAudio();
@@ -82,7 +85,7 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
     }
   };
 
-  // ── Photo scan handler (placeholder — real decode requires expo-image-manipulator) ──
+  // ── Photo scan handler ──
   const handleScanFromPhotos = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -91,7 +94,10 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
         quality: 1,
       });
       if (result.canceled) return;
-      Alert.alert('Coming Soon', 'Photo QR scanning will be available in the next update.');
+      
+      // Set the selected image and show PhotoScanner modal
+      setSelectedImage(result.assets[0].uri);
+      setShowPhotoScanner(true);
     } catch (err) {
       Alert.alert('Error', 'Failed to open photo library.');
     }
@@ -211,6 +217,17 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
           </Pressable>
         )}
       </View>
+
+      {/* Photo Scanner Modal */}
+      <PhotoScanner
+        visible={showPhotoScanner}
+        imageUri={selectedImage || ''}
+        onClose={() => {
+          setShowPhotoScanner(false);
+          setSelectedImage(null);
+        }}
+        onResult={onResult}
+      />
     </View>
   );
 }

@@ -3,9 +3,9 @@ import { View, StyleSheet, Animated, Dimensions } from 'react-native';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-// Default reticle position (centered)
+
 const DEFAULT_SIZE = 260;
-const DEFAULT_TOP = (SCREEN_HEIGHT - DEFAULT_SIZE) / 2;
+const DEFAULT_TOP = (SCREEN_HEIGHT - DEFAULT_SIZE) / 2 - 70;
 const DEFAULT_LEFT = (SCREEN_WIDTH - DEFAULT_SIZE) / 2;
 
 interface Bounds {
