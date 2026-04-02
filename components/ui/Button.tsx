@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { useColorScheme } from 'react-native';
-import { lightTheme, darkTheme, spacing, borderRadius, typography } from '../../constants/theme';
+import { spacing, borderRadius, typography } from '../../constants/theme';
+import { useAppTheme } from '../../hooks/useAppTheme';
 
 interface ButtonProps {
   title: string;
@@ -20,8 +20,7 @@ export function Button({
   disabled = false,
   icon 
 }: ButtonProps) {
-  const colorScheme = useColorScheme();
-  const theme = colorScheme === 'dark' ? darkTheme : lightTheme;
+  const { theme } = useAppTheme();
 
   const getButtonStyle = () => {
     const baseStyle = {

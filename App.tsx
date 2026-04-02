@@ -9,6 +9,7 @@ import { SettingsScreen } from './components/ui/SettingsScreen';
 import { QrGeneratorContent } from './components/generator/QrGeneratorContent';
 import { QRCodeData } from './constants/types';
 import { useSettingsStore } from './store/useSettingsStore';
+import { useAppTheme } from './hooks/useAppTheme';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('scan');
@@ -16,8 +17,10 @@ export default function App() {
   const [showResult, setShowResult] = useState(false);
   const [scannerKey, setScannerKey] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
+  const [isTabBarHidden, setIsTabBarHidden] = useState(false);
 
   const { vibrateOnScan, autoOpenUrls } = useSettingsStore();
+  const { theme } = useAppTheme();
 
   const handleScanResult = (data: QRCodeData) => {
     // Haptic feedback - use MEDIUM for successful scan
@@ -42,11 +45,19 @@ export default function App() {
     setScannerKey(k => k + 1);
   };
 
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+
+    if (tab !== 'history') {
+      setIsTabBarHidden(false);
+    }
+  };
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <StatusBar hidden />
       
-      {activeTab === 'scan' && (
+      {activeTab === 'scan' && !showResult && (
         <View style={styles.tabContent}>
           <ScannerScreen
             key={scannerKey}
@@ -67,14 +78,18 @@ export default function App() {
       
       {activeTab === 'history' && (
         <View style={styles.tabContent}>
-          <HistoryScreen />
+          <HistoryScreen onTabBarVisibilityChange={setIsTabBarHidden} />
         </View>
       )}
 
-      <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
+      <TabBar
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        hidden={activeTab === 'history' && isTabBarHidden}
+      />
 
       {showResult && scanResult && (
-        <View style={StyleSheet.absoluteFill}>
+        <View style={[StyleSheet.absoluteFill, styles.resultOverlay]}>
           <ScanResultSheet
             visible={showResult}
             onClose={handleCloseResult}
@@ -96,9 +111,12 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
   },
   tabContent: {
     flex: 1,
+  },
+  resultOverlay: {
+    zIndex: 100,
+    elevation: 100,
   },
 });

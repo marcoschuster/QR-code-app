@@ -1,35 +1,35 @@
 import { ThemeColors } from './types';
 
 export const lightTheme: ThemeColors = {
-  background: '#F5F5F7',
-  surface: '#FFFFFF',
+  background: '#FFFFFF',
+  surface: '#F4F4F5',
   accent: '#0A84FF',
   danger: '#FF453A',
   success: '#30D158',
   warning: '#FFD60A',
   text: {
     primary: '#000000',
-    secondary: '#6E6E73',
-    tertiary: '#8E8E93',
+    secondary: '#5F5F67',
+    tertiary: '#86868F',
   },
-  border: '#D1D1D6',
+  border: '#D7D7DC',
   shadow: '#000000',
 };
 
 export const darkTheme: ThemeColors = {
   background: '#000000',
-  surface: '#1C1C1E',
+  surface: '#111214',
   accent: '#0A84FF',
   danger: '#FF453A',
   success: '#30D158',
   warning: '#FFD60A',
   text: {
     primary: '#FFFFFF',
-    secondary: '#AEAEB2',
-    tertiary: '#8E8E93',
+    secondary: '#B6B6BC',
+    tertiary: '#8B8B93',
   },
-  border: '#38383A',
-  shadow: '#FFFFFF',
+  border: '#26272B',
+  shadow: '#000000',
 };
 
 export const spacing = {

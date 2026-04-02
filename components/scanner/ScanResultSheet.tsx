@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Share, Alert, Linking, Image } from 'react-native';
-import { useColorScheme } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import * as WebBrowser from 'expo-web-browser';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,7 +7,8 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Card } from '../ui/Card';
 import { QRCodeData } from '../../constants/types';
-import { lightTheme, darkTheme, spacing, borderRadius, typography } from '../../constants/theme';
+import { spacing, borderRadius, typography } from '../../constants/theme';
+import { useAppTheme } from '../../hooks/useAppTheme';
 
 interface ScanResultSheetProps {
   visible: boolean;
@@ -23,8 +23,7 @@ interface ScanResultSheetProps {
 }
 
 export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps) {
-  const colorScheme = useColorScheme();
-  const theme = colorScheme === 'dark' ? darkTheme : lightTheme;
+  const { theme, isDark } = useAppTheme();
   const [faviconError, setFaviconError] = useState(false);
 
   // Reset favicon error when data changes
@@ -319,11 +318,16 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { borderBottomColor: theme.border }]}>
         <View style={styles.headerLeft}>
           {/* Favicon for URLs, emoji icon for other types */}
           {data.type === 'url' ? (
-            <View style={styles.faviconContainer}>
+            <View
+              style={[
+                styles.faviconContainer,
+                { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' },
+              ]}
+            >
               {getDomainFromUrl(data.data.url) && !faviconError ? (
                 <Image
                   source={{ uri: getFaviconUrl(getDomainFromUrl(data.data.url)!) }}
@@ -392,7 +396,7 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
       </ScrollView>
 
       {/* Close button */}
-      <Pressable style={styles.closeButton} onPress={onClose}>
+      <Pressable style={[styles.closeButton, { borderTopColor: theme.border }]} onPress={onClose}>
         <Text style={[styles.closeButtonText, { color: theme.text.secondary }]}>
           Close
         </Text>
@@ -414,7 +418,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E7',
+    borderBottomColor: 'transparent',
   },
   headerLeft: {
     flexDirection: 'row',
@@ -425,7 +429,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(0,0,0,0.05)',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -507,7 +510,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.lg,
     borderTopWidth: 1,
-    borderTopColor: '#E5E5E7',
+    borderTopColor: 'transparent',
   },
   closeButtonText: {
     fontFamily: typography.fontFamily,

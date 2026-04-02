@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Alert, Linking, StatusBar, Platform } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
@@ -27,6 +27,7 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
   const [isLocking, setIsLocking] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showPhotoScanner, setShowPhotoScanner] = useState(false);
+  const photoScanSucceededRef = useRef(false);
   const { addItem } = useHistoryStore();
   const { saveToHistory, beepOnScan, vibrateOnScan } = useSettingsStore();
   const { playScanSound } = useScanAudio();
@@ -95,7 +96,10 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
       });
       if (result.canceled) return;
       
-      // Set the selected image and show PhotoScanner modal
+      photoScanSucceededRef.current = false;
+      setScanned(true);
+      setTargetBounds(null);
+      setIsLocking(false);
       setSelectedImage(result.assets[0].uri);
       setShowPhotoScanner(true);
     } catch (err) {
@@ -156,7 +160,7 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
         style={StyleSheet.absoluteFill}
         facing="back"
         enableTorch={torchOn}
-        onBarcodeScanned={scanned ? undefined : handleBarcodeScanned}
+        onBarcodeScanned={scanned || showPhotoScanner ? undefined : handleBarcodeScanned}
         barcodeScannerSettings={{
           barcodeTypes: [
             'qr', 'ean13', 'ean8', 'upc_a', 'upc_e',
@@ -166,7 +170,7 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
       />
 
       {/* Reticle — hidden once scanned so it vanishes when result sheet opens */}
-      {!scanned && <Reticle targetBounds={targetBounds} isLocking={isLocking} />}
+      {!scanned && !showPhotoScanner && <Reticle targetBounds={targetBounds} isLocking={isLocking} />}
 
       {/* Top bar */}
       <View style={[s.topBar, { paddingTop: Platform.OS === 'ios' ? 56 : 36 }]}>
@@ -225,8 +229,17 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
         onClose={() => {
           setShowPhotoScanner(false);
           setSelectedImage(null);
+          if (!photoScanSucceededRef.current) {
+            setScanned(false);
+            setTargetBounds(null);
+            setIsLocking(false);
+          }
         }}
-        onResult={onResult}
+        onResult={(data) => {
+          photoScanSucceededRef.current = true;
+          setScanned(true);
+          onResult(data);
+        }}
       />
     </View>
   );

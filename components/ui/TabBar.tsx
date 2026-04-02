@@ -1,24 +1,34 @@
-import React from 'react';
-import { View, Text, StyleSheet, Pressable, Dimensions } from 'react-native';
-import { useColorScheme } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { lightTheme, darkTheme, spacing, borderRadius, typography } from '../../constants/theme';
-import { useSettingsStore } from '../../store/useSettingsStore';
-
-const { width: screenWidth } = Dimensions.get('window');
+import { spacing, typography } from '../../constants/theme';
+import { useAppTheme } from '../../hooks/useAppTheme';
 
 interface TabBarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
+  hidden?: boolean;
 }
 
-export function TabBar({ activeTab, onTabChange }: TabBarProps) {
-  const colorScheme = useColorScheme();
-  const theme = colorScheme === 'dark' ? darkTheme : lightTheme;
-  const { appearance } = useSettingsStore();
-  
-  const actualTheme = appearance === 'system' ? colorScheme : appearance;
-  const isDark = actualTheme === 'dark';
+export function TabBar({ activeTab, onTabChange, hidden = false }: TabBarProps) {
+  const { theme, isDark } = useAppTheme();
+  const translateY = useRef(new Animated.Value(0)).current;
+  const opacity = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(translateY, {
+        toValue: hidden ? 120 : 0,
+        duration: 220,
+        useNativeDriver: true,
+      }),
+      Animated.timing(opacity, {
+        toValue: hidden ? 0 : 1,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [hidden, opacity, translateY]);
 
   const tabs = [
     { id: 'scan', icon: 'camera-outline', activeIcon: 'camera', label: 'Scan' },
@@ -27,8 +37,26 @@ export function TabBar({ activeTab, onTabChange }: TabBarProps) {
   ];
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.blurView, { backgroundColor: isDark ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)' }]}>
+    <Animated.View
+      pointerEvents={hidden ? 'none' : 'auto'}
+      style={[
+        styles.container,
+        {
+          opacity,
+          transform: [{ translateY }],
+        },
+      ]}
+    >
+      <View
+        style={[
+          styles.shell,
+          {
+            backgroundColor: isDark ? 'rgba(8,8,8,0.94)' : 'rgba(255,255,255,0.96)',
+            borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+            shadowColor: theme.shadow,
+          },
+        ]}
+      >
         <View style={styles.tabBar}>
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
@@ -37,13 +65,13 @@ export function TabBar({ activeTab, onTabChange }: TabBarProps) {
                 key={tab.id}
                 style={({ pressed }) => [
                   styles.tab,
-                  pressed && { opacity: 0.7, transform: [{ scale: 0.95 }] },
+                  pressed && { opacity: 0.7, transform: [{ scale: 0.96 }] },
                 ]}
                 onPress={() => onTabChange(tab.id)}
               >
                 <View style={styles.iconContainer}>
                   <Ionicons
-                    name={(isActive ? tab.activeIcon : tab.icon) as any}
+                    name={(isActive ? tab.activeIcon : tab.icon) as keyof typeof Ionicons.glyphMap}
                     size={24}
                     color={isActive ? theme.accent : theme.text.secondary}
                   />
@@ -61,9 +89,7 @@ export function TabBar({ activeTab, onTabChange }: TabBarProps) {
                     styles.label,
                     {
                       color: isActive ? theme.accent : theme.text.secondary,
-                      fontFamily: typography.fontFamily,
                       fontWeight: isActive ? '600' : '500',
-                      fontSize: 12,
                     },
                   ]}
                 >
@@ -74,7 +100,7 @@ export function TabBar({ activeTab, onTabChange }: TabBarProps) {
           })}
         </View>
       </View>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -86,16 +112,20 @@ const styles = StyleSheet.create({
     right: 0,
     alignItems: 'center',
   },
-  blurView: {
-    borderRadius: 24,
-    overflow: 'hidden',
+  shell: {
+    borderRadius: 28,
+    borderWidth: 1,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    elevation: 10,
   },
   tabBar: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 24,
     paddingVertical: 16,
-    width: 240,
+    width: 248,
     gap: 16,
   },
   tab: {
@@ -120,5 +150,7 @@ const styles = StyleSheet.create({
   label: {
     marginTop: 4,
     textAlign: 'center',
+    fontFamily: typography.fontFamily,
+    fontSize: 12,
   },
 });

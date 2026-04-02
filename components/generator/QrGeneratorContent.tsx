@@ -11,17 +11,15 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { useColorScheme } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from '../ui/Card';
 import {
   borderRadius,
-  darkTheme,
-  lightTheme,
   spacing,
   typography,
 } from '../../constants/theme';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   createQrCodeImage,
   normalizeQrLinkInput,
@@ -29,20 +27,20 @@ import {
   type GeneratedQrCodeImage,
 } from '../../services/qrCodeImage';
 
-type ScreenTheme = typeof lightTheme;
+type ScreenTheme = ReturnType<typeof useAppTheme>['theme'];
 
 interface ActionButtonProps {
   title: string;
   icon: keyof typeof Ionicons.glyphMap;
   onPress: () => void;
   theme: ScreenTheme;
+  isDark: boolean;
   variant?: 'primary' | 'secondary';
   disabled?: boolean;
 }
 
 export function QrGeneratorContent() {
-  const colorScheme = useColorScheme();
-  const theme = colorScheme === 'dark' ? darkTheme : lightTheme;
+  const { theme, isDark } = useAppTheme();
 
   const [linkInput, setLinkInput] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -183,6 +181,7 @@ export function QrGeneratorContent() {
               icon="clipboard-outline"
               onPress={handlePaste}
               theme={theme}
+              isDark={isDark}
               variant="secondary"
             />
             <ActionButton
@@ -190,6 +189,7 @@ export function QrGeneratorContent() {
               icon="qr-code-outline"
               onPress={handleGenerate}
               theme={theme}
+              isDark={isDark}
               disabled={!linkInput.trim()}
             />
           </View>
@@ -236,6 +236,7 @@ export function QrGeneratorContent() {
               icon="copy-outline"
               onPress={handleCopyLink}
               theme={theme}
+              isDark={isDark}
               variant="secondary"
               disabled={!generatedCode}
             />
@@ -244,6 +245,7 @@ export function QrGeneratorContent() {
               icon="download-outline"
               onPress={handleDownload}
               theme={theme}
+              isDark={isDark}
               disabled={!generatedCode || isSaving}
             />
           </View>
@@ -258,18 +260,31 @@ function ActionButton({
   icon,
   onPress,
   theme,
+  isDark,
   variant = 'primary',
   disabled = false,
 }: ActionButtonProps) {
   const isPrimary = variant === 'primary';
   const backgroundColor = disabled
-    ? theme.text.tertiary
+    ? isDark
+      ? '#1A1C1F'
+      : '#ECEEF1'
     : isPrimary
-      ? theme.accent
-      : theme.background;
-  const borderColor = isPrimary ? theme.accent : theme.border;
-  const iconColor = isPrimary ? '#FFFFFF' : theme.text.primary;
-  const textColor = isPrimary ? '#FFFFFF' : theme.text.primary;
+      ? isDark
+        ? '#1A1C1F'
+        : '#ECEEF1'
+      : isDark
+        ? '#090A0C'
+        : '#FFFFFF';
+  const borderColor = disabled
+    ? theme.border
+    : isPrimary
+      ? isDark
+        ? '#2B2E34'
+        : '#DDE2E8'
+      : theme.border;
+  const iconColor = disabled ? theme.text.tertiary : theme.text.primary;
+  const textColor = disabled ? theme.text.tertiary : theme.text.primary;
 
   return (
     <Pressable

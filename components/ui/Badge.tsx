@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { useColorScheme } from 'react-native';
-import { lightTheme, darkTheme, spacing, borderRadius, typography } from '../../constants/theme';
+import { spacing, borderRadius, typography } from '../../constants/theme';
+import { useAppTheme } from '../../hooks/useAppTheme';
 
 interface BadgeProps {
   title: string;
@@ -11,8 +11,7 @@ interface BadgeProps {
 }
 
 export function Badge({ title, variant = 'default', size = 'medium', onPress }: BadgeProps) {
-  const colorScheme = useColorScheme();
-  const theme = colorScheme === 'dark' ? darkTheme : lightTheme;
+  const { theme } = useAppTheme();
 
   const getBadgeStyle = () => {
     const baseStyle = {

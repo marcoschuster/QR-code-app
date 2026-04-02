@@ -1,11 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Alert, Linking, Modal } from 'react-native';
-import { useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { useTestAudio } from '../../hooks/useTestAudio';
-import { lightTheme, darkTheme, spacing, borderRadius, typography } from '../../constants/theme';
+import { spacing, typography } from '../../constants/theme';
+import { useAppTheme } from '../../hooks/useAppTheme';
 
 interface SettingsScreenProps {
   visible: boolean;
@@ -13,8 +13,7 @@ interface SettingsScreenProps {
 }
 
 export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
-  const colorScheme = useColorScheme();
-  const theme = colorScheme === 'dark' ? darkTheme : lightTheme;
+  const { theme, isDark } = useAppTheme();
   const { playTestSound } = useTestAudio();
   
   const {
@@ -114,9 +113,24 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
       onRequestClose={handleClose}
     >
       <View style={styles.overlay}>
-        <Pressable style={styles.backdrop} onPress={handleClose} />
+        <Pressable
+          style={[
+            styles.backdrop,
+            { backgroundColor: isDark ? 'rgba(0, 0, 0, 0.72)' : 'rgba(0, 0, 0, 0.5)' },
+          ]}
+          onPress={handleClose}
+        />
         
-        <View style={[styles.modal, { backgroundColor: theme.background }]}>
+        <View
+          style={[
+            styles.modal,
+            {
+              backgroundColor: theme.background,
+              shadowColor: theme.shadow,
+              borderColor: theme.border,
+            },
+          ]}
+        >
           {/* Header */}
           <View style={[styles.header, { borderBottomColor: theme.border }]}>
             <Pressable onPress={handleClose} style={styles.closeButton}>
@@ -469,14 +483,13 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
   },
   modal: {
     width: '88%',
     height: '80%', // Change from maxHeight to height
     borderRadius: 20,
     overflow: 'hidden',
-    shadowColor: '#000',
+    borderWidth: 1,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.25,
     shadowRadius: 20,
@@ -505,7 +518,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     minHeight: 200, // Add minimum height
-    backgroundColor: 'transparent', // Add background for debugging
+    backgroundColor: 'transparent',
   },
   section: {
     marginTop: 20,
