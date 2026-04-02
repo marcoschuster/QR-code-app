@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppearanceMode, SettingsState } from '../constants/types';
 
 const defaultSettings: SettingsState = {
@@ -17,9 +19,17 @@ interface SettingsStore extends SettingsState {
   resetSettings: () => void;
 }
 
-export const useSettingsStore = create<SettingsStore>((set) => ({
-  ...defaultSettings,
-  updateSettings: (updates) =>
-    set((state) => ({ ...state, ...updates })),
-  resetSettings: () => set(defaultSettings),
-}));
+export const useSettingsStore = create<SettingsStore>()(
+  persist(
+    (set) => ({
+      ...defaultSettings,
+      updateSettings: (updates) =>
+        set((state) => ({ ...state, ...updates })),
+      resetSettings: () => set(defaultSettings),
+    }),
+    {
+      name: 'qr-scanner-settings',
+      storage: createJSONStorage(() => AsyncStorage),
+    }
+  )
+);
