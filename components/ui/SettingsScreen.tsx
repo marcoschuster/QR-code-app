@@ -155,7 +155,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
                     <View style={[styles.iconWrapper, { backgroundColor: theme.accent + '20' }]}>
                       <Ionicons name="camera-outline" size={20} color={theme.accent} />
                     </View>
-                    <View>
+                    <View style={styles.settingTextContainer}>
                       <Text style={[styles.settingText, { color: theme.text.primary }]}>
                         Camera Access
                       </Text>
@@ -183,7 +183,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
                     <View style={[styles.iconWrapper, { backgroundColor: '#34C75920' }]}>
                       <Ionicons name="open-outline" size={20} color="#34C759" />
                     </View>
-                    <View>
+                    <View style={styles.settingTextContainer}>
                       <Text style={[styles.settingText, { color: theme.text.primary }]}>
                         Auto-open URLs
                       </Text>
@@ -207,7 +207,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
                     <View style={[styles.iconWrapper, { backgroundColor: '#5856D620' }]}>
                       <Ionicons name="time-outline" size={20} color="#5856D6" />
                     </View>
-                    <View>
+                    <View style={styles.settingTextContainer}>
                       <Text style={[styles.settingText, { color: theme.text.primary }]}>
                         Save to History
                       </Text>
@@ -231,7 +231,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
                     <View style={[styles.iconWrapper, { backgroundColor: '#FF950020' }]}>
                       <Ionicons name="phone-portrait-outline" size={20} color="#FF9500" />
                     </View>
-                    <View>
+                    <View style={styles.settingTextContainer}>
                       <Text style={[styles.settingText, { color: theme.text.primary }]}>
                         Haptic Feedback
                       </Text>
@@ -255,7 +255,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
                     <View style={[styles.iconWrapper, { backgroundColor: '#FF2D5520' }]}>
                       <Ionicons name="volume-high-outline" size={20} color="#FF2D55" />
                     </View>
-                    <View>
+                    <View style={styles.settingTextContainer}>
                       <Text style={[styles.settingText, { color: theme.text.primary }]}>
                         Sound Effects
                       </Text>
@@ -285,7 +285,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
                     <View style={[styles.iconWrapper, { backgroundColor: '#30D15820' }]}>
                       <Ionicons name="shield-checkmark-outline" size={20} color="#30D158" />
                     </View>
-                    <View>
+                    <View style={styles.settingTextContainer}>
                       <Text style={[styles.settingText, { color: theme.text.primary }]}>
                         URL Threat Scanning
                       </Text>
@@ -309,7 +309,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
                     <View style={[styles.iconWrapper, { backgroundColor: '#FF3B3020' }]}>
                       <Ionicons name="trash-outline" size={20} color="#FF3B30" />
                     </View>
-                    <View>
+                    <View style={styles.settingTextContainer}>
                       <Text style={[styles.settingText, { color: '#FF3B30' }]}>
                         Clear History
                       </Text>
@@ -400,7 +400,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
                     <View style={[styles.iconWrapper, { backgroundColor: '#34C75920' }]}>
                       <Ionicons name="volume-high-outline" size={20} color="#34C759" />
                     </View>
-                    <View>
+                    <View style={styles.settingTextContainer}>
                       <Text style={[styles.settingText, { color: theme.text.primary }]}>
                         Test Audio
                       </Text>
@@ -422,7 +422,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
                     <View style={[styles.iconWrapper, { backgroundColor: '#FF950020' }]}>
                       <Ionicons name="phone-portrait-outline" size={20} color="#FF9500" />
                     </View>
-                    <View>
+                    <View style={styles.settingTextContainer}>
                       <Text style={[styles.settingText, { color: theme.text.primary }]}>
                         Test Haptic
                       </Text>
@@ -549,6 +549,10 @@ const styles = StyleSheet.create({
     gap: 12,
     flex: 1,
   },
+  settingTextContainer: {
+    flex: 1,
+    justifyContent: 'center',
+  },
   iconWrapper: {
     width: 36,
     height: 36,
@@ -560,11 +564,13 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily,
     fontSize: 15,
     fontWeight: '500',
+    paddingRight: 8,
   },
   settingHint: {
     fontFamily: typography.fontFamily,
     fontSize: 12,
     marginTop: 2,
+    paddingRight: 8,
   },
   settingValue: {
     fontFamily: typography.fontFamily,
