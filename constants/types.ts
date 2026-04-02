@@ -2,6 +2,7 @@ export type ScanType = 'url' | 'wifi' | 'email' | 'phone' | 'sms' | 'text' | 'vc
 
 export interface HistoryItem {
   id: string;
+  name?: string;
   kind: 'scanned' | 'generated';
   type: ScanType;
   rawValue: string;
