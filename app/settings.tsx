@@ -1,16 +1,33 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Alert, Linking } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useSettingsStore } from '../store/useSettingsStore';
+import { useHistoryStore } from '../store/useHistoryStore';
 import { lightTheme, darkTheme, spacing, borderRadius, typography } from '../constants/theme';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 
 export default function SettingsScreen() {
   console.log('[Settings] SettingsScreen mounting');
   const colorScheme = useColorScheme();
   const theme = colorScheme === 'dark' ? darkTheme : lightTheme;
   const router = useRouter();
+  const { clearAll } = useHistoryStore();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    confirmLabel: string;
+    onConfirm: () => void;
+    isDestructive?: boolean;
+  }>({
+    visible: false,
+    title: '',
+    message: '',
+    confirmLabel: '',
+    onConfirm: () => {},
+  });
   
   const {
     appearance,
@@ -32,36 +49,37 @@ export default function SettingsScreen() {
   };
 
   const handleClearHistory = () => {
-    Alert.alert(
-      'Clear History',
-      'Are you sure you want to clear all scan history? This action cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Clear', 
-          style: 'destructive',
-          onPress: () => {
-            // Clear history logic would go here
-            Alert.alert('History Cleared', 'All scan history has been cleared.');
-          }
-        },
-      ]
-    );
+    setConfirmDialog({
+      visible: true,
+      title: 'Clear History',
+      message: 'Are you sure you want to clear all scan history? This action cannot be undone.',
+      confirmLabel: 'Clear',
+      onConfirm: () => {
+        clearAll();
+        setConfirmDialog(prev => ({ ...prev, visible: false }));
+        setTimeout(() => {
+          Alert.alert('History Cleared', 'All scan history has been cleared.');
+        }, 300);
+      },
+      isDestructive: true,
+    });
   };
 
   const handleResetSettings = () => {
-    Alert.alert(
-      'Reset Settings',
-      'Are you sure you want to reset all settings to default values?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Reset', 
-          style: 'destructive',
-          onPress: resetSettings
-        },
-      ]
-    );
+    setConfirmDialog({
+      visible: true,
+      title: 'Reset Settings',
+      message: 'Are you sure you want to reset all settings to default values?',
+      confirmLabel: 'Reset',
+      onConfirm: () => {
+        resetSettings();
+        setConfirmDialog(prev => ({ ...prev, visible: false }));
+        setTimeout(() => {
+          Alert.alert('Done', 'All settings have been reset to default values.');
+        }, 300);
+      },
+      isDestructive: true,
+    });
   };
 
   return (
@@ -245,6 +263,16 @@ export default function SettingsScreen() {
 
         <View style={styles.spacer} />
       </ScrollView>
+
+      <ConfirmDialog
+        visible={confirmDialog.visible}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        confirmLabel={confirmDialog.confirmLabel}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog(prev => ({ ...prev, visible: false }))}
+        isDestructive={confirmDialog.isDestructive}
+      />
     </View>
   );
 }

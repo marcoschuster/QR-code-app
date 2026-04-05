@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Alert } from 'react-native';
 import { HistoryItem } from '../constants/types';
 
 // crypto.randomUUID() doesn't exist in Hermes (React Native engine)
@@ -11,7 +12,7 @@ function generateId(): string {
 
 interface HistoryStore {
   items: HistoryItem[];
-  addItem: (item: Omit<HistoryItem, 'id' | 'timestamp' | 'hours' | 'minutes' | 'groupId' | 'scanCount' | 'scanIds'>) => void;
+  addItem: (item: Omit<HistoryItem, 'id' | 'timestamp' | 'hours' | 'minutes' | 'groupId' | 'scanCount' | 'scanIds'>) => boolean;
   removeItem: (id: string) => void;
   removeScanId: (itemId: string, scanId: string) => void;
   clearAll: () => void;
@@ -33,6 +34,12 @@ export const useHistoryStore = create<HistoryStore>()(
         const existingItem = get().items.find(i => i.rawValue === item.rawValue);
         
         if (existingItem) {
+          const currentCount = existingItem.scanCount || 1;
+          
+          if (currentCount >= 99) {
+            return false;
+          }
+
           // Update existing group
           const scanId = generateId();
           const updatedScanIds = [...(existingItem.scanIds || []), scanId];
@@ -42,7 +49,7 @@ export const useHistoryStore = create<HistoryStore>()(
               i.id === existingItem.id 
                 ? { 
                     ...i, 
-                    scanCount: (i.scanCount || 1) + 1,
+                    scanCount: currentCount + 1,
                     scanIds: updatedScanIds,
                     hours, 
                     minutes,
@@ -66,6 +73,7 @@ export const useHistoryStore = create<HistoryStore>()(
           console.log('[History] addItem succeeded, id:', newItem.id);
           set((state) => ({ items: [newItem, ...state.items] }));
         }
+        return true;
       },
       removeItem: (id) => set((state) => ({ items: state.items.filter((i) => i.id !== id) })),
       removeScanId: (itemId, scanId) => {

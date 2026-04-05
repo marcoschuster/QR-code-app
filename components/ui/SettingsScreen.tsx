@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Alert, Linking, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -6,6 +6,7 @@ import { useSettingsStore } from '../../store/useSettingsStore';
 import { useTestAudio } from '../../hooks/useTestAudio';
 import { spacing, typography } from '../../constants/theme';
 import { useAppTheme } from '../../hooks/useAppTheme';
+import { ConfirmDialog } from './ConfirmDialog';
 
 interface SettingsScreenProps {
   visible: boolean;
@@ -15,6 +16,20 @@ interface SettingsScreenProps {
 export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
   const { theme, isDark } = useAppTheme();
   const { playTestSound } = useTestAudio();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    confirmLabel: string;
+    onConfirm: () => void;
+    isDestructive?: boolean;
+  }>({
+    visible: false,
+    title: '',
+    message: '',
+    confirmLabel: '',
+    onConfirm: () => {},
+  });
   
   const {
     appearance,
@@ -23,6 +38,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
     vibrateOnScan,
     beepOnScan,
     urlThreatScanning,
+    confirmDeleteHistory,
     updateSettings,
     resetSettings,
   } = useSettingsStore();
@@ -49,42 +65,39 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
 
   const handleClearHistory = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    Alert.alert(
-      'Clear History',
-      'Are you sure you want to delete all saved scans?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Clear', 
-          style: 'destructive',
-          onPress: () => {
-            // Import and call clearAll from history store
-            const { useHistoryStore } = require('../../store/useHistoryStore');
-            useHistoryStore.getState().clearAll();
-            Alert.alert('Done', 'All scan history has been cleared.');
-          }
-        },
-      ]
-    );
+    setConfirmDialog({
+      visible: true,
+      title: 'Clear History',
+      message: 'Are you sure you want to delete all saved scans?',
+      confirmLabel: 'Clear',
+      onConfirm: () => {
+        const { useHistoryStore } = require('../../store/useHistoryStore');
+        useHistoryStore.getState().clearAll();
+        setConfirmDialog(prev => ({ ...prev, visible: false }));
+        setTimeout(() => {
+          Alert.alert('Done', 'All scan history has been cleared.');
+        }, 300);
+      },
+      isDestructive: true,
+    });
   };
 
   const handleResetSettings = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    Alert.alert(
-      'Reset Settings',
-      'Are you sure you want to reset all settings to default values?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Reset', 
-          style: 'destructive',
-          onPress: () => {
-            resetSettings();
-            Alert.alert('Done', 'All settings have been reset to default values.');
-          }
-        },
-      ]
-    );
+    setConfirmDialog({
+      visible: true,
+      title: 'Reset Settings',
+      message: 'Are you sure you want to reset all settings to default values?',
+      confirmLabel: 'Reset',
+      onConfirm: () => {
+        resetSettings();
+        setConfirmDialog(prev => ({ ...prev, visible: false }));
+        setTimeout(() => {
+          Alert.alert('Done', 'All settings have been reset to default values.');
+        }, 300);
+      },
+      isDestructive: true,
+    });
   };
 
   const handleTestAudio = async () => {
@@ -303,6 +316,30 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
 
                 <Pressable
                   style={styles.settingItem}
+                  onPress={() => handleToggle('confirmDeleteHistory', !confirmDeleteHistory)}
+                >
+                  <View style={styles.settingLeft}>
+                    <View style={[styles.iconWrapper, { backgroundColor: '#FF950020' }]}>
+                      <Ionicons name="warning-outline" size={20} color="#FF9500" />
+                    </View>
+                    <View style={styles.settingTextContainer}>
+                      <Text style={[styles.settingText, { color: theme.text.primary }]}>
+                        Delete Confirmation
+                      </Text>
+                      <Text style={[styles.settingHint, { color: theme.text.secondary }]}>
+                        Show confirmation before deleting history items
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={[styles.switchTrack, confirmDeleteHistory && { backgroundColor: theme.accent }]}>
+                    <View style={[styles.switchThumb, confirmDeleteHistory && styles.switchThumbOn]} />
+                  </View>
+                </Pressable>
+
+                <View style={[styles.divider, { backgroundColor: theme.border }]} />
+
+                <Pressable
+                  style={styles.settingItem}
                   onPress={handleClearHistory}
                 >
                   <View style={styles.settingLeft}>
@@ -470,6 +507,16 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
             <View style={styles.spacer} />
           </ScrollView>
         </View>
+
+        <ConfirmDialog
+          visible={confirmDialog.visible}
+          title={confirmDialog.title}
+          message={confirmDialog.message}
+          confirmLabel={confirmDialog.confirmLabel}
+          onConfirm={confirmDialog.onConfirm}
+          onCancel={() => setConfirmDialog(prev => ({ ...prev, visible: false }))}
+          isDestructive={confirmDialog.isDestructive}
+        />
       </View>
     </Modal>
   );

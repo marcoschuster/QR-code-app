@@ -7,6 +7,7 @@ import { useSettingsStore } from '../../store/useSettingsStore';
 import { useScanAudio } from '../../hooks/useScanAudio';
 import * as Haptics from 'expo-haptics';
 import { scanFromURLAsync } from 'expo-camera';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
 
 interface PhotoScannerProps {
   visible: boolean;
@@ -19,6 +20,7 @@ export function PhotoScanner({ visible, imageUri, onClose, onResult }: PhotoScan
   const [isScanning, setIsScanning] = useState(false);
   const [scanned, setScanned] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
+  const [showLimitReached, setShowLimitReached] = useState(false);
   const { addItem } = useHistoryStore();
   const { saveToHistory, beepOnScan, vibrateOnScan } = useSettingsStore();
   const { playScanSound } = useScanAudio();
@@ -54,15 +56,20 @@ export function PhotoScanner({ visible, imageUri, onClose, onResult }: PhotoScan
     }
 
     // Save to history
+    let success = true;
     if (saveToHistory) {
       try {
-        addItem({
+        success = addItem({
           kind: 'scanned',
           type: parsed.type,
           rawValue: qrData,
           parsedData: parsed.data,
           safety: { checked: false, safe: null as boolean | null },
         });
+
+        if (!success) {
+          setShowLimitReached(true);
+        }
       } catch (e) {
         console.warn('[PhotoScanner] history save failed:', e);
       }
@@ -74,7 +81,12 @@ export function PhotoScanner({ visible, imageUri, onClose, onResult }: PhotoScan
 
     try {
       onResult({ ...parsed, safety: { checked: false, safe: null as boolean | null } });
-      onClose();
+      
+      // Only close automatically if we AREN'T showing the limit dialog
+      // Otherwise, we let the dialog's confirm action handle it
+      if (success) {
+        onClose();
+      }
     } catch (e) {
       console.error('[PhotoScanner] onResult crashed:', e);
     }
@@ -191,6 +203,21 @@ export function PhotoScanner({ visible, imageUri, onClose, onResult }: PhotoScan
             <Text style={styles.doneButtonText}>{scanError ? 'Back to Scanner' : 'Close'}</Text>
           </Pressable>
         </View>
+
+        <ConfirmDialog
+          visible={showLimitReached}
+          title="Limit Reached"
+          message="This scan has been saved 99 times already and won't be saved again."
+          confirmLabel="OK"
+          onConfirm={() => {
+            setShowLimitReached(false);
+            onClose();
+          }}
+          onCancel={() => {
+            setShowLimitReached(false);
+            onClose();
+          }}
+        />
       </View>
     </Modal>
   );

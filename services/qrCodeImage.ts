@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import { Directory, Paths } from 'expo/node_modules/expo-file-system';
+import { Directory, Paths } from 'expo-file-system';
 import { toQR } from 'toqr';
 
 const QR_MARGIN_MODULES = 4;

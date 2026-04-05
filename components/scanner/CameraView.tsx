@@ -11,6 +11,7 @@ import { useSettingsStore } from '../../store/useSettingsStore';
 import { useScanAudio } from '../../hooks/useScanAudio';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
 
 interface ScannerScreenProps {
   onResult: (data: any) => void;
@@ -27,6 +28,7 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
   const [isLocking, setIsLocking] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showPhotoScanner, setShowPhotoScanner] = useState(false);
+  const [showLimitReached, setShowLimitReached] = useState(false);
   const photoScanSucceededRef = useRef(false);
   const { addItem } = useHistoryStore();
   const { saveToHistory, beepOnScan, vibrateOnScan } = useSettingsStore();
@@ -67,13 +69,17 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
 
     if (saveToHistory) {
       try {
-        addItem({
+        const success = addItem({
           kind: 'scanned',
           type: parsed.type,
           rawValue: result.data,
           parsedData: parsed.data,
           safety: { checked: false, safe: null as boolean | null },
         });
+        
+        if (!success) {
+          setShowLimitReached(true);
+        }
       } catch (e) {
         console.warn('[Scanner] history save failed:', e);
       }
@@ -240,6 +246,15 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
           setScanned(true);
           onResult(data);
         }}
+      />
+
+      <ConfirmDialog
+        visible={showLimitReached}
+        title="Limit Reached"
+        message="This scan has been saved 99 times already and won't be saved again."
+        confirmLabel="OK"
+        onConfirm={() => setShowLimitReached(false)}
+        onCancel={() => setShowLimitReached(false)}
       />
     </View>
   );

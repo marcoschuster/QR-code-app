@@ -1,20 +1,30 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { useColorScheme } from 'react-native';
-import { lightTheme, darkTheme, typography } from '../../constants/theme';
+import { View, StyleSheet, StatusBar } from 'react-native';
+import { useRouter } from 'expo-router';
+import { HistoryScreen } from '../../components/ui/HistoryScreen';
+import { TabBar } from '../../components/ui/TabBar';
+import { useAppTheme } from '../../hooks/useAppTheme';
 
-export default function HistoryScreen() {
-  const colorScheme = useColorScheme();
-  const theme = colorScheme === 'dark' ? darkTheme : lightTheme;
+export default function HistoryTab() {
+  const router = useRouter();
+  const { theme } = useAppTheme();
+
+  const handleTabChange = (tab: string) => {
+    if (tab === 'scan') {
+      router.push('/');
+      return;
+    }
+    if (tab === 'generate') {
+      router.push('/(tabs)/generate');
+      return;
+    }
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <Text style={[styles.title, { color: theme.text.primary }]}>
-        Scan History
-      </Text>
-      <Text style={[styles.subtitle, { color: theme.text.secondary }]}>
-        Coming soon - View your scan history
-      </Text>
+      <StatusBar barStyle={theme.isDark ? 'light-content' : 'dark-content'} />
+      <HistoryScreen />
+      <TabBar activeTab="history" onTabChange={handleTabChange} />
     </View>
   );
 }
@@ -22,21 +32,5 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-  },
-  title: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes['3xl'],
-    fontWeight: typography.weights.bold,
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  subtitle: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.base,
-    textAlign: 'center',
-    lineHeight: 24,
   },
 });

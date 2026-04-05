@@ -10,6 +10,7 @@ const defaultSettings: SettingsState = {
   vibrateOnScan: true,
   beepOnScan: false,
   urlThreatScanning: true,
+  confirmDeleteHistory: true,
   defaultErrorCorrection: 'M',
   defaultOutputFormat: 'QR',
 };

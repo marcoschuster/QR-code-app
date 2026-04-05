@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Card } from '../ui/Card';
+import { SuccessDialog } from '../ui/SuccessDialog';
 import { QRCodeData } from '../../constants/types';
 import { spacing, borderRadius, typography } from '../../constants/theme';
 import { useAppTheme } from '../../hooks/useAppTheme';
@@ -25,6 +26,15 @@ interface ScanResultSheetProps {
 export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps) {
   const { theme, isDark } = useAppTheme();
   const [faviconError, setFaviconError] = useState(false);
+  const [successDialog, setSuccessDialog] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+  }>({
+    visible: false,
+    title: '',
+    message: '',
+  });
 
   // Reset favicon error when data changes
   useEffect(() => {
@@ -90,7 +100,11 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
     }
     
     await Clipboard.setStringAsync(textToCopy);
-    Alert.alert('Copied', 'Content copied to clipboard');
+    setSuccessDialog({
+      visible: true,
+      title: 'Copied',
+      message: 'Content copied to clipboard',
+    });
   };
 
   const handleShare = async () => {
@@ -401,6 +415,13 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
           Close
         </Text>
       </Pressable>
+
+      <SuccessDialog
+        visible={successDialog.visible}
+        title={successDialog.title}
+        message={successDialog.message}
+        onClose={() => setSuccessDialog(prev => ({ ...prev, visible: false }))}
+      />
     </View>
   );
 }
@@ -459,6 +480,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
   },
   contentContainer: {
     gap: spacing.sm,

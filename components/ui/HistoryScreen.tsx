@@ -16,9 +16,12 @@ import * as Clipboard from 'expo-clipboard';
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import { useHistoryStore } from '../../store/useHistoryStore';
+import { useSettingsStore } from '../../store/useSettingsStore';
 import { HistoryItem, ThemeColors } from '../../constants/types';
 import { useAppTheme } from '../../hooks/useAppTheme';
 import { Button } from './Button';
+import { ConfirmDialog } from './ConfirmDialog';
+import { SuccessDialog } from './SuccessDialog';
 
 const getDomainFromUrl = (url: string) => {
   try {
@@ -157,10 +160,34 @@ interface HistoryScreenProps {
 
 export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) {
   const { clearAll, removeItem, removeScanId, getGroupedItems, updateItem } = useHistoryStore();
+  const { confirmDeleteHistory } = useSettingsStore();
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [selectedItem, setSelectedItem] = useState<HistoryItem | null>(null);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editingNameValue, setEditingNameValue] = useState('');
+  const [confirmDialog, setConfirmDialog] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    confirmLabel: string;
+    onConfirm: () => void;
+    isDestructive?: boolean;
+  }>({
+    visible: false,
+    title: '',
+    message: '',
+    confirmLabel: '',
+    onConfirm: () => {},
+  });
+  const [successDialog, setSuccessDialog] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+  }>({
+    visible: false,
+    title: '',
+    message: '',
+  });
   const { theme, isDark } = useAppTheme();
   const lastScrollY = useRef(0);
   const tabBarHidden = useRef(false);
@@ -201,28 +228,53 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
   }, [onTabBarVisibilityChange, setTabBarHidden]);
 
   const handleClearAll = () => {
-    Alert.alert(
-      'Clear History',
-      'Are you sure you want to delete all scan history?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Clear All', style: 'destructive', onPress: clearAll },
-      ]
-    );
+    setConfirmDialog({
+      visible: true,
+      title: 'Clear History',
+      message: 'Are you sure you want to delete all scan history?',
+      confirmLabel: 'Clear All',
+      onConfirm: () => {
+        clearAll();
+        setConfirmDialog(prev => ({ ...prev, visible: false }));
+      },
+      isDestructive: true,
+    });
   };
 
   const handleRemoveItem = (id: string) => {
-    Alert.alert('Delete', 'Remove this item from history?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => removeItem(id) },
-    ]);
+    if (confirmDeleteHistory) {
+      setConfirmDialog({
+        visible: true,
+        title: 'Delete',
+        message: 'Remove this item from history?',
+        confirmLabel: 'Delete',
+        onConfirm: () => {
+          removeItem(id);
+          setConfirmDialog(prev => ({ ...prev, visible: false }));
+        },
+        isDestructive: true,
+      });
+    } else {
+      removeItem(id);
+    }
   };
 
   const handleRemoveScan = (itemId: string, scanId: string) => {
-    Alert.alert('Delete Scan', 'Remove this individual scan from history?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => removeScanId(itemId, scanId) },
-    ]);
+    if (confirmDeleteHistory) {
+      setConfirmDialog({
+        visible: true,
+        title: 'Delete Scan',
+        message: 'Remove this individual scan from history?',
+        confirmLabel: 'Delete',
+        onConfirm: () => {
+          removeScanId(itemId, scanId);
+          setConfirmDialog(prev => ({ ...prev, visible: false }));
+        },
+        isDestructive: true,
+      });
+    } else {
+      removeScanId(itemId, scanId);
+    }
   };
 
   const toggleExpanded = (itemId: string) => {
@@ -260,12 +312,13 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
     }
 
     await Clipboard.setStringAsync(selectedItem.rawValue);
-    Alert.alert(
-      selectedItem.type === 'url' ? 'Link copied' : 'Copied',
-      selectedItem.type === 'url'
+    setSuccessDialog({
+      visible: true,
+      title: selectedItem.type === 'url' ? 'Link copied' : 'Copied',
+      message: selectedItem.type === 'url'
         ? 'The scanned link has been copied to your clipboard.'
-        : 'The scanned content has been copied to your clipboard.'
-    );
+        : 'The scanned content has been copied to your clipboard.',
+    });
   };
 
   const handleOpenSelectedItem = async () => {
@@ -355,6 +408,23 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
           />
         )}
         scrollEventThrottle={16}
+      />
+
+      <ConfirmDialog
+        visible={confirmDialog.visible}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        confirmLabel={confirmDialog.confirmLabel}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog(prev => ({ ...prev, visible: false }))}
+        isDestructive={confirmDialog.isDestructive}
+      />
+
+      <SuccessDialog
+        visible={successDialog.visible}
+        title={successDialog.title}
+        message={successDialog.message}
+        onClose={() => setSuccessDialog(prev => ({ ...prev, visible: false }))}
       />
 
       {selectedItem && (
@@ -622,6 +692,7 @@ const s = StyleSheet.create({
     fontWeight: '500',
   },
   listContent: {
+    paddingTop: 16,
     paddingBottom: 140,
   },
   empty: {

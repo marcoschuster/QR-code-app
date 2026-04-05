@@ -14,6 +14,7 @@ import {
 import * as Clipboard from 'expo-clipboard';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from '../ui/Card';
+import { SuccessDialog } from '../ui/SuccessDialog';
 import {
   borderRadius,
   spacing,
@@ -46,6 +47,15 @@ export function QrGeneratorContent() {
   const [errorMessage, setErrorMessage] = useState('');
   const [generatedCode, setGeneratedCode] = useState<GeneratedQrCodeImage | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [successDialog, setSuccessDialog] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+  }>({
+    visible: false,
+    title: '',
+    message: '',
+  });
 
   const handleLinkChange = (value: string) => {
     setLinkInput(value);
@@ -90,7 +100,11 @@ export function QrGeneratorContent() {
     }
 
     await Clipboard.setStringAsync(generatedCode.content);
-    Alert.alert('Link copied', 'The QR code link has been copied to your clipboard.');
+    setSuccessDialog({
+      visible: true,
+      title: 'Link copied',
+      message: 'The QR code link has been copied to your clipboard.',
+    });
   };
 
   const handleDownload = async () => {
@@ -126,132 +140,144 @@ export function QrGeneratorContent() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: theme.background }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+    <>
+      <KeyboardAvoidingView
+        style={[styles.container, { backgroundColor: theme.background }]}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: theme.text.primary }]}>Generate QR</Text>
-          <Text style={[styles.subtitle, { color: theme.text.secondary }]}>
-            Paste a link, turn it into a QR code, and export it as a PNG image.
-          </Text>
-        </View>
-
-        <Card style={styles.sectionCard} padding={spacing.lg}>
-          <Text style={[styles.sectionLabel, { color: theme.text.secondary }]}>Link</Text>
-
-          <TextInput
-            value={linkInput}
-            onChangeText={handleLinkChange}
-            placeholder="https://example.com"
-            placeholderTextColor={theme.text.tertiary}
-            autoCapitalize="none"
-            autoCorrect={false}
-            keyboardType="url"
-            multiline
-            textAlignVertical="top"
-            style={[
-              styles.input,
-              {
-                backgroundColor: theme.background,
-                borderColor: errorMessage ? theme.danger : theme.border,
-                color: theme.text.primary,
-              },
-            ]}
-          />
-
-          <Text
-            style={[
-              styles.helperText,
-              { color: errorMessage ? theme.danger : theme.text.secondary },
-            ]}
-          >
-            {errorMessage || 'If you paste a domain without http, https will be added for you.'}
-          </Text>
-
-          <View style={styles.actionsRow}>
-            <ActionButton
-              title="Paste"
-              icon="clipboard-outline"
-              onPress={handlePaste}
-              theme={theme}
-              isDark={isDark}
-              variant="secondary"
-            />
-            <ActionButton
-              title="Generate"
-              icon="qr-code-outline"
-              onPress={handleGenerate}
-              theme={theme}
-              isDark={isDark}
-              disabled={!linkInput.trim()}
-            />
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.header}>
+            <Text style={[styles.title, { color: theme.text.primary }]}>Generate QR</Text>
+            <Text style={[styles.subtitle, { color: theme.text.secondary }]}>
+              Paste a link, turn it into a QR code, and export it as a PNG image.
+            </Text>
           </View>
-        </Card>
 
-        <Card style={styles.sectionCard} padding={spacing.lg}>
-          <Text style={[styles.sectionLabel, { color: theme.text.secondary }]}>Preview</Text>
+          <Card style={styles.sectionCard} padding={spacing.lg}>
+            <Text style={[styles.sectionLabel, { color: theme.text.secondary }]}>Link</Text>
 
-          <View
-            style={[
-              styles.previewSurface,
-              {
-                backgroundColor: theme.background,
-                borderColor: theme.border,
-              },
-            ]}
-          >
-            {generatedCode ? (
-              <Image
-                source={{ uri: generatedCode.imageUri }}
-                style={styles.previewImage}
-                resizeMode="contain"
+            <TextInput
+              value={linkInput}
+              onChangeText={handleLinkChange}
+              placeholder="https://example.com"
+              placeholderTextColor={theme.text.tertiary}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="url"
+              multiline
+              textAlignVertical="top"
+              style={[
+                styles.input,
+                {
+                  backgroundColor: theme.background,
+                  borderColor: errorMessage ? theme.danger : theme.border,
+                  color: theme.text.primary,
+                },
+              ]}
+            />
+
+            <Text
+              style={[
+                styles.helperText,
+                { color: errorMessage ? theme.danger : theme.text.secondary },
+              ]}
+            >
+              {errorMessage || 'If you paste a domain without http, https will be added for you.'}
+            </Text>
+
+            <View style={styles.actionsRow}>
+              <ActionButton
+                title="Paste"
+                icon="clipboard-outline"
+                onPress={handlePaste}
+                theme={theme}
+                isDark={isDark}
+                variant="secondary"
               />
-            ) : (
-              <View style={styles.emptyPreview}>
-                <Ionicons name="qr-code-outline" size={42} color={theme.text.tertiary} />
-                <Text style={[styles.emptyPreviewText, { color: theme.text.secondary }]}>
-                  Your QR code preview will appear here.
-                </Text>
+              <ActionButton
+                title="Generate QR"
+                icon="qr-code-outline"
+                onPress={() => {
+                  if (linkInput.trim()) {
+                    const normalizedInput = normalizeQrLinkInput(linkInput.trim());
+                    if (normalizedInput) {
+                      const qrCode = createQrCodeImage(normalizedInput);
+                      setGeneratedCode(qrCode);
+                      setErrorMessage('');
+                    } else {
+                      setErrorMessage('Please enter a valid URL or text.');
+                    }
+                  } else {
+                    setErrorMessage('Please enter a URL or text first.');
+                  }
+                }}
+                theme={theme}
+                isDark={isDark}
+                disabled={!linkInput.trim()}
+              />
+            </View>
+          </Card>
+
+          {generatedCode && (
+            <Card style={styles.sectionCard} padding={spacing.lg}>
+              <Text style={[styles.sectionLabel, { color: theme.text.secondary }]}>Preview</Text>
+
+              <View
+                style={[
+                  styles.previewSurface,
+                  {
+                    backgroundColor: theme.background,
+                    borderColor: theme.border,
+                  },
+                ]}
+              >
+                <Image
+                  source={{ uri: generatedCode.imageUri }}
+                  style={styles.previewImage}
+                  resizeMode="contain"
+                />
               </View>
-            )}
-          </View>
 
-          <Text
-            style={[styles.previewLink, { color: theme.text.primary }]}
-            numberOfLines={3}
-          >
-            {generatedCode?.content || 'Generate a QR code to preview the final image.'}
-          </Text>
+              <Text style={[styles.previewLink, { color: theme.text.secondary }]}>
+                {generatedCode.content}
+              </Text>
 
-          <View style={styles.actionsRow}>
-            <ActionButton
-              title="Copy Link"
-              icon="copy-outline"
-              onPress={handleCopyLink}
-              theme={theme}
-              isDark={isDark}
-              variant="secondary"
-              disabled={!generatedCode}
-            />
-            <ActionButton
-              title={isSaving ? 'Saving...' : 'Download PNG'}
-              icon="download-outline"
-              onPress={handleDownload}
-              theme={theme}
-              isDark={isDark}
-              disabled={!generatedCode || isSaving}
-            />
-          </View>
-        </Card>
-      </ScrollView>
-    </KeyboardAvoidingView>
+              <View style={styles.actionsRow}>
+                <ActionButton
+                  title="Copy Link"
+                  icon="copy-outline"
+                  onPress={handleCopyLink}
+                  theme={theme}
+                  isDark={isDark}
+                  variant="secondary"
+                  disabled={!generatedCode}
+                />
+                <ActionButton
+                  title={isSaving ? 'Saving...' : 'Download PNG'}
+                  icon="download-outline"
+                  onPress={handleDownload}
+                  theme={theme}
+                  isDark={isDark}
+                  disabled={!generatedCode || isSaving}
+                />
+              </View>
+            </Card>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
+
+      <SuccessDialog
+        visible={successDialog.visible}
+        title={successDialog.title}
+        message={successDialog.message}
+        onClose={() => setSuccessDialog(prev => ({ ...prev, visible: false }))}
+      />
+    </>
   );
 }
 
