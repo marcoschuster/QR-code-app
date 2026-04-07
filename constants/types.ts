@@ -1,4 +1,16 @@
 export type ScanType = 'url' | 'wifi' | 'email' | 'phone' | 'sms' | 'text' | 'vcard' | 'barcode' | 'location';
+export type ThreatCheckSource = 'google-safe-browsing' | 'heuristic';
+
+export interface ScanSafetyState {
+  checked: boolean;
+  safe: boolean | null;
+  threatType?: string;
+  checkedAt?: number;
+  confidence?: 'high' | 'medium' | 'low';
+  source?: ThreatCheckSource;
+  inProgress?: boolean;
+  error?: string;
+}
 
 export interface HistoryItem {
   id: string;
@@ -9,12 +21,7 @@ export interface HistoryItem {
   parsedData: Record<string, any>;
   timestamp: number;
   thumbnailBase64?: string;
-  safety: {
-    checked: boolean;
-    safe: boolean | null;
-    threatType?: string;
-    checkedAt?: number;
-  };
+  safety: ScanSafetyState;
   // Enhanced time tracking
   hours?: number;
   minutes?: number;
@@ -29,6 +36,7 @@ export interface SafetyResult {
   safe: boolean;
   threatType?: string;
   confidence: 'high' | 'medium' | 'low';
+  source: ThreatCheckSource;
 }
 
 export interface QRCodeData {

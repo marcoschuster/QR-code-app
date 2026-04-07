@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, Modal, Pressable, Image, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { parseQRCode } from '../../services/qrParser';
+import { checkUrlSafety } from '../../services/threatCheck';
 import { useHistoryStore } from '../../store/useHistoryStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { useScanAudio } from '../../hooks/useScanAudio';
@@ -22,7 +23,7 @@ export function PhotoScanner({ visible, imageUri, onClose, onResult }: PhotoScan
   const [scanError, setScanError] = useState<string | null>(null);
   const [showLimitReached, setShowLimitReached] = useState(false);
   const { addItem } = useHistoryStore();
-  const { saveToHistory, beepOnScan, vibrateOnScan } = useSettingsStore();
+  const { saveToHistory, beepOnScan, vibrateOnScan, urlThreatScanning } = useSettingsStore();
   const { playScanSound } = useScanAudio();
 
   const handleQRCodeFound = useCallback(async (qrData: string, isActive: () => boolean) => {
@@ -33,7 +34,9 @@ export function PhotoScanner({ visible, imageUri, onClose, onResult }: PhotoScan
     setScanned(true);
 
     if (beepOnScan) {
-      await playScanSound();
+      void playScanSound().catch((error) => {
+        console.warn('[PhotoScanner] audio feedback failed:', error);
+      });
     }
 
     if (!isActive()) {
@@ -41,7 +44,9 @@ export function PhotoScanner({ visible, imageUri, onClose, onResult }: PhotoScan
     }
 
     if (vibrateOnScan) {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch((error) => {
+        console.warn('[PhotoScanner] haptic feedback failed:', error);
+      });
     }
 
     if (!isActive()) {
@@ -55,17 +60,31 @@ export function PhotoScanner({ visible, imageUri, onClose, onResult }: PhotoScan
       parsed = { type: 'text', data: { text: qrData }, rawValue: qrData };
     }
 
+    // Safety Check Integration
+    let safety: any = { checked: false, safe: null };
+    if (parsed.type === 'url' && urlThreatScanning) {
+      try {
+        safety = await checkUrlSafety(parsed.data.url);
+        safety = { checked: true, ...safety };
+      } catch (error) {
+        console.warn('Safety check failed:', error);
+      }
+    }
+
     // Save to history
     let success = true;
+    let historyItemId: string | undefined;
     if (saveToHistory) {
       try {
-        success = addItem({
+        const saveResult = addItem({
           kind: 'scanned',
           type: parsed.type,
           rawValue: qrData,
           parsedData: parsed.data,
-          safety: { checked: false, safe: null as boolean | null },
+          safety,
         });
+        success = saveResult.saved;
+        historyItemId = saveResult.itemId;
 
         if (!success) {
           setShowLimitReached(true);
@@ -80,7 +99,7 @@ export function PhotoScanner({ visible, imageUri, onClose, onResult }: PhotoScan
     }
 
     try {
-      onResult({ ...parsed, safety: { checked: false, safe: null as boolean | null } });
+      onResult({ ...parsed, safety, historyItemId });
       
       // Only close automatically if we AREN'T showing the limit dialog
       // Otherwise, we let the dialog's confirm action handle it
@@ -90,7 +109,7 @@ export function PhotoScanner({ visible, imageUri, onClose, onResult }: PhotoScan
     } catch (e) {
       console.error('[PhotoScanner] onResult crashed:', e);
     }
-  }, [addItem, beepOnScan, onClose, onResult, playScanSound, saveToHistory, vibrateOnScan]);
+  }, [addItem, beepOnScan, onClose, onResult, playScanSound, saveToHistory, vibrateOnScan, urlThreatScanning]);
 
   useEffect(() => {
     if (!visible || !imageUri) {

@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router';
 import { Reticle } from './Reticle';
 import { PhotoScanner } from './PhotoScanner';
 import { parseQRCode } from '../../services/qrParser';
+import { getThreatCheckSourceHint } from '../../services/threatCheck';
 import { useHistoryStore } from '../../store/useHistoryStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { useScanAudio } from '../../hooks/useScanAudio';
@@ -31,7 +32,7 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
   const [showLimitReached, setShowLimitReached] = useState(false);
   const photoScanSucceededRef = useRef(false);
   const { addItem } = useHistoryStore();
-  const { saveToHistory, beepOnScan, vibrateOnScan } = useSettingsStore();
+  const { saveToHistory, beepOnScan, vibrateOnScan, urlThreatScanning } = useSettingsStore();
   const { playScanSound } = useScanAudio();
 
   // ── Barcode scan handler ───────────────────────────────────────────────────
@@ -50,14 +51,17 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
     // 3. Now set scanned to true (hides camera, shows result)
     setScanned(true);
 
-    // Play audio feedback
+    // Fire feedback without blocking scan result rendering.
     if (beepOnScan) {
-      await playScanSound();
+      void playScanSound().catch((error) => {
+        console.warn('[Scanner] audio feedback failed:', error);
+      });
     }
     
-    // Play haptic feedback
     if (vibrateOnScan) {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch((error) => {
+        console.warn('[Scanner] haptic feedback failed:', error);
+      });
     }
 
     let parsed: any;
@@ -67,17 +71,34 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
       parsed = { type: 'text', data: { text: result.data }, rawValue: result.data };
     }
 
+    const initialSafety =
+      parsed.type === 'url' && urlThreatScanning
+        ? {
+            checked: false,
+            safe: null as boolean | null,
+            inProgress: true,
+            source: getThreatCheckSourceHint(),
+          }
+        : {
+            checked: false,
+            safe: null as boolean | null,
+            inProgress: false,
+          };
+
+    let historyItemId: string | undefined;
+
     if (saveToHistory) {
       try {
-        const success = addItem({
+        const saveResult = addItem({
           kind: 'scanned',
           type: parsed.type,
           rawValue: result.data,
           parsedData: parsed.data,
-          safety: { checked: false, safe: null as boolean | null },
+          safety: initialSafety,
         });
+        historyItemId = saveResult.itemId;
         
-        if (!success) {
+        if (!saveResult.saved) {
           setShowLimitReached(true);
         }
       } catch (e) {
@@ -86,7 +107,7 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
     }
 
     try {
-      onResult({ ...parsed, safety: { checked: false, safe: null as boolean | null } });
+      onResult({ ...parsed, safety: initialSafety, historyItemId });
     } catch (e) {
       console.error('[Scanner] onResult crashed:', e);
     }

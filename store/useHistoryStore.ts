@@ -12,7 +12,10 @@ function generateId(): string {
 
 interface HistoryStore {
   items: HistoryItem[];
-  addItem: (item: Omit<HistoryItem, 'id' | 'timestamp' | 'hours' | 'minutes' | 'groupId' | 'scanCount' | 'scanIds'>) => boolean;
+  addItem: (item: Omit<HistoryItem, 'id' | 'timestamp' | 'hours' | 'minutes' | 'groupId' | 'scanCount' | 'scanIds'>) => {
+    saved: boolean;
+    itemId?: string;
+  };
   removeItem: (id: string) => void;
   removeScanId: (itemId: string, scanId: string) => void;
   clearAll: () => void;
@@ -37,7 +40,10 @@ export const useHistoryStore = create<HistoryStore>()(
           const currentCount = existingItem.scanCount || 1;
           
           if (currentCount >= 99) {
-            return false;
+            return {
+              saved: false,
+              itemId: existingItem.id,
+            };
           }
 
           // Update existing group
@@ -49,6 +55,9 @@ export const useHistoryStore = create<HistoryStore>()(
               i.id === existingItem.id 
                 ? { 
                     ...i, 
+                    type: item.type,
+                    parsedData: item.parsedData,
+                    safety: item.safety,
                     scanCount: currentCount + 1,
                     scanIds: updatedScanIds,
                     hours, 
@@ -58,6 +67,11 @@ export const useHistoryStore = create<HistoryStore>()(
                 : i
             )
           }));
+
+          return {
+            saved: true,
+            itemId: existingItem.id,
+          };
         } else {
           // Create new item
           const newItem: HistoryItem = {
@@ -72,8 +86,12 @@ export const useHistoryStore = create<HistoryStore>()(
           };
           console.log('[History] addItem succeeded, id:', newItem.id);
           set((state) => ({ items: [newItem, ...state.items] }));
+
+          return {
+            saved: true,
+            itemId: newItem.id,
+          };
         }
-        return true;
       },
       removeItem: (id) => set((state) => ({ items: state.items.filter((i) => i.id !== id) })),
       removeScanId: (itemId, scanId) => {

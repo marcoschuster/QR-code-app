@@ -73,6 +73,8 @@ export function Button({
     const baseStyle = {
       fontFamily: typography.fontFamily,
       fontWeight: typography.weights.semibold,
+      flexShrink: 1,
+      textAlign: 'center' as const,
     };
 
     const sizeStyles = {
@@ -111,7 +113,9 @@ export function Button({
       disabled={disabled}
     >
       {icon && <View style={styles.icon}>{icon}</View>}
-      <Text style={getTextStyle()}>{title}</Text>
+      <Text style={getTextStyle()} numberOfLines={1} ellipsizeMode="tail">
+        {title}
+      </Text>
     </Pressable>
   );
 }

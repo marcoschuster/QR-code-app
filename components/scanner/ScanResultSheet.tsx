@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Share, Alert, Linking, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Share, Alert, Linking, Image, ActivityIndicator } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import * as WebBrowser from 'expo-web-browser';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,7 +7,7 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Card } from '../ui/Card';
 import { SuccessDialog } from '../ui/SuccessDialog';
-import { QRCodeData } from '../../constants/types';
+import { QRCodeData, ScanSafetyState, ThreatCheckSource } from '../../constants/types';
 import { spacing, borderRadius, typography } from '../../constants/theme';
 import { useAppTheme } from '../../hooks/useAppTheme';
 
@@ -15,11 +15,7 @@ interface ScanResultSheetProps {
   visible: boolean;
   onClose: () => void;
   data: QRCodeData & {
-    safety?: {
-      checked: boolean;
-      safe: boolean | null;
-      threatType?: string;
-    };
+    safety?: ScanSafetyState;
   };
 }
 
@@ -86,6 +82,45 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
     }
   };
 
+  const getSafetySourceLabel = (source?: ThreatCheckSource) => {
+    switch (source) {
+      case 'google-safe-browsing':
+        return 'Google Safe Browsing';
+      case 'heuristic':
+        return 'local heuristic scan';
+      default:
+        return 'link safety checks';
+    }
+  };
+
+  const getThreatTypeLabel = (threatType?: string) => {
+    if (!threatType) {
+      return null;
+    }
+
+    return threatType
+      .toLowerCase()
+      .split('_')
+      .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+      .join(' ');
+  };
+
+  const getTypeSublabel = () => {
+    if (data.type === 'url' && data.safety?.inProgress) {
+      return 'Threat check in progress';
+    }
+
+    if (data.type === 'url' && data.safety?.error) {
+      return 'Threat check unavailable';
+    }
+
+    if (data.type === 'url' && data.safety?.checked) {
+      return data.safety.safe ? 'Threat check complete' : 'Threat detected';
+    }
+
+    return 'Successfully scanned';
+  };
+
   const handleOpenUrl = async () => {
     if (data.type === 'url') {
       await WebBrowser.openBrowserAsync(data.data.url);
@@ -133,6 +168,8 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
 
   const renderActionButtons = () => {
     const buttons = [];
+    const urlThreatCheckPending = data.type === 'url' && data.safety?.inProgress;
+    const urlThreatCheckFailed = data.type === 'url' && !!data.safety?.error;
 
     switch (data.type) {
       case 'url':
@@ -140,8 +177,15 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
           buttons.push(
             <Button
               key="open"
-              title="Open in Browser"
+              title={
+                urlThreatCheckPending
+                  ? 'Checking Threats...'
+                  : urlThreatCheckFailed
+                    ? 'Open Anyway'
+                    : 'Open in Browser'
+              }
               onPress={handleOpenUrl}
+              disabled={urlThreatCheckPending}
               icon={<Ionicons name="globe-outline" size={20} color="#FFFFFF" />}
             />
           );
@@ -240,6 +284,99 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
     );
 
     return buttons;
+  };
+
+  const renderSafetyStatus = () => {
+    if (data.type !== 'url' || !data.safety) {
+      return null;
+    }
+
+    if (data.safety.inProgress) {
+      return (
+        <Card style={styles.safetyCard}>
+          <View style={[styles.safetyContent, { backgroundColor: theme.warning + '10' }]}>
+            <View style={styles.safetyIconContainer}>
+              <ActivityIndicator size="small" color={theme.warning} />
+            </View>
+            <View style={styles.safetyText}>
+              <Text style={[styles.safetyTitle, { color: theme.warning }]}>
+                Checking this link for threats
+              </Text>
+              <Text style={[styles.safetyDescription, { color: theme.text.secondary }]}>
+                Running {getSafetySourceLabel(data.safety.source)} before enabling this link.
+              </Text>
+            </View>
+          </View>
+        </Card>
+      );
+    }
+
+    if (data.safety.error) {
+      return (
+        <Card style={styles.safetyCard}>
+          <View style={[styles.safetyContent, { backgroundColor: theme.warning + '10' }]}>
+            <View style={styles.safetyIconContainer}>
+              <Ionicons name="alert-circle-outline" size={24} color={theme.warning} />
+            </View>
+            <View style={styles.safetyText}>
+              <Text style={[styles.safetyTitle, { color: theme.warning }]}>
+                Threat check could not complete
+              </Text>
+              <Text style={[styles.safetyDescription, { color: theme.text.secondary }]}>
+                {data.safety.error} The link was not verified, so open it only if you trust it.
+              </Text>
+            </View>
+          </View>
+        </Card>
+      );
+    }
+
+    if (data.safety.checked && !data.safety.safe) {
+      return (
+        <Card style={styles.safetyCard}>
+          <View style={[styles.safetyContent, { backgroundColor: theme.danger + '10' }]}>
+            <View style={styles.safetyIconContainer}>
+              <Ionicons name="warning-outline" size={24} color={theme.danger} />
+            </View>
+            <View style={styles.safetyText}>
+              <Text style={[styles.safetyTitle, { color: theme.danger }]}>
+                Malicious URL Detected
+              </Text>
+              <Text style={[styles.safetyDescription, { color: theme.text.secondary }]}>
+                This link was flagged by {getSafetySourceLabel(data.safety.source)} and opening it may compromise your security.
+              </Text>
+              {getThreatTypeLabel(data.safety.threatType) ? (
+                <Text style={[styles.safetyMeta, { color: theme.text.secondary }]}>
+                  Signal: {getThreatTypeLabel(data.safety.threatType)}
+                </Text>
+              ) : null}
+            </View>
+          </View>
+        </Card>
+      );
+    }
+
+    if (data.safety.checked && data.safety.safe) {
+      return (
+        <Card style={styles.safetyCard}>
+          <View style={[styles.safetyContent, { backgroundColor: theme.success + '10' }]}>
+            <View style={styles.safetyIconContainer}>
+              <Ionicons name="shield-checkmark-outline" size={24} color={theme.success} />
+            </View>
+            <View style={styles.safetyText}>
+              <Text style={[styles.safetyTitle, { color: theme.success }]}>
+                No threats detected
+              </Text>
+              <Text style={[styles.safetyDescription, { color: theme.text.secondary }]}>
+                {getSafetySourceLabel(data.safety.source)} finished and did not find a known threat for this link.
+              </Text>
+            </View>
+          </View>
+        </Card>
+      );
+    }
+
+    return null;
   };
 
   const renderContent = () => {
@@ -363,17 +500,27 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
               {getTypeLabel(data.type)}
             </Text>
             <Text style={[styles.typeSublabel, { color: theme.text.secondary }]}>
-              Successfully scanned
+              {getTypeSublabel()}
             </Text>
           </View>
         </View>
         
-        {data.safety?.checked && (
+        {data.safety?.inProgress ? (
+          <Badge
+            title="Checking…"
+            variant="warning"
+          />
+        ) : data.safety?.error ? (
+          <Badge
+            title="Check Failed"
+            variant="warning"
+          />
+        ) : data.safety?.checked ? (
           <Badge
             title={data.safety.safe ? 'Safe ✓' : '⚠ Threat Detected'}
             variant={data.safety.safe ? 'success' : 'danger'}
           />
-        )}
+        ) : null}
       </View>
 
       {/* Content */}
@@ -382,27 +529,18 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
           {renderContent()}
         </Card>
 
-        {/* Safety warning for URLs */}
-        {data.type === 'url' && data.safety?.checked && !data.safety.safe && (
-          <Card style={styles.safetyCard}>
-            <View style={[styles.safetyContent, { backgroundColor: theme.danger + '10' }]}>
-              <Ionicons name="warning-outline" size={24} color={theme.danger} />
-              <View style={styles.safetyText}>
-                <Text style={[styles.safetyTitle, { color: theme.danger }]}>
-                  ⚠ Malicious URL Detected
-                </Text>
-                <Text style={[styles.safetyDescription, { color: theme.text.secondary }]}>
-                  This link has been flagged as potentially harmful. Opening it may compromise your security.
-                </Text>
-              </View>
-            </View>
-          </Card>
-        )}
+        {renderSafetyStatus()}
 
         {/* Action buttons */}
         <View style={styles.actionContainer}>
           {renderActionButtons().map((button, index) => (
-            <View key={index} style={styles.actionButton}>
+            <View
+              key={index}
+              style={[
+                styles.actionButton,
+                data.type === 'url' && index === 0 && styles.primaryUrlActionButton,
+              ]}
+            >
               {button}
             </View>
           ))}
@@ -503,6 +641,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
   },
+  safetyIconContainer: {
+    width: 24,
+    alignItems: 'center',
+    paddingTop: 2,
+  },
   safetyText: {
     flex: 1,
   },
@@ -517,6 +660,12 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.sm,
     lineHeight: 20,
   },
+  safetyMeta: {
+    fontFamily: typography.fontFamily,
+    fontSize: typography.sizes.xs,
+    lineHeight: 18,
+    marginTop: spacing.xs,
+  },
   actionContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -527,6 +676,10 @@ const styles = StyleSheet.create({
   actionButton: {
     flex: 1,
     minWidth: 140,
+  },
+  primaryUrlActionButton: {
+    flexBasis: '100%',
+    width: '100%',
   },
   closeButton: {
     alignItems: 'center',

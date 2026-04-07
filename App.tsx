@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { View, StyleSheet, StatusBar, Linking } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { ScannerScreen } from './components/scanner/CameraView';
@@ -7,22 +7,43 @@ import { TabBar } from './components/ui/TabBar';
 import { HistoryScreen } from './components/ui/HistoryScreen';
 import { SettingsScreen } from './components/ui/SettingsScreen';
 import { QrGeneratorContent } from './components/generator/QrGeneratorContent';
-import { QRCodeData } from './constants/types';
+import { QRCodeData, ScanSafetyState } from './constants/types';
+import { checkUrlSafety, getThreatCheckSourceHint } from './services/threatCheck';
+import { useHistoryStore } from './store/useHistoryStore';
 import { useSettingsStore } from './store/useSettingsStore';
 import { useAppTheme } from './hooks/useAppTheme';
 
+const MIN_THREAT_CHECK_INDICATOR_MS = 600;
+const MAX_THREAT_CHECK_WAIT_MS = 3500;
+const THREAT_CHECK_TIMEOUT_MESSAGE = 'Could not finish the threat check in time.';
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function resolveThreatCheck(url: string) {
+  const result = await Promise.race([
+    checkUrlSafety(url).then((safety) => ({ kind: 'resolved' as const, safety })),
+    sleep(MAX_THREAT_CHECK_WAIT_MS).then(() => ({ kind: 'timeout' as const })),
+  ]);
+
+  return result;
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('scan');
-  const [scanResult, setScanResult] = useState<QRCodeData | null>(null);
+  const [scanResult, setScanResult] = useState<any>(null);
   const [showResult, setShowResult] = useState(false);
   const [scannerKey, setScannerKey] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
   const [isTabBarHidden, setIsTabBarHidden] = useState(false);
+  const threatCheckRunRef = useRef(0);
 
-  const { vibrateOnScan, autoOpenUrls } = useSettingsStore();
+  const updateItem = useHistoryStore((state) => state.updateItem);
+  const { vibrateOnScan, autoOpenUrls, urlThreatScanning } = useSettingsStore();
   const { theme } = useAppTheme();
 
-  const handleScanResult = (data: QRCodeData) => {
+  const handleScanResult = async (data: QRCodeData & { safety?: ScanSafetyState; historyItemId?: string }) => {
     // Haptic feedback - use MEDIUM for successful scan
     if (vibrateOnScan) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -35,11 +56,86 @@ export default function App() {
       }, 500); // Small delay to let user see the result first
     }
 
-    setScanResult(data);
+    const requiresThreatCheck =
+      data.type === 'url' &&
+      urlThreatScanning &&
+      (!data.safety || !data.safety.checked);
+
+    if (!requiresThreatCheck) {
+      setScanResult(data);
+      setShowResult(true);
+      return;
+    }
+
+    const requestId = ++threatCheckRunRef.current;
+    const pendingSafety: ScanSafetyState = {
+      checked: false,
+      safe: null,
+      inProgress: true,
+      source: data.safety?.source || getThreatCheckSourceHint(),
+    };
+    const pendingResult = { ...data, safety: pendingSafety };
+
+    setScanResult(pendingResult);
     setShowResult(true);
+
+    try {
+      const [result] = await Promise.all([
+        resolveThreatCheck(data.data.url),
+        sleep(MIN_THREAT_CHECK_INDICATOR_MS),
+      ]);
+
+      if (threatCheckRunRef.current !== requestId) {
+        return;
+      }
+
+      if (result.kind === 'timeout') {
+        const timeoutSafety: ScanSafetyState = {
+          ...pendingSafety,
+          inProgress: false,
+          error: THREAT_CHECK_TIMEOUT_MESSAGE,
+        };
+
+        setScanResult({ ...pendingResult, safety: timeoutSafety });
+
+        if (data.historyItemId) {
+          updateItem(data.historyItemId, { safety: timeoutSafety });
+        }
+        return;
+      }
+
+      const resolvedSafety: ScanSafetyState = {
+        checked: true,
+        safe: result.safety.safe,
+        threatType: result.safety.threatType,
+        confidence: result.safety.confidence,
+        source: result.safety.source,
+        checkedAt: Date.now(),
+        inProgress: false,
+      };
+
+      setScanResult({ ...pendingResult, safety: resolvedSafety });
+
+      if (data.historyItemId) {
+        updateItem(data.historyItemId, { safety: resolvedSafety });
+      }
+    } catch (error) {
+      const failedSafety: ScanSafetyState = {
+        ...pendingSafety,
+        inProgress: false,
+        error: 'Threat check failed.',
+      };
+
+      setScanResult({ ...pendingResult, safety: failedSafety });
+
+      if (data.historyItemId) {
+        updateItem(data.historyItemId, { safety: failedSafety });
+      }
+    }
   };
 
   const handleCloseResult = () => {
+    threatCheckRunRef.current += 1;
     setShowResult(false);
     setScanResult(null);
     setScannerKey(k => k + 1);

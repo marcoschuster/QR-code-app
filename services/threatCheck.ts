@@ -1,6 +1,31 @@
-import { SafetyResult } from '../constants/types';
+import { SafetyResult, ThreatCheckSource } from '../constants/types';
 
-const GOOGLE_SAFE_BROWSING_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_SAFE_BROWSING_API_KEY;
+const RAW_GOOGLE_SAFE_BROWSING_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_SAFE_BROWSING_API_KEY?.trim();
+const GOOGLE_SAFE_BROWSING_API_KEY = normalizeSafeBrowsingApiKey(RAW_GOOGLE_SAFE_BROWSING_API_KEY);
+const SAFE_BROWSING_TIMEOUT_MS = 2500;
+
+function normalizeSafeBrowsingApiKey(value?: string) {
+  if (!value) {
+    return undefined;
+  }
+
+  try {
+    const parsed = new URL(value);
+    const key = parsed.searchParams.get('key')?.trim();
+
+    if (key) {
+      return key;
+    }
+  } catch {
+    // The expected value is a raw API key, not a URL.
+  }
+
+  return value;
+}
+
+export function getThreatCheckSourceHint(): ThreatCheckSource {
+  return GOOGLE_SAFE_BROWSING_API_KEY ? 'google-safe-browsing' : 'heuristic';
+}
 
 export async function checkUrlSafety(url: string): Promise<SafetyResult> {
   if (!GOOGLE_SAFE_BROWSING_API_KEY) {
@@ -9,7 +34,14 @@ export async function checkUrlSafety(url: string): Promise<SafetyResult> {
   }
 
   try {
-    const response = await fetch('https://safebrowsing.googleapis.com/v4/threatMatches:find', {
+    const endpoint = new URL('https://safebrowsing.googleapis.com/v4/threatMatches:find');
+    endpoint.searchParams.set('key', GOOGLE_SAFE_BROWSING_API_KEY);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, SAFE_BROWSING_TIMEOUT_MS);
+
+    const response = await fetch(endpoint.toString(), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -31,7 +63,15 @@ export async function checkUrlSafety(url: string): Promise<SafetyResult> {
           threatEntries: [{ url }],
         },
       }),
+      signal: controller.signal,
+    }).finally(() => {
+      clearTimeout(timeoutId);
     });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(`Google Safe Browsing returned ${response.status}: ${getSafeBrowsingErrorMessage(errorBody)}`);
+    }
 
     const data = await response.json();
     
@@ -41,16 +81,27 @@ export async function checkUrlSafety(url: string): Promise<SafetyResult> {
         safe: false,
         threatType: threat.threatType,
         confidence: 'high',
+        source: 'google-safe-browsing',
       };
     }
 
     return {
       safe: true,
       confidence: 'high',
+      source: 'google-safe-browsing',
     };
   } catch (error) {
     console.warn('Google Safe Browsing API failed, falling back to heuristic check:', error);
     return heuristicSafetyCheck(url);
+  }
+}
+
+function getSafeBrowsingErrorMessage(errorBody: string) {
+  try {
+    const parsed = JSON.parse(errorBody);
+    return parsed?.error?.message || errorBody || 'unknown error';
+  } catch {
+    return errorBody || 'unknown error';
   }
 }
 
@@ -100,18 +151,21 @@ function heuristicSafetyCheck(url: string): SafetyResult {
         safe: false,
         threatType: 'SUSPICIOUS_PATTERN',
         confidence: 'medium',
+        source: 'heuristic',
       };
     } else if (riskScore >= 2) {
       return {
         safe: false,
         threatType: 'POTENTIALLY_SUSPICIOUS',
         confidence: 'low',
+        source: 'heuristic',
       };
     }
 
     return {
       safe: true,
       confidence: 'low',
+      source: 'heuristic',
     };
   } catch (error) {
     // If URL parsing fails, assume it's suspicious
@@ -119,6 +173,7 @@ function heuristicSafetyCheck(url: string): SafetyResult {
       safe: false,
       threatType: 'INVALID_URL',
       confidence: 'medium',
+      source: 'heuristic',
     };
   }
 }
