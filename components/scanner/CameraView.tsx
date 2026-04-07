@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Alert, Linking, StatusBar, Platform } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,6 +20,8 @@ interface ScannerScreenProps {
   onReset?: () => void;
 }
 
+let lastKnownCameraPermissionGranted = false;
+
 export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScreenProps) {
   const router = useRouter();
   const [permission, requestPermission] = useCameraPermissions();
@@ -34,6 +36,12 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
   const { addItem } = useHistoryStore();
   const { saveToHistory, beepOnScan, vibrateOnScan, urlThreatScanning } = useSettingsStore();
   const { playScanSound } = useScanAudio();
+
+  useEffect(() => {
+    if (permission?.granted) {
+      lastKnownCameraPermissionGranted = true;
+    }
+  }, [permission?.granted]);
 
   // ── Barcode scan handler ───────────────────────────────────────────────────
   const handleBarcodeScanned = async (result: { data: string; bounds?: {origin: {x: number; y: number}; size: {width: number; height: number}} }) => {
@@ -135,7 +143,7 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
   };
 
   // ── Permission loading ─────────────────────────────────────────────────────
-  if (permission === null) {
+  if (permission === null && !lastKnownCameraPermissionGranted) {
     return (
       <View style={s.container}>
         <StatusBar hidden />
@@ -151,7 +159,7 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
   }
 
   // ── Permission denied ──────────────────────────────────────────────────────
-  if (!permission.granted) {
+  if (permission && !permission.granted) {
     return (
       <View style={s.container}>
         <StatusBar hidden />
