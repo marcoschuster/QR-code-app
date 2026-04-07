@@ -5,7 +5,6 @@ import {
   FlatList,
   StyleSheet,
   Pressable,
-  Alert,
   Image,
   Linking,
   Modal,
@@ -48,6 +47,21 @@ const truncateText = (text: string, maxLength: number) => {
   }
 
   return text.substring(0, maxLength - 3) + '...';
+};
+
+const escapeCsvValue = (value: string) => `"${value.replace(/"/g, '""')}"`;
+
+const getHistoryItemCsv = (item: HistoryItem) => {
+  const columns = ['Title', 'Type', 'Content', 'Scanned At', 'Scan Count'];
+  const values = [
+    getHistoryItemName(item),
+    item.type.toUpperCase(),
+    item.rawValue,
+    new Date(item.timestamp).toISOString(),
+    String(item.scanCount || 1),
+  ];
+
+  return `${columns.map(escapeCsvValue).join(',')}\n${values.map(escapeCsvValue).join(',')}`;
 };
 
 const toTitleCase = (value: string) =>
@@ -158,13 +172,19 @@ interface HistoryScreenProps {
   onTabBarVisibilityChange?: (hidden: boolean) => void;
 }
 
+type HistorySortMode = 'date' | 'name';
+
 export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) {
   const { clearAll, removeItem, removeScanId, getGroupedItems, updateItem } = useHistoryStore();
   const { confirmDeleteHistory } = useSettingsStore();
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [selectedItem, setSelectedItem] = useState<HistoryItem | null>(null);
+  const [menuItem, setMenuItem] = useState<HistoryItem | null>(null);
+  const [renamingItem, setRenamingItem] = useState<HistoryItem | null>(null);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editingNameValue, setEditingNameValue] = useState('');
+  const [renameValue, setRenameValue] = useState('');
+  const [sortMode, setSortMode] = useState<HistorySortMode>('date');
   const [confirmDialog, setConfirmDialog] = useState<{
     visible: boolean;
     title: string;
@@ -192,6 +212,20 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
   const lastScrollY = useRef(0);
   const tabBarHidden = useRef(false);
   const groupedItems = getGroupedItems();
+  const sortedGroupedItems = [...groupedItems].sort((a, b) => {
+    if (!!a.isFavorite !== !!b.isFavorite) {
+      return a.isFavorite ? -1 : 1;
+    }
+
+    if (sortMode === 'name') {
+      return getHistoryItemName(a).localeCompare(getHistoryItemName(b), undefined, {
+        sensitivity: 'base',
+        numeric: true,
+      });
+    }
+
+    return b.timestamp - a.timestamp;
+  });
   const primaryAction = selectedItem ? getHistoryPrimaryAction(selectedItem) : null;
 
   useEffect(() => {
@@ -208,6 +242,34 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
       setSelectedItem({ ...selectedItem, name: trimmedName || undefined });
       setIsEditingName(false);
     }
+  };
+
+  const openRenameDialog = (item: HistoryItem) => {
+    setMenuItem(null);
+    setRenamingItem(item);
+    setRenameValue(item.name || getHistoryItemName(item));
+  };
+
+  const closeRenameDialog = () => {
+    setRenamingItem(null);
+    setRenameValue('');
+  };
+
+  const handleSaveRename = () => {
+    if (!renamingItem) {
+      return;
+    }
+
+    const trimmedName = renameValue.trim();
+    const updates = { name: trimmedName || undefined };
+
+    updateItem(renamingItem.id, updates);
+
+    if (selectedItem?.id === renamingItem.id) {
+      setSelectedItem({ ...selectedItem, ...updates });
+    }
+
+    closeRenameDialog();
   };
 
   const setTabBarHidden = useCallback((hidden: boolean) => {
@@ -257,6 +319,38 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
     } else {
       removeItem(id);
     }
+  };
+
+  const handleToggleFavorite = (item: HistoryItem) => {
+    const updates = { isFavorite: !item.isFavorite };
+
+    updateItem(item.id, updates);
+
+    if (selectedItem?.id === item.id) {
+      setSelectedItem({ ...selectedItem, ...updates });
+    }
+
+    setMenuItem(null);
+  };
+
+  const handleCopyItemAsText = async (item: HistoryItem) => {
+    await Clipboard.setStringAsync(item.rawValue);
+    setMenuItem(null);
+    setSuccessDialog({
+      visible: true,
+      title: 'Copied',
+      message: 'The history item content has been copied as text.',
+    });
+  };
+
+  const handleCopyItemAsCsv = async (item: HistoryItem) => {
+    await Clipboard.setStringAsync(getHistoryItemCsv(item));
+    setMenuItem(null);
+    setSuccessDialog({
+      visible: true,
+      title: 'CSV copied',
+      message: 'The history item has been copied as CSV.',
+    });
   };
 
   const handleRemoveScan = (itemId: string, scanId: string) => {
@@ -384,14 +478,60 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
   return (
     <View style={[s.container, { backgroundColor: theme.background }]}>
       <View style={[s.header, { borderBottomColor: theme.border }]}>
-        <Text style={[s.headerTitle, { color: theme.text.primary }]}>History</Text>
-        <Pressable onPress={handleClearAll}>
-          <Text style={[s.clearBtn, { color: theme.danger }]}>Clear All</Text>
-        </Pressable>
+        <View style={s.headerTopRow}>
+          <Text style={[s.headerTitle, { color: theme.text.primary }]}>History</Text>
+          <Pressable onPress={handleClearAll}>
+            <Text style={[s.clearBtn, { color: theme.danger }]}>Clear All</Text>
+          </Pressable>
+        </View>
+        <View style={[s.sortControl, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <Pressable
+            style={[
+              s.sortOption,
+              sortMode === 'date' && { backgroundColor: theme.accent },
+            ]}
+            onPress={() => setSortMode('date')}
+          >
+            <Ionicons
+              name="time-outline"
+              size={14}
+              color={sortMode === 'date' ? '#FFFFFF' : theme.text.secondary}
+            />
+            <Text
+              style={[
+                s.sortOptionText,
+                { color: sortMode === 'date' ? '#FFFFFF' : theme.text.secondary },
+              ]}
+            >
+              Date
+            </Text>
+          </Pressable>
+          <Pressable
+            style={[
+              s.sortOption,
+              sortMode === 'name' && { backgroundColor: theme.accent },
+            ]}
+            onPress={() => setSortMode('name')}
+          >
+            <Ionicons
+              name="text-outline"
+              size={14}
+              color={sortMode === 'name' ? '#FFFFFF' : theme.text.secondary}
+            />
+            <Text
+              style={[
+                s.sortOptionText,
+                { color: sortMode === 'name' ? '#FFFFFF' : theme.text.secondary },
+              ]}
+            >
+              Name
+            </Text>
+          </Pressable>
+        </View>
       </View>
 
       <FlatList
-        data={groupedItems}
+        data={sortedGroupedItems}
         keyExtractor={(item) => item.id}
         contentContainerStyle={s.listContent}
         onScroll={handleScroll}
@@ -400,7 +540,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
             item={item}
             isExpanded={expandedItems.has(item.id)}
             onToggleExpanded={() => toggleExpanded(item.id)}
-            onRemoveItem={handleRemoveItem}
+            onOpenMenu={() => setMenuItem(item)}
             onRemoveScan={handleRemoveScan}
             onPress={() => setSelectedItem(item)}
             theme={theme}
@@ -426,6 +566,83 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
         message={successDialog.message}
         onClose={() => setSuccessDialog(prev => ({ ...prev, visible: false }))}
       />
+
+      {menuItem ? (
+        <HistoryItemMenu
+          item={menuItem}
+          theme={theme}
+          onClose={() => setMenuItem(null)}
+          onToggleFavorite={() => handleToggleFavorite(menuItem)}
+          onRename={() => openRenameDialog(menuItem)}
+          onCopyText={() => handleCopyItemAsText(menuItem)}
+          onCopyCsv={() => handleCopyItemAsCsv(menuItem)}
+          onDelete={() => {
+            const itemId = menuItem.id;
+            setMenuItem(null);
+            handleRemoveItem(itemId);
+          }}
+        />
+      ) : null}
+
+      {renamingItem ? (
+        <Modal
+          transparent
+          visible
+          animationType="fade"
+          onRequestClose={closeRenameDialog}
+        >
+          <View style={s.actionMenuOverlay}>
+            <Pressable style={s.actionMenuBackdrop} onPress={closeRenameDialog} />
+            <View
+              style={[
+                s.renameDialog,
+                {
+                  backgroundColor: theme.surface,
+                  borderColor: theme.border,
+                  shadowColor: theme.shadow,
+                },
+              ]}
+            >
+              <Text style={[s.renameTitle, { color: theme.text.primary }]}>Change title</Text>
+              <TextInput
+                style={[
+                  s.renameInput,
+                  {
+                    color: theme.text.primary,
+                    borderColor: theme.border,
+                    backgroundColor: theme.background,
+                  },
+                ]}
+                value={renameValue}
+                onChangeText={setRenameValue}
+                autoFocus
+                onSubmitEditing={handleSaveRename}
+                returnKeyType="done"
+                placeholder="Enter a title..."
+                placeholderTextColor={theme.text.tertiary}
+              />
+              <View style={s.renameActions}>
+                <View style={s.renameActionButton}>
+                  <Button
+                    title="Cancel"
+                    onPress={closeRenameDialog}
+                    variant="secondary"
+                    size="medium"
+                  />
+                </View>
+                <View style={s.renameActionButton}>
+                  <Button
+                    title="Save"
+                    onPress={handleSaveRename}
+                    variant="primary"
+                    size="medium"
+                  />
+                </View>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      ) : null}
 
       {selectedItem && (
         <Modal
@@ -566,7 +783,7 @@ function HistoryItemComponent({
   item,
   isExpanded,
   onToggleExpanded,
-  onRemoveItem,
+  onOpenMenu,
   onRemoveScan,
   onPress,
   theme,
@@ -575,7 +792,7 @@ function HistoryItemComponent({
   item: HistoryItem;
   isExpanded: boolean;
   onToggleExpanded: () => void;
-  onRemoveItem: (id: string) => void;
+  onOpenMenu: () => void;
   onRemoveScan: (itemId: string, scanId: string) => void;
   onPress: () => void;
   theme: ThemeColors;
@@ -584,6 +801,7 @@ function HistoryItemComponent({
   const [imgError, setImgError] = useState(false);
   const domain = getDomainFromUrl(item.rawValue);
   const isGrouped = (item.scanCount || 0) > 1;
+  const displayUrl = item.type === 'url' ? item.parsedData?.url || item.rawValue : null;
 
   return (
     <View
@@ -613,14 +831,26 @@ function HistoryItemComponent({
         <View style={s.textContainer}>
           <View style={s.headerRow}>
             <Text style={[s.dataText, { color: theme.text.primary }]}>
-              {item.name || truncateText(item.rawValue, 25)}
+              {truncateText(getHistoryItemName(item), 32)}
             </Text>
+            {item.isFavorite ? (
+              <Ionicons name="star" size={14} color={theme.warning} style={s.favoriteIcon} />
+            ) : null}
             {isGrouped ? (
               <View style={[s.scanCount, { backgroundColor: theme.accent }]}>
                 <Text style={s.scanCountText}>{item.scanCount}</Text>
               </View>
             ) : null}
           </View>
+          {displayUrl ? (
+            <Text
+              style={[s.urlText, { color: theme.text.tertiary }]}
+              numberOfLines={1}
+              ellipsizeMode="middle"
+            >
+              {displayUrl}
+            </Text>
+          ) : null}
           <Text style={[s.dateText, { color: theme.text.secondary }]}>
             {new Date(item.timestamp).toLocaleDateString()} at {formatTime(item.hours, item.minutes)}
           </Text>
@@ -636,8 +866,8 @@ function HistoryItemComponent({
               />
             </Pressable>
           ) : null}
-          <Pressable style={s.deleteBtn} onPress={() => onRemoveItem(item.id)}>
-            <Ionicons name="trash-outline" size={16} color={theme.danger} />
+          <Pressable style={s.menuBtn} onPress={onOpenMenu}>
+            <Ionicons name="ellipsis-horizontal" size={18} color={theme.text.secondary} />
           </Pressable>
         </View>
       </Pressable>
@@ -669,18 +899,115 @@ function HistoryItemComponent({
   );
 }
 
+function HistoryItemMenu({
+  item,
+  theme,
+  onClose,
+  onToggleFavorite,
+  onRename,
+  onCopyText,
+  onCopyCsv,
+  onDelete,
+}: {
+  item: HistoryItem;
+  theme: ThemeColors;
+  onClose: () => void;
+  onToggleFavorite: () => void;
+  onRename: () => void;
+  onCopyText: () => void;
+  onCopyCsv: () => void;
+  onDelete: () => void;
+}) {
+  const menuOptions = [
+    {
+      label: item.isFavorite ? 'Remove favorite' : 'Add to favorites',
+      icon: item.isFavorite ? 'star' : 'star-outline',
+      color: theme.warning,
+      onPress: onToggleFavorite,
+    },
+    {
+      label: 'Change title',
+      icon: 'create-outline',
+      color: theme.text.primary,
+      onPress: onRename,
+    },
+    {
+      label: 'Copy as text',
+      icon: 'copy-outline',
+      color: theme.text.primary,
+      onPress: onCopyText,
+    },
+    {
+      label: 'Copy as CSV',
+      icon: 'document-text-outline',
+      color: theme.text.primary,
+      onPress: onCopyCsv,
+    },
+    {
+      label: 'Delete history card',
+      icon: 'trash-outline',
+      color: theme.danger,
+      onPress: onDelete,
+    },
+  ] as const;
+
+  return (
+    <Modal
+      transparent
+      visible
+      animationType="fade"
+      onRequestClose={onClose}
+    >
+      <View style={s.actionMenuOverlay}>
+        <Pressable style={s.actionMenuBackdrop} onPress={onClose} />
+        <View
+          style={[
+            s.actionMenu,
+            {
+              backgroundColor: theme.surface,
+              borderColor: theme.border,
+              shadowColor: theme.shadow,
+            },
+          ]}
+        >
+          <Text style={[s.actionMenuTitle, { color: theme.text.primary }]}>
+            {truncateText(getHistoryItemName(item), 48)}
+          </Text>
+          {menuOptions.map((option) => (
+            <Pressable
+              key={option.label}
+              style={({ pressed }) => [
+                s.actionMenuOption,
+                pressed && { backgroundColor: theme.background },
+              ]}
+              onPress={option.onPress}
+            >
+              <Ionicons name={option.icon} size={20} color={option.color} />
+              <Text style={[s.actionMenuOptionText, { color: option.color }]}>
+                {option.label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 const s = StyleSheet.create({
   container: {
     flex: 1,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 16,
     borderBottomWidth: 1,
+  },
+  headerTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   headerTitle: {
     fontSize: 28,
@@ -690,6 +1017,26 @@ const s = StyleSheet.create({
   clearBtn: {
     fontSize: 14,
     fontWeight: '500',
+  },
+  sortControl: {
+    flexDirection: 'row',
+    alignSelf: 'flex-end',
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 3,
+    marginTop: 14,
+  },
+  sortOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: 15,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  sortOptionText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
   listContent: {
     paddingTop: 16,
@@ -763,6 +1110,9 @@ const s = StyleSheet.create({
     alignItems: 'center',
     marginLeft: 8,
   },
+  favoriteIcon: {
+    marginLeft: 8,
+  },
   scanCountText: {
     fontSize: 11,
     fontWeight: '600',
@@ -771,6 +1121,11 @@ const s = StyleSheet.create({
   dateText: {
     fontSize: 12,
     marginTop: 2,
+  },
+  urlText: {
+    fontSize: 11,
+    lineHeight: 13,
+    marginTop: 1,
   },
   expandedContent: {
     paddingHorizontal: 16,
@@ -812,9 +1167,78 @@ const s = StyleSheet.create({
     padding: 6,
     borderRadius: 4,
   },
-  deleteBtn: {
+  menuBtn: {
     padding: 6,
     borderRadius: 4,
+  },
+  actionMenuOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  actionMenuBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  actionMenu: {
+    width: '100%',
+    maxWidth: 360,
+    borderRadius: 18,
+    borderWidth: 1,
+    paddingVertical: 8,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 12,
+  },
+  actionMenuTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+  },
+  actionMenuOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+  },
+  actionMenuOptionText: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  renameDialog: {
+    width: '100%',
+    maxWidth: 380,
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 20,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 12,
+  },
+  renameTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 14,
+  },
+  renameInput: {
+    borderWidth: 1,
+    borderRadius: 12,
+    fontSize: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  renameActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 18,
+  },
+  renameActionButton: {
+    flex: 1,
   },
   modalContainer: {
     flex: 1,

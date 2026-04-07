@@ -15,6 +15,7 @@ export interface ScanSafetyState {
 export interface HistoryItem {
   id: string;
   name?: string;
+  isFavorite?: boolean;
   kind: 'scanned' | 'generated';
   type: ScanType;
   rawValue: string;

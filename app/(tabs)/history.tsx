@@ -7,7 +7,7 @@ import { useAppTheme } from '../../hooks/useAppTheme';
 
 export default function HistoryTab() {
   const router = useRouter();
-  const { theme } = useAppTheme();
+  const { theme, isDark } = useAppTheme();
 
   const handleTabChange = (tab: string) => {
     if (tab === 'scan') {
@@ -22,7 +22,7 @@ export default function HistoryTab() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <StatusBar barStyle={theme.isDark ? 'light-content' : 'dark-content'} />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
       <HistoryScreen />
       <TabBar activeTab="history" onTabChange={handleTabChange} />
     </View>

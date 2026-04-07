@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable, StatusBar, Linking } from 'react-native';
 import { useColorScheme } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import * as Audio from 'expo-av';
+import { Audio } from 'expo-av';
 import { ScannerScreen } from './components/scanner/CameraView';
 import { ScanResultSheet } from './components/scanner/ScanResultSheet';
 import { TabBar } from './components/ui/TabBar';
