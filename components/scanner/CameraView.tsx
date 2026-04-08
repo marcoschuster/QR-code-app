@@ -1,5 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Alert, Linking, StatusBar, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  Alert,
+  Linking,
+  StatusBar,
+  Platform,
+  Animated,
+  type LayoutChangeEvent,
+} from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -21,6 +32,37 @@ interface ScannerScreenProps {
 }
 
 let lastKnownCameraPermissionGranted = false;
+const ZOOM_CONTROL_POINTS: number[] = [0, 0.08, 0.16, 0.26, 0.38, 0.49, 0.6];
+const MAX_ZOOM = ZOOM_CONTROL_POINTS[ZOOM_CONTROL_POINTS.length - 1] ?? 0.6;
+
+const clampValue = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
+const getNearestPointIndex = (points: number[], value: number) =>
+  points.reduce((bestIndex, point, index) => {
+    const bestDistance = Math.abs((points[bestIndex] ?? 0) - value);
+    const nextDistance = Math.abs(point - value);
+
+    return nextDistance < bestDistance ? index : bestIndex;
+  }, 0);
+
+const getNextPointIndex = (points: number[], value: number, direction: -1 | 1) => {
+  const nearestIndex = getNearestPointIndex(points, value);
+  const nearestValue = points[nearestIndex] ?? 0;
+
+  if (direction < 0) {
+    if (value < nearestValue - 0.001) {
+      return nearestIndex;
+    }
+
+    return Math.max(0, nearestIndex - 1);
+  }
+
+  if (value > nearestValue + 0.001) {
+    return nearestIndex;
+  }
+
+  return Math.min(points.length - 1, nearestIndex + 1);
+};
 
 export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScreenProps) {
   const router = useRouter();
@@ -32,6 +74,7 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showPhotoScanner, setShowPhotoScanner] = useState(false);
   const [showLimitReached, setShowLimitReached] = useState(false);
+  const [zoom, setZoom] = useState(0);
   const photoScanSucceededRef = useRef(false);
   const { addItem } = useHistoryStore();
   const { saveToHistory, beepOnScan, vibrateOnScan, urlThreatScanning } = useSettingsStore();
@@ -194,6 +237,7 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
       <CameraView
         style={StyleSheet.absoluteFill}
         facing="back"
+        zoom={zoom}
         enableTorch={torchOn}
         onBarcodeScanned={scanned || showPhotoScanner ? undefined : handleBarcodeScanned}
         barcodeScannerSettings={{
@@ -235,6 +279,14 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
 
       {/* Bottom — button sits above the tab bar */}
       <View style={s.bottom}>
+        {!scanned && !showPhotoScanner ? (
+          <ZoomControl
+            points={ZOOM_CONTROL_POINTS}
+            value={zoom}
+            onValueChange={setZoom}
+          />
+        ) : null}
+
         <Text style={s.hint}>Point at any code to scan</Text>
 
         <Pressable style={s.photosBtn} onPress={handleScanFromPhotos}>
@@ -289,6 +341,248 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
   );
 }
 
+function ZoomControl({
+  points,
+  value,
+  onValueChange,
+}: {
+  points: number[];
+  value: number;
+  onValueChange: (value: number) => void;
+}) {
+  const animatedZoom = useRef(new Animated.Value(value)).current;
+  const fineTuneAnim = useRef(new Animated.Value(0)).current;
+  const zoomRef = useRef(value);
+  const dragStartZoomRef = useRef(value);
+  const fineTuneActiveRef = useRef(false);
+  const longPressTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const touchStartXRef = useRef(0);
+  const [trackWidth, setTrackWidth] = useState(1);
+  const [fineTuneActive, setFineTuneActive] = useState(false);
+  const minPoint = points[0] ?? 0;
+  const maxPoint = points[points.length - 1] ?? MAX_ZOOM;
+  const segmentWidth = trackWidth / Math.max(points.length, 1);
+  const thumbTravelWidth = Math.max(1, trackWidth - segmentWidth);
+  const pointCenters = points.map((_, index) => segmentWidth / 2 + index * segmentWidth);
+
+  useEffect(() => {
+    const previousValue = zoomRef.current;
+    zoomRef.current = value;
+
+    if (!fineTuneActive && Math.abs(value - previousValue) > 0.001) {
+      animatedZoom.setValue(value);
+    }
+  }, [animatedZoom, fineTuneActive, value]);
+
+  useEffect(() => {
+    return () => {
+      if (longPressTimeoutRef.current) {
+        clearTimeout(longPressTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const setFineTuneVisible = (visible: boolean) => {
+    fineTuneActiveRef.current = visible;
+    setFineTuneActive(visible);
+    Animated.spring(fineTuneAnim, {
+      toValue: visible ? 1 : 0,
+      useNativeDriver: false,
+      friction: 7,
+      tension: 90,
+    }).start();
+  };
+
+  const updateZoomImmediate = (nextZoom: number) => {
+    const clampedZoom = clampValue(nextZoom, minPoint, maxPoint);
+    zoomRef.current = clampedZoom;
+    animatedZoom.setValue(clampedZoom);
+    onValueChange(clampedZoom);
+  };
+
+  const animateToZoom = (nextZoom: number) => {
+    const clampedZoom = clampValue(nextZoom, minPoint, maxPoint);
+
+    animatedZoom.stopAnimation();
+    zoomRef.current = clampedZoom;
+    Animated.spring(animatedZoom, {
+      toValue: clampedZoom,
+      useNativeDriver: false,
+      friction: 8,
+      tension: 110,
+    }).start();
+    onValueChange(clampedZoom);
+  };
+
+  const handleStepZoom = (direction: -1 | 1) => {
+    const nextIndex = getNextPointIndex(points, zoomRef.current, direction);
+    const nextValue = points[nextIndex] ?? minPoint;
+
+    void Haptics.selectionAsync().catch(() => {});
+    animateToZoom(nextValue);
+  };
+
+  const handleRailLayout = (event: LayoutChangeEvent) => {
+    const nextWidth = Math.max(1, event.nativeEvent.layout.width);
+    setTrackWidth(nextWidth);
+  };
+
+  const handlePointPress = (point: number) => {
+    void Haptics.selectionAsync().catch(() => {});
+    animateToZoom(point);
+  };
+
+  const handleFineTuneStart = () => {
+    dragStartZoomRef.current = zoomRef.current;
+    setFineTuneVisible(true);
+    void Haptics.selectionAsync().catch(() => {});
+  };
+
+  const stopFineTune = () => {
+    setFineTuneVisible(false);
+  };
+
+  const clearLongPressTimeout = () => {
+    if (longPressTimeoutRef.current) {
+      clearTimeout(longPressTimeoutRef.current);
+      longPressTimeoutRef.current = null;
+    }
+  };
+
+  const thumbResponderHandlers = {
+    onStartShouldSetResponder: () => true,
+    onResponderGrant: (event: { nativeEvent: { pageX: number } }) => {
+      touchStartXRef.current = event.nativeEvent.pageX;
+      dragStartZoomRef.current = zoomRef.current;
+      clearLongPressTimeout();
+      longPressTimeoutRef.current = setTimeout(() => {
+        handleFineTuneStart();
+        longPressTimeoutRef.current = null;
+      }, 220);
+    },
+    onResponderMove: (event: { nativeEvent: { pageX: number } }) => {
+      const dx = event.nativeEvent.pageX - touchStartXRef.current;
+
+      if (!fineTuneActiveRef.current) {
+        if (Math.abs(dx) > 6) {
+          clearLongPressTimeout();
+        }
+        return;
+      }
+
+      const deltaZoom = (dx / thumbTravelWidth) * (maxPoint - minPoint);
+      const nextZoom = clampValue(dragStartZoomRef.current + deltaZoom, minPoint, maxPoint);
+
+      updateZoomImmediate(nextZoom);
+    },
+    onResponderRelease: () => {
+      clearLongPressTimeout();
+      if (fineTuneActiveRef.current) {
+        stopFineTune();
+      }
+    },
+    onResponderTerminate: () => {
+      clearLongPressTimeout();
+      if (fineTuneActiveRef.current) {
+        stopFineTune();
+      }
+    },
+  };
+
+  const thumbTranslateX = animatedZoom.interpolate({
+    inputRange: points,
+    outputRange: pointCenters,
+    extrapolate: 'clamp',
+  });
+  const fineTuneTrackOpacity = fineTuneAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 1],
+  });
+  const dotsOpacity = fineTuneAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 0.35],
+  });
+  const thumbScale = fineTuneAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.15],
+  });
+  const activeZoomIndex = getNearestPointIndex(points, value);
+  const canStepLeft = value > minPoint + 0.001;
+  const canStepRight = value < maxPoint - 0.001;
+
+  return (
+    <View style={s.zoomControl}>
+      <Pressable
+        style={[s.zoomStepButton, !canStepLeft && s.zoomStepButtonDisabled]}
+        onPress={() => handleStepZoom(-1)}
+        disabled={!canStepLeft}
+      >
+        <Ionicons name="remove" size={18} color={canStepLeft ? '#FFF' : 'rgba(255,255,255,0.3)'} />
+      </Pressable>
+
+      <View style={s.zoomRailContainer}>
+        <View style={s.zoomRailTapArea} onLayout={handleRailLayout}>
+          {!fineTuneActive ? (
+            <View style={s.zoomTapZones}>
+              {points.map((point) => (
+                <Pressable
+                  key={`tap-${point}`}
+                  style={s.zoomTapZone}
+                  onPress={() => handlePointPress(point)}
+                />
+              ))}
+            </View>
+          ) : null}
+
+          <Animated.View style={[s.zoomFineTuneTrack, { opacity: fineTuneTrackOpacity }]} />
+
+          <Animated.View style={[s.zoomDotsRow, { opacity: dotsOpacity }]}>
+            {points.map((point, index) => (
+              <Pressable
+                key={point}
+                style={s.zoomDotPressable}
+                onPress={() => handlePointPress(point)}
+                disabled={fineTuneActive}
+              >
+                <View
+                  style={[
+                    s.zoomDot,
+                    index === activeZoomIndex && s.zoomDotNearActive,
+                  ]}
+                />
+              </Pressable>
+            ))}
+          </Animated.View>
+
+          <Animated.View
+            style={[
+              s.zoomThumbWrap,
+              {
+                transform: [{ translateX: thumbTranslateX }, { scale: thumbScale }],
+              },
+            ]}
+            {...thumbResponderHandlers}
+          >
+            <View style={s.zoomThumbTouch}>
+              <View style={s.zoomThumbOuter}>
+                <View style={s.zoomThumbInner} />
+              </View>
+            </View>
+          </Animated.View>
+        </View>
+      </View>
+
+      <Pressable
+        style={[s.zoomStepButton, !canStepRight && s.zoomStepButtonDisabled]}
+        onPress={() => handleStepZoom(1)}
+        disabled={!canStepRight}
+      >
+        <Ionicons name="add" size={18} color={canStepRight ? '#FFF' : 'rgba(255,255,255,0.3)'} />
+      </Pressable>
+    </View>
+  );
+}
+
 const s = StyleSheet.create({
   container:  { flex: 1, backgroundColor: '#000' },
   center:     { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40, gap: 16 },
@@ -302,6 +596,98 @@ const s = StyleSheet.create({
   titleTxt:   { fontSize: 15, fontWeight: '600', color: '#FFF' },
   // bottom: sits high enough to clear the floating tab bar (height ~80) + its bottom offset (24)
   bottom:     { position: 'absolute', bottom: 160, left: 0, right: 0, alignItems: 'center', gap: 14 },
+  zoomControl: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  zoomStepButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  zoomStepButtonDisabled: {
+    backgroundColor: 'rgba(0,0,0,0.28)',
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  zoomRailContainer: {
+    width: 214,
+    justifyContent: 'center',
+  },
+  zoomRailTapArea: {
+    height: 38,
+    justifyContent: 'center',
+  },
+  zoomTapZones: {
+    ...StyleSheet.absoluteFillObject,
+    flexDirection: 'row',
+  },
+  zoomTapZone: {
+    flex: 1,
+  },
+  zoomFineTuneTrack: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    height: 3,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.28)',
+  },
+  zoomDotsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  zoomDotPressable: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+  },
+  zoomDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.45)',
+  },
+  zoomDotNearActive: {
+    backgroundColor: 'rgba(255,255,255,0.7)',
+  },
+  zoomThumbWrap: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    marginLeft: -11,
+    width: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  zoomThumbTouch: {
+    width: 34,
+    height: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  zoomThumbOuter: {
+    width: 18,
+    height: 18,
+    borderRadius: 999,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.28,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  zoomThumbInner: {
+    width: 8,
+    height: 8,
+    borderRadius: 999,
+    backgroundColor: '#0A84FF',
+  },
   hint:       { fontSize: 13, color: 'rgba(255,255,255,0.5)', textAlign: 'center' },
   photosBtn:  { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(255,255,255,0.1)', paddingHorizontal: 20, paddingVertical: 11, borderRadius: 22, borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)' },
   photosTxt:  { fontSize: 14, fontWeight: '500', color: 'rgba(255,255,255,0.85)' },
