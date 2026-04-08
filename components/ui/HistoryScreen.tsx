@@ -49,6 +49,9 @@ const truncateText = (text: string, maxLength: number) => {
   return text.substring(0, maxLength - 3) + '...';
 };
 
+const getHistoryPreviewUrl = (url: string, maxLength = 30) =>
+  truncateText(url.replace(/^https?:\/\//i, ''), maxLength);
+
 const escapeCsvValue = (value: string) => `"${value.replace(/"/g, '""')}"`;
 
 const getHistoryItemCsv = (item: HistoryItem) => {
@@ -801,7 +804,8 @@ function HistoryItemComponent({
   const [imgError, setImgError] = useState(false);
   const domain = getDomainFromUrl(item.rawValue);
   const isGrouped = (item.scanCount || 0) > 1;
-  const displayUrl = item.type === 'url' ? item.parsedData?.url || item.rawValue : null;
+  const displayUrl =
+    item.type === 'url' ? getHistoryPreviewUrl(item.parsedData?.url || item.rawValue) : null;
 
   return (
     <View
@@ -814,6 +818,11 @@ function HistoryItemComponent({
         },
       ]}
     >
+      {item.isFavorite ? (
+        <View style={s.favoriteBadge}>
+          <Ionicons name="star" size={18} color={theme.warning} />
+        </View>
+      ) : null}
       <Pressable style={s.cardContent} onPress={onPress}>
         <View style={[s.iconContainer, { backgroundColor: theme.background }]}>
           {domain && !imgError ? (
@@ -833,9 +842,6 @@ function HistoryItemComponent({
             <Text style={[s.dataText, { color: theme.text.primary }]}>
               {truncateText(getHistoryItemName(item), 32)}
             </Text>
-            {item.isFavorite ? (
-              <Ionicons name="star" size={14} color={theme.warning} style={s.favoriteIcon} />
-            ) : null}
             {isGrouped ? (
               <View style={[s.scanCount, { backgroundColor: theme.accent }]}>
                 <Text style={s.scanCountText}>{item.scanCount}</Text>
@@ -846,7 +852,7 @@ function HistoryItemComponent({
             <Text
               style={[s.urlText, { color: theme.text.tertiary }]}
               numberOfLines={1}
-              ellipsizeMode="middle"
+              ellipsizeMode="tail"
             >
               {displayUrl}
             </Text>
@@ -1066,6 +1072,7 @@ const s = StyleSheet.create({
     marginVertical: 4,
     borderRadius: 14,
     borderWidth: 1,
+    position: 'relative',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -1110,8 +1117,11 @@ const s = StyleSheet.create({
     alignItems: 'center',
     marginLeft: 8,
   },
-  favoriteIcon: {
-    marginLeft: 8,
+  favoriteBadge: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    zIndex: 1,
   },
   scanCountText: {
     fontSize: 11,
