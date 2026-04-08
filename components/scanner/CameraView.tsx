@@ -32,7 +32,7 @@ interface ScannerScreenProps {
 }
 
 let lastKnownCameraPermissionGranted = false;
-const ZOOM_CONTROL_POINTS: number[] = [0, 0.08, 0.16, 0.26, 0.38, 0.49, 0.6];
+const ZOOM_CONTROL_POINTS: number[] = [0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9];
 const MAX_ZOOM = ZOOM_CONTROL_POINTS[ZOOM_CONTROL_POINTS.length - 1] ?? 0.6;
 
 const clampValue = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
