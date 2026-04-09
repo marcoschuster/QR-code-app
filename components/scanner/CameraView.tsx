@@ -88,8 +88,9 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
   }, [permission?.granted]);
 
   // ── Barcode scan handler ───────────────────────────────────────────────────
-  const handleBarcodeScanned = async (result: { data: string; bounds?: {origin: {x: number; y: number}; size: {width: number; height: number}} }) => {
+  const handleBarcodeScanned = async (result: { data: string; raw?: string; bounds?: {origin: {x: number; y: number}; size: {width: number; height: number}} }) => {
     if (scanned) return;
+    const encodedValue = result.raw || result.data;
 
     // 1. Start the lock animation FIRST
     if (result.bounds) {
@@ -118,9 +119,9 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
 
     let parsed: any;
     try {
-      parsed = parseQRCode(result.data);
+      parsed = parseQRCode(encodedValue);
     } catch (e) {
-      parsed = { type: 'text', data: { text: result.data }, rawValue: result.data };
+      parsed = { type: 'text', data: { text: encodedValue }, rawValue: encodedValue };
     }
 
     const initialSafety =
@@ -144,7 +145,7 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
         const saveResult = addItem({
           kind: 'scanned',
           type: parsed.type,
-          rawValue: result.data,
+          rawValue: encodedValue,
           parsedData: parsed.data,
           safety: initialSafety,
         });

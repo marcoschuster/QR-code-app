@@ -151,7 +151,7 @@ export function PhotoScanner({ visible, imageUri, onClose, onResult }: PhotoScan
           return;
         }
 
-        await handleQRCodeFound(match.data, () => active);
+        await handleQRCodeFound(match.raw || match.data, () => active);
       } catch (error) {
         if (!active) {
           return;
