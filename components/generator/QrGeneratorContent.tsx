@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Alert,
   Image,
@@ -14,6 +14,7 @@ import {
 import * as Clipboard from 'expo-clipboard';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from '../ui/Card';
+import { Chip } from '../ui/Chip';
 import { SuccessDialog } from '../ui/SuccessDialog';
 import {
   borderRadius,
@@ -23,10 +24,17 @@ import {
 import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   createQrCodeImage,
-  normalizeQrLinkInput,
   saveQrCodeImage,
   type GeneratedQrCodeImage,
 } from '../../services/qrCodeImage';
+import {
+  GENERATOR_TEMPLATES,
+  buildGeneratorContent,
+  createInitialGeneratorValues,
+  getGeneratorTemplate,
+  type GeneratorField,
+  type GeneratorTemplateId,
+} from '../../services/generatorTemplates';
 
 type ScreenTheme = ReturnType<typeof useAppTheme>['theme'];
 
@@ -43,7 +51,10 @@ interface ActionButtonProps {
 export function QrGeneratorContent() {
   const { theme, isDark } = useAppTheme();
 
-  const [linkInput, setLinkInput] = useState('');
+  const [selectedTemplateId, setSelectedTemplateId] = useState<GeneratorTemplateId>('website');
+  const [formValues, setFormValues] = useState<Record<string, string>>(() =>
+    createInitialGeneratorValues('website')
+  );
   const [errorMessage, setErrorMessage] = useState('');
   const [generatedCode, setGeneratedCode] = useState<GeneratedQrCodeImage | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -57,13 +68,25 @@ export function QrGeneratorContent() {
     message: '',
   });
 
-  const handleLinkChange = (value: string) => {
-    setLinkInput(value);
-    setErrorMessage('');
+  const selectedTemplate = useMemo(
+    () => getGeneratorTemplate(selectedTemplateId),
+    [selectedTemplateId]
+  );
 
-    if (generatedCode && value.trim() !== generatedCode.content) {
-      setGeneratedCode(null);
-    }
+  const handleTemplateSelect = (templateId: GeneratorTemplateId) => {
+    setSelectedTemplateId(templateId);
+    setFormValues(createInitialGeneratorValues(templateId));
+    setErrorMessage('');
+    setGeneratedCode(null);
+  };
+
+  const handleFieldChange = (fieldKey: string, value: string) => {
+    setFormValues((currentValues) => ({
+      ...currentValues,
+      [fieldKey]: value,
+    }));
+    setErrorMessage('');
+    setGeneratedCode(null);
   };
 
   const handlePaste = async () => {
@@ -74,16 +97,20 @@ export function QrGeneratorContent() {
       return;
     }
 
-    setLinkInput(clipboardValue);
-    setErrorMessage('');
+    const firstField = selectedTemplate.fields[0];
+
+    if (!firstField) {
+      return;
+    }
+
+    handleFieldChange(firstField.key, clipboardValue);
   };
 
   const handleGenerate = () => {
     try {
-      const normalizedLink = normalizeQrLinkInput(linkInput);
-      const qrCode = createQrCodeImage(normalizedLink);
+      const content = buildGeneratorContent(selectedTemplateId, formValues);
+      const qrCode = createQrCodeImage(content);
 
-      setLinkInput(normalizedLink);
       setGeneratedCode(qrCode);
       setErrorMessage('');
     } catch (error) {
@@ -102,8 +129,8 @@ export function QrGeneratorContent() {
     await Clipboard.setStringAsync(generatedCode.content);
     setSuccessDialog({
       visible: true,
-      title: 'Link copied',
-      message: 'The QR code link has been copied to your clipboard.',
+      title: 'Content copied',
+      message: 'The generated code content has been copied to your clipboard.',
     });
   };
 
@@ -152,42 +179,45 @@ export function QrGeneratorContent() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
-            <Text style={[styles.title, { color: theme.text.primary }]}>Generate QR</Text>
+            <Text style={[styles.title, { color: theme.text.primary }]}>Generate Codes</Text>
             <Text style={[styles.subtitle, { color: theme.text.secondary }]}>
-              Paste a link, turn it into a QR code, and export it as a PNG image.
+              Pick a format, fill in the details, and export the generated code as a PNG image.
             </Text>
           </View>
 
           <Card style={styles.sectionCard} padding={spacing.lg}>
-            <Text style={[styles.sectionLabel, { color: theme.text.secondary }]}>Link</Text>
+            <Text style={[styles.sectionLabel, { color: theme.text.secondary }]}>Code Type</Text>
 
-            <TextInput
-              value={linkInput}
-              onChangeText={handleLinkChange}
-              placeholder="https://example.com"
-              placeholderTextColor={theme.text.tertiary}
-              autoCapitalize="none"
-              autoCorrect={false}
-              keyboardType="url"
-              multiline
-              textAlignVertical="top"
-              style={[
-                styles.input,
-                {
-                  backgroundColor: theme.background,
-                  borderColor: errorMessage ? theme.danger : theme.border,
-                  color: theme.text.primary,
-                },
-              ]}
-            />
+            <View style={styles.templateGrid}>
+              {GENERATOR_TEMPLATES.map((template) => (
+                <Chip
+                  key={template.id}
+                  title={template.title}
+                  selected={template.id === selectedTemplateId}
+                  onPress={() => handleTemplateSelect(template.id)}
+                />
+              ))}
+            </View>
+          </Card>
 
-            <Text
-              style={[
-                styles.helperText,
-                { color: errorMessage ? theme.danger : theme.text.secondary },
-              ]}
-            >
-              {errorMessage || 'If you paste a domain without http, https will be added for you.'}
+          <Card style={styles.sectionCard} padding={spacing.lg}>
+            <Text style={[styles.sectionLabel, { color: theme.text.secondary }]}>Details</Text>
+            <Text style={[styles.templateDescription, { color: theme.text.secondary }]}>
+              {selectedTemplate.description}
+            </Text>
+
+            <View style={styles.formFields}>
+              {selectedTemplate.fields.map((field) => renderField({
+                field,
+                value: formValues[field.key] ?? '',
+                onChange: (value) => handleFieldChange(field.key, value),
+                theme,
+                errorMessage,
+              }))}
+            </View>
+
+            <Text style={[styles.helperText, { color: errorMessage ? theme.danger : theme.text.secondary }]}>
+              {errorMessage || 'All code types are encoded into QR images in this version.'}
             </Text>
 
             <View style={styles.actionsRow}>
@@ -200,25 +230,11 @@ export function QrGeneratorContent() {
                 variant="secondary"
               />
               <ActionButton
-                title="Generate QR"
+                title="Generate"
                 icon="qr-code-outline"
-                onPress={() => {
-                  if (linkInput.trim()) {
-                    const normalizedInput = normalizeQrLinkInput(linkInput.trim());
-                    if (normalizedInput) {
-                      const qrCode = createQrCodeImage(normalizedInput);
-                      setGeneratedCode(qrCode);
-                      setErrorMessage('');
-                    } else {
-                      setErrorMessage('Please enter a valid URL or text.');
-                    }
-                  } else {
-                    setErrorMessage('Please enter a URL or text first.');
-                  }
-                }}
+                onPress={handleGenerate}
                 theme={theme}
                 isDark={isDark}
-                disabled={!linkInput.trim()}
               />
             </View>
           </Card>
@@ -226,6 +242,9 @@ export function QrGeneratorContent() {
           {generatedCode && (
             <Card style={styles.sectionCard} padding={spacing.lg}>
               <Text style={[styles.sectionLabel, { color: theme.text.secondary }]}>Preview</Text>
+              <Text style={[styles.previewTitle, { color: theme.text.primary }]}>
+                {selectedTemplate.title}
+              </Text>
 
               <View
                 style={[
@@ -243,13 +262,16 @@ export function QrGeneratorContent() {
                 />
               </View>
 
+              <Text style={[styles.previewLabel, { color: theme.text.secondary }]}>
+                Encoded Content
+              </Text>
               <Text style={[styles.previewLink, { color: theme.text.secondary }]}>
                 {generatedCode.content}
               </Text>
 
               <View style={styles.actionsRow}>
                 <ActionButton
-                  title="Copy Link"
+                  title="Copy Text"
                   icon="copy-outline"
                   onPress={handleCopyLink}
                   theme={theme}
@@ -278,6 +300,79 @@ export function QrGeneratorContent() {
         onClose={() => setSuccessDialog(prev => ({ ...prev, visible: false }))}
       />
     </>
+  );
+}
+
+function renderField({
+  field,
+  value,
+  onChange,
+  theme,
+  errorMessage,
+}: {
+  field: GeneratorField;
+  value: string;
+  onChange: (value: string) => void;
+  theme: ScreenTheme;
+  errorMessage: string;
+}) {
+  return (
+    <View key={field.key} style={styles.fieldBlock}>
+      <Text style={[styles.fieldLabel, { color: theme.text.primary }]}>{field.label}</Text>
+
+      {field.options ? (
+        <View style={styles.optionRow}>
+          {field.options.map((option) => {
+            const isSelected = value === option.value;
+
+            return (
+              <Pressable
+                key={option.value}
+                style={({ pressed }) => [
+                  styles.optionButton,
+                  {
+                    backgroundColor: isSelected ? theme.accent : theme.background,
+                    borderColor: isSelected ? theme.accent : theme.border,
+                    opacity: pressed ? 0.84 : 1,
+                  },
+                ]}
+                onPress={() => onChange(option.value)}
+              >
+                <Text
+                  style={[
+                    styles.optionButtonText,
+                    { color: isSelected ? '#FFFFFF' : theme.text.primary },
+                  ]}
+                >
+                  {option.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : (
+        <TextInput
+          value={value}
+          onChangeText={onChange}
+          placeholder={field.placeholder}
+          placeholderTextColor={theme.text.tertiary}
+          autoCapitalize={field.autoCapitalize}
+          autoCorrect={false}
+          keyboardType={field.keyboardType}
+          multiline={field.multiline}
+          textAlignVertical={field.multiline ? 'top' : 'center'}
+          style={[
+            styles.input,
+            field.multiline ? styles.multilineInput : styles.singleLineInput,
+            {
+              backgroundColor: theme.background,
+              borderColor: errorMessage ? theme.danger : theme.border,
+              color: theme.text.primary,
+            },
+          ]}
+        />
+      )}
+    </View>
   );
 }
 
@@ -358,6 +453,17 @@ const styles = StyleSheet.create({
   sectionCard: {
     marginBottom: spacing.lg,
   },
+  templateGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  templateDescription: {
+    fontFamily: typography.fontFamily,
+    fontSize: typography.sizes.base,
+    lineHeight: 22,
+    marginBottom: spacing.md,
+  },
   sectionLabel: {
     fontFamily: typography.fontFamily,
     fontSize: typography.sizes.sm,
@@ -366,8 +472,18 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: typography.letterSpacing.wide,
   },
+  formFields: {
+    gap: spacing.md,
+  },
+  fieldBlock: {
+    gap: spacing.sm,
+  },
+  fieldLabel: {
+    fontFamily: typography.fontFamily,
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.semibold,
+  },
   input: {
-    minHeight: 112,
     borderWidth: 1,
     borderRadius: borderRadius.md,
     paddingHorizontal: spacing.md,
@@ -375,6 +491,30 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily,
     fontSize: typography.sizes.base,
     lineHeight: 22,
+  },
+  singleLineInput: {
+    minHeight: 56,
+  },
+  multilineInput: {
+    minHeight: 112,
+  },
+  optionRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  optionButton: {
+    minHeight: 42,
+    borderWidth: 1,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  optionButtonText: {
+    fontFamily: typography.fontFamily,
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.semibold,
   },
   helperText: {
     marginTop: spacing.sm,
@@ -417,19 +557,20 @@ const styles = StyleSheet.create({
     maxWidth: 280,
     maxHeight: 280,
   },
-  emptyPreview: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-  },
-  emptyPreviewText: {
+  previewTitle: {
     fontFamily: typography.fontFamily,
     fontSize: typography.sizes.base,
-    textAlign: 'center',
-    lineHeight: 22,
+    fontWeight: typography.weights.semibold,
+    marginBottom: spacing.md,
+  },
+  previewLabel: {
+    marginTop: spacing.md,
+    fontFamily: typography.fontFamily,
+    fontSize: typography.sizes.xs,
+    textTransform: 'uppercase',
+    letterSpacing: typography.letterSpacing.wide,
   },
   previewLink: {
-    marginTop: spacing.md,
     fontFamily: typography.fontFamily,
     fontSize: typography.sizes.sm,
     lineHeight: 20,

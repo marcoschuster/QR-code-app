@@ -1,4 +1,14 @@
-export type ScanType = 'url' | 'wifi' | 'email' | 'phone' | 'sms' | 'text' | 'vcard' | 'barcode' | 'location';
+export type ScanType =
+  | 'url'
+  | 'wifi'
+  | 'email'
+  | 'phone'
+  | 'sms'
+  | 'text'
+  | 'vcard'
+  | 'barcode'
+  | 'location'
+  | 'calendar';
 export type ThreatCheckSource = 'google-safe-browsing' | 'heuristic';
 
 export interface ScanSafetyState {

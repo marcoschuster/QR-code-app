@@ -10,6 +10,7 @@ import {
   Modal,
   ScrollView,
   TextInput,
+  Platform,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { Ionicons } from '@expo/vector-icons';
@@ -51,6 +52,46 @@ const truncateText = (text: string, maxLength: number) => {
 
 const getHistoryPreviewUrl = (url: string, maxLength = 30) =>
   truncateText(url.replace(/^https?:\/\//i, ''), maxLength);
+
+const getLocationDisplayValue = (parsedData: Record<string, any>) => {
+  if (parsedData?.query) {
+    return parsedData.query;
+  }
+
+  if (
+    typeof parsedData?.latitude === 'number' &&
+    typeof parsedData?.longitude === 'number'
+  ) {
+    return `${parsedData.latitude}, ${parsedData.longitude}`;
+  }
+
+  return 'Map Location';
+};
+
+const getHistoryItemContentValue = (item: HistoryItem) => {
+  switch (item.type) {
+    case 'sms':
+      return item.parsedData?.body
+        ? `SMS to ${item.parsedData.phone}\n${item.parsedData.body}`
+        : `SMS to ${item.parsedData?.phone || ''}`.trim();
+    case 'phone':
+      return item.parsedData?.phone || item.rawValue.replace(/^tel:/i, '');
+    case 'location':
+      return getLocationDisplayValue(item.parsedData);
+    case 'calendar':
+      return [
+        item.parsedData?.title || 'Calendar Event',
+        item.parsedData?.start ? `Start: ${item.parsedData.start}` : '',
+        item.parsedData?.end ? `End: ${item.parsedData.end}` : '',
+        item.parsedData?.location ? `Location: ${item.parsedData.location}` : '',
+        item.parsedData?.description ? `Description: ${item.parsedData.description}` : '',
+      ]
+        .filter(Boolean)
+        .join('\n');
+    default:
+      return item.rawValue;
+  }
+};
 
 const escapeCsvValue = (value: string) => `"${value.replace(/"/g, '""')}"`;
 
@@ -145,9 +186,11 @@ const getHistoryItemName = (item: HistoryItem) => {
       return fullName || item.parsedData?.company || 'Contact Card';
     }
     case 'location':
-      return 'Map Location';
+      return getLocationDisplayValue(item.parsedData);
     case 'barcode':
       return 'Barcode';
+    case 'calendar':
+      return item.parsedData?.title || 'Calendar Event';
     case 'text':
     default:
       return truncateText(item.rawValue, 48);
@@ -166,6 +209,8 @@ const getHistoryPrimaryAction = (item: HistoryItem) => {
       return { title: 'Send SMS', icon: 'chatbubble-outline' as const };
     case 'location':
       return { title: 'Open Map', icon: 'location-outline' as const };
+    case 'calendar':
+      return null;
     default:
       return null;
   }
@@ -448,11 +493,41 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
         return;
       }
       case 'location': {
+        const query = selectedItem.parsedData?.query;
         const latitude = selectedItem.parsedData?.latitude;
         const longitude = selectedItem.parsedData?.longitude;
 
+        if (
+          /^https?:\/\//i.test(selectedItem.rawValue) &&
+          (!query || /^https?:\/\//i.test(String(query)))
+        ) {
+          await WebBrowser.openBrowserAsync(selectedItem.rawValue);
+          return;
+        }
+
+        if (query) {
+          const encodedQuery = encodeURIComponent(query);
+          const mapUrl =
+            Platform.OS === 'ios'
+              ? `http://maps.apple.com/?q=${encodedQuery}`
+              : Platform.OS === 'android'
+                ? `geo:0,0?q=${encodedQuery}`
+                : `https://www.google.com/maps/search/?api=1&query=${encodedQuery}`;
+
+          await Linking.openURL(mapUrl);
+          return;
+        }
+
         if (typeof latitude === 'number' && typeof longitude === 'number') {
-          await WebBrowser.openBrowserAsync(`https://maps.google.com/?q=${latitude},${longitude}`);
+          const coordinates = `${latitude},${longitude}`;
+          const mapUrl =
+            Platform.OS === 'ios'
+              ? `http://maps.apple.com/?ll=${coordinates}`
+              : Platform.OS === 'android'
+                ? `geo:${coordinates}`
+                : `https://maps.google.com/?q=${coordinates}`;
+
+          await Linking.openURL(mapUrl);
         }
         return;
       }
@@ -703,7 +778,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
               <DetailCard label="Type" value={selectedItem.type.toUpperCase()} theme={theme} />
               <DetailCard
                 label={selectedItem.type === 'url' ? 'Link' : 'Content'}
-                value={selectedItem.rawValue}
+                value={getHistoryItemContentValue(selectedItem)}
                 theme={theme}
               />
               <DetailCard

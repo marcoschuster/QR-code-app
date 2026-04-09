@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Share, Alert, Linking, Image, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Share, Alert, Linking, Image, ActivityIndicator, Platform } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import * as WebBrowser from 'expo-web-browser';
+import * as Contacts from 'expo-contacts';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -59,6 +60,7 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
       case 'email': return '📧';
       case 'phone': return '📱';
       case 'location': return '📍';
+      case 'calendar': return '🗓️';
       case 'text': return '📄';
       case 'barcode': return '🛒';
       case 'sms': return '💬';
@@ -74,6 +76,7 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
       case 'email': return 'Email';
       case 'phone': return 'Phone';
       case 'location': return 'Location';
+      case 'calendar': return 'Calendar';
       case 'text': return 'Text';
       case 'barcode': return 'Product';
       case 'sms': return 'SMS';
@@ -127,11 +130,86 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
     }
   };
 
+  const getMapUrl = () => {
+    if (data.type !== 'location') {
+      return null;
+    }
+
+    if (
+      typeof data.rawValue === 'string' &&
+      /^https?:\/\//i.test(data.rawValue) &&
+      (!data.data.query || /^https?:\/\//i.test(String(data.data.query)))
+    ) {
+      return data.rawValue;
+    }
+
+    if (data.data.query) {
+      const encodedQuery = encodeURIComponent(data.data.query);
+
+      if (Platform.OS === 'ios') {
+        return `http://maps.apple.com/?q=${encodedQuery}`;
+      }
+
+      if (Platform.OS === 'android') {
+        return `geo:0,0?q=${encodedQuery}`;
+      }
+
+      return `https://www.google.com/maps/search/?api=1&query=${encodedQuery}`;
+    }
+
+    if (
+      typeof data.data.latitude === 'number' &&
+      typeof data.data.longitude === 'number'
+    ) {
+      const coordinates = `${data.data.latitude},${data.data.longitude}`;
+
+      if (Platform.OS === 'ios') {
+        return `http://maps.apple.com/?ll=${coordinates}`;
+      }
+
+      if (Platform.OS === 'android') {
+        return `geo:${coordinates}`;
+      }
+
+      return `https://maps.google.com/?q=${coordinates}`;
+    }
+
+    return null;
+  };
+
+  const handleOpenMap = async () => {
+    const mapUrl = getMapUrl();
+
+    if (!mapUrl) {
+      return;
+    }
+
+    await Linking.openURL(mapUrl);
+  };
+
   const handleCopy = async () => {
     let textToCopy = data.rawValue;
     
     if (data.type === 'wifi') {
       textToCopy = `WiFi: ${data.data.ssid}\nPassword: ${data.data.password}`;
+    }
+
+    if (data.type === 'sms') {
+      textToCopy = data.data.body
+        ? `SMS to ${data.data.phone}\n${data.data.body}`
+        : `SMS to ${data.data.phone}`;
+    }
+
+    if (data.type === 'calendar') {
+      textToCopy = [
+        data.data.title,
+        data.data.start ? `Start: ${data.data.start}` : '',
+        data.data.end ? `End: ${data.data.end}` : '',
+        data.data.location ? `Location: ${data.data.location}` : '',
+        data.data.description ? `Description: ${data.data.description}` : '',
+      ]
+        .filter(Boolean)
+        .join('\n');
     }
     
     await Clipboard.setStringAsync(textToCopy);
@@ -163,6 +241,76 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
     if (data.type === 'email') {
       const mailto = `mailto:${data.data.email}?subject=${encodeURIComponent(data.data.subject)}&body=${encodeURIComponent(data.data.body)}`;
       Linking.openURL(mailto);
+    }
+  };
+
+  const handleReplySms = () => {
+    if (data.type !== 'sms') {
+      return;
+    }
+
+    const sms = data.data.body
+      ? `sms:${data.data.phone}?body=${encodeURIComponent(data.data.body)}`
+      : `sms:${data.data.phone}`;
+
+    Linking.openURL(sms);
+  };
+
+  const handleAddToContacts = async () => {
+    try {
+      const isAvailable = await Contacts.isAvailableAsync();
+
+      if (!isAvailable) {
+        Alert.alert('Contacts unavailable', 'This device does not support contact creation.');
+        return;
+      }
+
+      const permission = await Contacts.requestPermissionsAsync();
+      if (permission.status !== 'granted') {
+        Alert.alert('Permission needed', 'Allow contacts access to save this contact.');
+        return;
+      }
+
+      if (data.type === 'phone') {
+        await Contacts.presentFormAsync(null, {
+          contactType: Contacts.ContactTypes.Person,
+          name: data.data.phone,
+          phoneNumbers: [{ label: 'mobile', number: data.data.phone }],
+        }, {
+          allowsEditing: true,
+          isNew: true,
+        });
+        return;
+      }
+
+      if (data.type === 'vcard') {
+        const fullName = [data.data.firstName, data.data.lastName].filter(Boolean).join(' ').trim();
+        await Contacts.presentFormAsync(null, {
+          contactType: Contacts.ContactTypes.Person,
+          name: fullName || data.data.company || 'New Contact',
+          firstName: data.data.firstName || undefined,
+          lastName: data.data.lastName || undefined,
+          company: data.data.company || undefined,
+          jobTitle: data.data.jobTitle || undefined,
+          phoneNumbers: data.data.phone
+            ? [{ label: 'mobile', number: data.data.phone }]
+            : undefined,
+          emails: data.data.email
+            ? [{ label: 'work', email: data.data.email }]
+            : undefined,
+          urlAddresses: data.data.website
+            ? [{ label: 'website', url: data.data.website }]
+            : undefined,
+        }, {
+          allowsEditing: true,
+          isNew: true,
+        });
+      }
+    } catch (error) {
+      Alert.alert(
+        'Could not open contacts',
+        error instanceof Error ? error.message : 'The contact form could not be opened.'
+      );
     }
   };
 
@@ -255,6 +403,91 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
             key="copy"
             title="Copy Number"
             onPress={() => Clipboard.setStringAsync(data.data.phone)}
+            variant="secondary"
+            icon={<Ionicons name="copy-outline" size={20} color={theme.text.primary} />}
+          />
+        );
+        buttons.push(
+          <Button
+            key="contact"
+            title="Add to Contacts"
+            onPress={handleAddToContacts}
+            variant="secondary"
+            icon={<Ionicons name="person-add-outline" size={20} color={theme.text.primary} />}
+          />
+        );
+        break;
+
+      case 'sms':
+        buttons.push(
+          <Button
+            key="reply"
+            title="Reply"
+            onPress={handleReplySms}
+            icon={<Ionicons name="chatbubble-outline" size={20} color="#FFFFFF" />}
+          />
+        );
+        buttons.push(
+          <Button
+            key="copy"
+            title="Copy Number"
+            onPress={() => Clipboard.setStringAsync(data.data.phone)}
+            variant="secondary"
+            icon={<Ionicons name="copy-outline" size={20} color={theme.text.primary} />}
+          />
+        );
+        break;
+
+      case 'location':
+        buttons.push(
+          <Button
+            key="map"
+            title="Open Map"
+            onPress={handleOpenMap}
+            icon={<Ionicons name="location-outline" size={20} color="#FFFFFF" />}
+          />
+        );
+        buttons.push(
+          <Button
+            key="copy"
+            title={data.data.query ? 'Copy Address' : 'Copy Coordinates'}
+            onPress={() =>
+              Clipboard.setStringAsync(
+                data.data.query ||
+                  `${data.data.latitude},${data.data.longitude}`
+              )
+            }
+            variant="secondary"
+            icon={<Ionicons name="copy-outline" size={20} color={theme.text.primary} />}
+          />
+        );
+        break;
+
+      case 'calendar':
+        buttons.push(
+          <Button
+            key="copy"
+            title="Copy Event"
+            onPress={handleCopy}
+            icon={<Ionicons name="copy-outline" size={20} color="#FFFFFF" />}
+          />
+        );
+        break;
+
+      case 'vcard':
+        buttons.push(
+          <Button
+            key="contact"
+            title="Add to Contacts"
+            onPress={handleAddToContacts}
+            icon={<Ionicons name="person-add-outline" size={20} color="#FFFFFF" />}
+          />
+        );
+        buttons.push(
+          <Button
+            key="copy"
+            title="Copy Contact"
+            onPress={handleCopy}
             variant="secondary"
             icon={<Ionicons name="copy-outline" size={20} color={theme.text.primary} />}
           />
@@ -453,6 +686,148 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
           <Text style={[styles.contentText, { color: theme.text.primary }]}>
             {data.data.phone}
           </Text>
+        );
+
+      case 'sms':
+        return (
+          <View style={styles.contentContainer}>
+            <Text style={[styles.contentLabel, { color: theme.text.secondary }]}>
+              Phone Number
+            </Text>
+            <Text style={[styles.contentText, { color: theme.text.primary }]}>
+              {data.data.phone}
+            </Text>
+            {data.data.body ? (
+              <>
+                <Text style={[styles.contentLabel, { color: theme.text.secondary, marginTop: spacing.sm }]}>
+                  Message
+                </Text>
+                <Text style={[styles.contentText, { color: theme.text.primary }]}>
+                  {data.data.body}
+                </Text>
+              </>
+            ) : null}
+          </View>
+        );
+
+      case 'location':
+        return (
+          <View style={styles.contentContainer}>
+            {data.data.query ? (
+              <>
+                <Text style={[styles.contentLabel, { color: theme.text.secondary }]}>
+                  Address or Search
+                </Text>
+                <Text style={[styles.contentText, { color: theme.text.primary }]}>
+                  {data.data.query}
+                </Text>
+              </>
+            ) : null}
+            {typeof data.data.latitude === 'number' && typeof data.data.longitude === 'number' ? (
+              <>
+                <Text style={[styles.contentLabel, { color: theme.text.secondary, marginTop: data.data.query ? spacing.sm : 0 }]}>
+                  Coordinates
+                </Text>
+                <Text style={[styles.contentText, { color: theme.text.primary }]}>
+                  {data.data.latitude}, {data.data.longitude}
+                </Text>
+              </>
+            ) : null}
+          </View>
+        );
+
+      case 'calendar':
+        return (
+          <View style={styles.contentContainer}>
+            <Text style={[styles.contentLabel, { color: theme.text.secondary }]}>
+              Title
+            </Text>
+            <Text style={[styles.contentText, { color: theme.text.primary }]}>
+              {data.data.title}
+            </Text>
+            {data.data.start ? (
+              <>
+                <Text style={[styles.contentLabel, { color: theme.text.secondary, marginTop: spacing.sm }]}>
+                  Start
+                </Text>
+                <Text style={[styles.contentText, { color: theme.text.primary }]}>
+                  {data.data.start}
+                </Text>
+              </>
+            ) : null}
+            {data.data.end ? (
+              <>
+                <Text style={[styles.contentLabel, { color: theme.text.secondary, marginTop: spacing.sm }]}>
+                  End
+                </Text>
+                <Text style={[styles.contentText, { color: theme.text.primary }]}>
+                  {data.data.end}
+                </Text>
+              </>
+            ) : null}
+            {data.data.location ? (
+              <>
+                <Text style={[styles.contentLabel, { color: theme.text.secondary, marginTop: spacing.sm }]}>
+                  Location
+                </Text>
+                <Text style={[styles.contentText, { color: theme.text.primary }]}>
+                  {data.data.location}
+                </Text>
+              </>
+            ) : null}
+            {data.data.description ? (
+              <>
+                <Text style={[styles.contentLabel, { color: theme.text.secondary, marginTop: spacing.sm }]}>
+                  Description
+                </Text>
+                <Text style={[styles.contentText, { color: theme.text.primary }]}>
+                  {data.data.description}
+                </Text>
+              </>
+            ) : null}
+          </View>
+        );
+
+      case 'vcard':
+        return (
+          <View style={styles.contentContainer}>
+            <Text style={[styles.contentLabel, { color: theme.text.secondary }]}>
+              Name
+            </Text>
+            <Text style={[styles.contentText, { color: theme.text.primary }]}>
+              {[data.data.firstName, data.data.lastName].filter(Boolean).join(' ') || data.data.company || 'Contact'}
+            </Text>
+            {data.data.company ? (
+              <>
+                <Text style={[styles.contentLabel, { color: theme.text.secondary, marginTop: spacing.sm }]}>
+                  Company
+                </Text>
+                <Text style={[styles.contentText, { color: theme.text.primary }]}>
+                  {data.data.company}
+                </Text>
+              </>
+            ) : null}
+            {data.data.phone ? (
+              <>
+                <Text style={[styles.contentLabel, { color: theme.text.secondary, marginTop: spacing.sm }]}>
+                  Phone
+                </Text>
+                <Text style={[styles.contentText, { color: theme.text.primary }]}>
+                  {data.data.phone}
+                </Text>
+              </>
+            ) : null}
+            {data.data.email ? (
+              <>
+                <Text style={[styles.contentLabel, { color: theme.text.secondary, marginTop: spacing.sm }]}>
+                  Email
+                </Text>
+                <Text style={[styles.contentText, { color: theme.text.primary }]}>
+                  {data.data.email}
+                </Text>
+              </>
+            ) : null}
+          </View>
         );
 
       default:
