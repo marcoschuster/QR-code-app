@@ -616,6 +616,40 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
     }
   };
 
+  const handleAddSelectedPhoneToContacts = async () => {
+    if (selectedItem?.type !== 'phone') {
+      return;
+    }
+
+    const isAvailable = await Contacts.isAvailableAsync();
+
+    if (!isAvailable) {
+      Alert.alert('Contacts unavailable', 'This device does not support contact creation.');
+      return;
+    }
+
+    const permission = await Contacts.requestPermissionsAsync();
+    if (permission.status !== 'granted') {
+      Alert.alert('Permission needed', 'Allow contacts access to save this contact.');
+      return;
+    }
+
+    const phoneNumber = selectedItem.parsedData?.phone || selectedItem.rawValue.replace(/^tel:/i, '');
+
+    await Contacts.presentFormAsync(
+      null,
+      {
+        contactType: Contacts.ContactTypes.Person,
+        name: phoneNumber,
+        phoneNumbers: [{ label: 'mobile', number: phoneNumber }],
+      },
+      {
+        allowsEditing: true,
+        isNew: true,
+      }
+    );
+  };
+
   if (!groupedItems.length) {
     return (
       <View style={[s.container, { backgroundColor: theme.background }]}>
@@ -914,6 +948,25 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
                   />
                 </View>
               </View>
+              {selectedItem.type === 'phone' ? (
+                <View style={[s.modalActionRow, s.modalActionRowSpacing]}>
+                  <View style={s.modalActionButton}>
+                    <Button
+                      title="Add to Contacts"
+                      onPress={handleAddSelectedPhoneToContacts}
+                      variant="secondary"
+                      icon={
+                        <Ionicons
+                          name="person-add-outline"
+                          size={20}
+                          color={theme.text.primary}
+                        />
+                      }
+                    />
+                  </View>
+                  <View style={s.modalActionButton} />
+                </View>
+              ) : null}
             </View>
           </View>
         </Modal>
@@ -1505,6 +1558,9 @@ const s = StyleSheet.create({
   modalActionRow: {
     flexDirection: 'row',
     gap: 12,
+  },
+  modalActionRowSpacing: {
+    marginTop: 12,
   },
   modalActionButton: {
     flex: 1,

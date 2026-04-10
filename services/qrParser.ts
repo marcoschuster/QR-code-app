@@ -225,7 +225,7 @@ function parseVCardPayload(rawValue: string) {
     company: getLineValue(lines, 'ORG') || '',
     jobTitle: getLineValue(lines, 'TITLE') || '',
     website: getLineValue(lines, 'URL') || '',
-    address: getLineValue(lines, 'ADR') || '',
+    address: formatVCardAddress(getLineValue(lines, 'ADR') || ''),
   };
 }
 
@@ -437,10 +437,18 @@ function unescapeStructuredValue(value: string) {
 
 function decodeQrComponent(value: string) {
   try {
-    return decodeURIComponent(value.replace(/\+/g, ' '));
+    return decodeURIComponent(value);
   } catch {
     return value;
   }
+}
+
+function formatVCardAddress(value: string) {
+  return value
+    .split(';')
+    .map((segment) => segment.trim())
+    .filter(Boolean)
+    .join(', ');
 }
 
 function looksLikePhoneNumber(rawValue: string) {
