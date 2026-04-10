@@ -441,12 +441,12 @@ export const GENERATOR_TEMPLATES: GeneratorTemplate[] = [
   {
     id: 'maps-search',
     title: 'Map Search',
-    description: 'Search for any place or address in Google Maps.',
+    description: 'Open a place or address in Maps. You can paste plain text like an address, or a full Google Maps or Apple Maps URL.',
     fields: [
       {
         key: 'query',
-        label: 'Search Query',
-        placeholder: 'Coffee shop near Alexanderplatz',
+        label: 'Location or Maps URL',
+        placeholder: 'Coffee shop near Alexanderplatz or https://maps.google.com/...',
       },
     ],
   },
@@ -582,7 +582,7 @@ export function buildGeneratorContent(
     case 'telegram':
       return normalizeQrLinkInput(`t.me/${sanitizeHandle(required(values, 'username'))}`);
     case 'maps-search':
-      return `geo:0,0?q=${encodeURIComponent(required(values, 'query'))}`;
+      return buildMapsSearchUrl(required(values, 'query'));
     case 'x-profile':
       return normalizeQrLinkInput(`x.com/${sanitizeHandle(required(values, 'handle'))}`);
     case 'custom-data':
@@ -756,4 +756,133 @@ function normalizePhoneNumber(value: string) {
   }
 
   throw new Error('Use a full number with +country code, or a local number starting with 0.');
+}
+
+function buildMapsSearchUrl(value: string) {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
+    throw new Error('Enter a location, address, or maps URL.');
+  }
+
+  const normalizedUrlCandidate = tryNormalizeUrl(trimmedValue);
+
+  if (!normalizedUrlCandidate) {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(trimmedValue)}`;
+  }
+
+  const parsedUrl = tryParseUrl(normalizedUrlCandidate);
+
+  if (!parsedUrl) {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(trimmedValue)}`;
+  }
+
+  const extractedLocation = extractLocationFromMapsUrl(parsedUrl);
+
+  if (extractedLocation.kind === 'short-link') {
+    throw new Error(
+      'Short map links like maps.app.goo.gl cannot be converted offline. Paste the expanded maps link or a plain address instead.'
+    );
+  }
+
+  if (extractedLocation.kind === 'query') {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(extractedLocation.query)}`;
+  }
+
+  if (extractedLocation.kind === 'coordinates') {
+    return `https://www.google.com/maps/search/?api=1&query=${extractedLocation.latitude},${extractedLocation.longitude}`;
+  }
+
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(trimmedValue)}`;
+}
+
+function tryNormalizeUrl(value: string) {
+  try {
+    return normalizeQrLinkInput(value);
+  } catch {
+    return null;
+  }
+}
+
+function tryParseUrl(value: string) {
+  try {
+    return new URL(value);
+  } catch {
+    return null;
+  }
+}
+
+function extractLocationFromMapsUrl(url: URL):
+  | { kind: 'query'; query: string }
+  | { kind: 'coordinates'; latitude: string; longitude: string }
+  | { kind: 'short-link' }
+  | { kind: 'unknown' } {
+  const hostname = url.hostname.toLowerCase();
+  const pathname = decodeURIComponent(url.pathname);
+
+  if (hostname === 'maps.app.goo.gl' || hostname === 'goo.gl') {
+    return { kind: 'short-link' };
+  }
+
+  const queryParam = firstNonEmpty(
+    url.searchParams.get('query'),
+    url.searchParams.get('q'),
+    url.searchParams.get('destination'),
+    url.searchParams.get('daddr'),
+    url.searchParams.get('address')
+  );
+
+  if (queryParam) {
+    return { kind: 'query', query: queryParam };
+  }
+
+  const coordinateParam = firstNonEmpty(
+    url.searchParams.get('ll'),
+    url.searchParams.get('sll'),
+    url.searchParams.get('center')
+  );
+
+  if (coordinateParam) {
+    const coordinates = parseCoordinatePair(coordinateParam);
+    if (coordinates) {
+      return { kind: 'coordinates', ...coordinates };
+    }
+  }
+
+  const atMatch = pathname.match(/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/);
+  if (atMatch) {
+    return {
+      kind: 'coordinates',
+      latitude: atMatch[1],
+      longitude: atMatch[2],
+    };
+  }
+
+  const placeMatch = pathname.match(/\/place\/([^/]+)/i);
+  if (placeMatch) {
+    return {
+      kind: 'query',
+      query: placeMatch[1].replace(/\+/g, ' '),
+    };
+  }
+
+  return { kind: 'unknown' };
+}
+
+function firstNonEmpty(...values: Array<string | null>) {
+  return values.find((value) => typeof value === 'string' && value.trim().length > 0)?.trim() || '';
+}
+
+function parseCoordinatePair(value: string) {
+  const [latitude, longitude] = value.split(',').map((segment) => segment.trim());
+
+  if (!latitude || !longitude) {
+    return null;
+  }
+
+  if (!/^-?\d+(?:\.\d+)?$/.test(latitude) || !/^-?\d+(?:\.\d+)?$/.test(longitude)) {
+    return null;
+  }
+
+  return { latitude, longitude };
 }

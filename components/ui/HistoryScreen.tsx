@@ -11,8 +11,11 @@ import {
   ScrollView,
   TextInput,
   Platform,
+  Alert,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
+import * as Contacts from 'expo-contacts';
+import * as Calendar from 'expo-calendar';
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import { useHistoryStore } from '../../store/useHistoryStore';
@@ -90,6 +93,17 @@ const getHistoryItemContentValue = (item: HistoryItem) => {
         .join('\n');
     default:
       return item.rawValue;
+  }
+};
+
+const getDetailTypeLabel = (type: HistoryItem['type']) => {
+  switch (type) {
+    case 'vcard':
+      return 'CONTACT';
+    case 'calendar':
+      return 'CALENDAR EVENT';
+    default:
+      return type.toUpperCase();
   }
 };
 
@@ -210,7 +224,9 @@ const getHistoryPrimaryAction = (item: HistoryItem) => {
     case 'location':
       return { title: 'Open Map', icon: 'location-outline' as const };
     case 'calendar':
-      return null;
+      return { title: 'Add to Calendar', icon: 'calendar-outline' as const };
+    case 'vcard':
+      return { title: 'Add to Contacts', icon: 'person-add-outline' as const };
     default:
       return null;
   }
@@ -531,6 +547,70 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
         }
         return;
       }
+      case 'calendar': {
+        const startDate = parseHistoryCalendarDate(selectedItem.parsedData?.startRaw);
+        const endDate = parseHistoryCalendarDate(selectedItem.parsedData?.endRaw);
+
+        if (!startDate || !endDate) {
+          Alert.alert('Calendar event invalid', 'This history item does not include a valid event date.');
+          return;
+        }
+
+        await Calendar.createEventInCalendarAsync({
+          title: selectedItem.parsedData?.title || getHistoryItemName(selectedItem),
+          startDate,
+          endDate,
+          location: selectedItem.parsedData?.location || undefined,
+          notes: selectedItem.parsedData?.description || undefined,
+          allDay: !String(selectedItem.parsedData?.startRaw || '').includes('T'),
+        });
+        return;
+      }
+      case 'vcard': {
+        const isAvailable = await Contacts.isAvailableAsync();
+
+        if (!isAvailable) {
+          Alert.alert('Contacts unavailable', 'This device does not support contact creation.');
+          return;
+        }
+
+        const permission = await Contacts.requestPermissionsAsync();
+        if (permission.status !== 'granted') {
+          Alert.alert('Permission needed', 'Allow contacts access to save this contact.');
+          return;
+        }
+
+        const fullName = [selectedItem.parsedData?.firstName, selectedItem.parsedData?.lastName]
+          .filter(Boolean)
+          .join(' ')
+          .trim();
+
+        await Contacts.presentFormAsync(
+          null,
+          {
+            contactType: Contacts.ContactTypes.Person,
+            name: fullName || selectedItem.parsedData?.company || 'New Contact',
+            firstName: selectedItem.parsedData?.firstName || undefined,
+            lastName: selectedItem.parsedData?.lastName || undefined,
+            company: selectedItem.parsedData?.company || undefined,
+            jobTitle: selectedItem.parsedData?.jobTitle || undefined,
+            phoneNumbers: selectedItem.parsedData?.phone
+              ? [{ label: 'mobile', number: selectedItem.parsedData.phone }]
+              : undefined,
+            emails: selectedItem.parsedData?.email
+              ? [{ label: 'work', email: selectedItem.parsedData.email }]
+              : undefined,
+            urlAddresses: selectedItem.parsedData?.website
+              ? [{ label: 'website', url: selectedItem.parsedData.website }]
+              : undefined,
+          },
+          {
+            allowsEditing: true,
+            isNew: true,
+          }
+        );
+        return;
+      }
       default:
         return;
     }
@@ -775,12 +855,15 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
                   </Text>
                 )}
               </View>
-              <DetailCard label="Type" value={selectedItem.type.toUpperCase()} theme={theme} />
-              <DetailCard
-                label={selectedItem.type === 'url' ? 'Link' : 'Content'}
-                value={getHistoryItemContentValue(selectedItem)}
-                theme={theme}
-              />
+              <DetailCard label="Type" value={getDetailTypeLabel(selectedItem.type)} theme={theme} />
+              {renderSelectedItemDetails(selectedItem, theme)}
+              {selectedItem.type !== 'vcard' && selectedItem.type !== 'calendar' ? (
+                <DetailCard
+                  label={selectedItem.type === 'url' ? 'Link' : 'Content'}
+                  value={getHistoryItemContentValue(selectedItem)}
+                  theme={theme}
+                />
+              ) : null}
               <DetailCard
                 label="Scanned"
                 value={`${new Date(selectedItem.timestamp).toLocaleDateString()} at ${formatTime(selectedItem.hours, selectedItem.minutes)}`}
@@ -855,6 +938,71 @@ function DetailCard({ label, value, theme }: { label: string; value: string; the
       <Text style={[s.detailValue, { color: theme.text.primary }]}>{value}</Text>
     </View>
   );
+}
+
+function renderSelectedItemDetails(item: HistoryItem, theme: ThemeColors) {
+  if (item.type === 'vcard') {
+    const cards = [
+      {
+        label: 'Contact',
+        value:
+          [item.parsedData?.firstName, item.parsedData?.lastName].filter(Boolean).join(' ').trim() ||
+          item.parsedData?.company ||
+          'Contact',
+      },
+      item.parsedData?.jobTitle ? { label: 'Job Title', value: item.parsedData.jobTitle } : null,
+      item.parsedData?.company ? { label: 'Company', value: item.parsedData.company } : null,
+      item.parsedData?.phone ? { label: 'Phone', value: item.parsedData.phone } : null,
+      item.parsedData?.email ? { label: 'Email', value: item.parsedData.email } : null,
+      item.parsedData?.website ? { label: 'Website', value: item.parsedData.website } : null,
+      item.parsedData?.address ? { label: 'Address', value: item.parsedData.address } : null,
+    ].filter(Boolean) as Array<{ label: string; value: string }>;
+
+    return cards.map((card) => (
+      <DetailCard key={`${item.id}-${card.label}`} label={card.label} value={card.value} theme={theme} />
+    ));
+  }
+
+  if (item.type === 'calendar') {
+    const cards = [
+      { label: 'Event', value: item.parsedData?.title || 'Calendar Event' },
+      item.parsedData?.start ? { label: 'Start', value: item.parsedData.start } : null,
+      item.parsedData?.end ? { label: 'End', value: item.parsedData.end } : null,
+      item.parsedData?.location ? { label: 'Location', value: item.parsedData.location } : null,
+      item.parsedData?.description ? { label: 'Description', value: item.parsedData.description } : null,
+    ].filter(Boolean) as Array<{ label: string; value: string }>;
+
+    return cards.map((card) => (
+      <DetailCard key={`${item.id}-${card.label}`} label={card.label} value={card.value} theme={theme} />
+    ));
+  }
+
+  return null;
+}
+
+function parseHistoryCalendarDate(value?: string) {
+  if (!value) {
+    return null;
+  }
+
+  const compact = String(value).replace(/[^\d]/g, '');
+
+  if (compact.length < 8) {
+    return null;
+  }
+
+  const year = Number(compact.slice(0, 4));
+  const month = Number(compact.slice(4, 6)) - 1;
+  const day = Number(compact.slice(6, 8));
+  const hours = compact.length >= 10 ? Number(compact.slice(8, 10)) : 0;
+  const minutes = compact.length >= 12 ? Number(compact.slice(10, 12)) : 0;
+  const candidate = new Date(year, month, day, hours, minutes, 0, 0);
+
+  if (Number.isNaN(candidate.getTime())) {
+    return null;
+  }
+
+  return candidate;
 }
 
 function HistoryItemComponent({
