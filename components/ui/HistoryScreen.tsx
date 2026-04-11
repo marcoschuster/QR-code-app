@@ -77,8 +77,23 @@ const getHistoryItemContentValue = (item: HistoryItem) => {
       return item.parsedData?.body
         ? `SMS to ${item.parsedData.phone}\n${item.parsedData.body}`
         : `SMS to ${item.parsedData?.phone || ''}`.trim();
+    case 'whatsapp':
+      return [
+        item.parsedData?.phone ? `WhatsApp: ${item.parsedData.phone}` : '',
+        item.parsedData?.message ? `Message: ${item.parsedData.message}` : '',
+      ]
+        .filter(Boolean)
+        .join('\n');
     case 'phone':
       return item.parsedData?.phone || item.rawValue.replace(/^tel:/i, '');
+    case 'coupon':
+      return [
+        item.parsedData?.title ? `Offer: ${item.parsedData.title}` : '',
+        item.parsedData?.code ? `Code: ${item.parsedData.code}` : '',
+        item.parsedData?.details ? `Details: ${item.parsedData.details}` : '',
+      ]
+        .filter(Boolean)
+        .join('\n');
     case 'location':
       return getLocationDisplayValue(item.parsedData);
     case 'calendar':
@@ -102,6 +117,14 @@ const getDetailTypeLabel = (type: HistoryItem['type']) => {
       return 'CONTACT';
     case 'calendar':
       return 'CALENDAR EVENT';
+    case 'play-store':
+      return 'GOOGLE PLAY STORE';
+    case 'app-store':
+      return 'APP STORE';
+    case 'whatsapp':
+      return 'WHATSAPP';
+    case 'coupon':
+      return 'COUPON';
     default:
       return type.toUpperCase();
   }
@@ -190,6 +213,8 @@ const getHistoryItemName = (item: HistoryItem) => {
       return item.parsedData?.email || 'Email Address';
     case 'phone':
       return item.parsedData?.phone || 'Phone Number';
+    case 'whatsapp':
+      return item.parsedData?.phone ? `WhatsApp to ${item.parsedData.phone}` : 'WhatsApp Chat';
     case 'sms':
       return item.parsedData?.phone ? `SMS to ${item.parsedData.phone}` : 'SMS Message';
     case 'vcard': {
@@ -203,6 +228,12 @@ const getHistoryItemName = (item: HistoryItem) => {
       return getLocationDisplayValue(item.parsedData);
     case 'barcode':
       return 'Barcode';
+    case 'coupon':
+      return item.parsedData?.title || item.parsedData?.code || 'Coupon';
+    case 'play-store':
+      return 'Google Play Store';
+    case 'app-store':
+      return 'App Store';
     case 'calendar':
       return item.parsedData?.title || 'Calendar Event';
     case 'text':
@@ -221,12 +252,18 @@ const getHistoryPrimaryAction = (item: HistoryItem) => {
       return { title: 'Send Email', icon: 'mail-outline' as const };
     case 'sms':
       return { title: 'Send SMS', icon: 'chatbubble-outline' as const };
+    case 'whatsapp':
+      return { title: 'Open WhatsApp', icon: 'logo-whatsapp' as const };
     case 'location':
       return { title: 'Open Map', icon: 'location-outline' as const };
     case 'calendar':
       return { title: 'Add to Calendar', icon: 'calendar-outline' as const };
     case 'vcard':
       return { title: 'Add to Contacts', icon: 'person-add-outline' as const };
+    case 'play-store':
+      return { title: 'Open in Play Store', icon: 'open-outline' as const };
+    case 'app-store':
+      return { title: 'Open in App Store', icon: 'open-outline' as const };
     default:
       return null;
   }
@@ -479,6 +516,41 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
     });
   };
 
+  const handleCopySelectedSpecialValue = async () => {
+    if (!selectedItem) {
+      return;
+    }
+
+    let valueToCopy = '';
+    let title = 'Copied';
+    let message = 'The selected value has been copied to your clipboard.';
+
+    if (selectedItem.type === 'coupon' && selectedItem.parsedData?.code) {
+      valueToCopy = selectedItem.parsedData.code;
+      title = 'Coupon code copied';
+      message = 'The coupon code has been copied to your clipboard.';
+    }
+
+    if (selectedItem.type === 'whatsapp') {
+      valueToCopy = selectedItem.parsedData?.message || selectedItem.parsedData?.phone || '';
+      title = selectedItem.parsedData?.message ? 'Message copied' : 'Number copied';
+      message = selectedItem.parsedData?.message
+        ? 'The WhatsApp message has been copied to your clipboard.'
+        : 'The WhatsApp number has been copied to your clipboard.';
+    }
+
+    if (!valueToCopy) {
+      return;
+    }
+
+    await Clipboard.setStringAsync(valueToCopy);
+    setSuccessDialog({
+      visible: true,
+      title,
+      message,
+    });
+  };
+
   const handleOpenSelectedItem = async () => {
     if (!selectedItem) {
       return;
@@ -508,6 +580,9 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
         await Linking.openURL(sms);
         return;
       }
+      case 'whatsapp':
+        await Linking.openURL(selectedItem.parsedData?.url || selectedItem.rawValue);
+        return;
       case 'location': {
         const query = selectedItem.parsedData?.query;
         const latitude = selectedItem.parsedData?.latitude;
@@ -515,9 +590,13 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
 
         if (
           /^https?:\/\//i.test(selectedItem.rawValue) &&
-          (!query || /^https?:\/\//i.test(String(query)))
+          (
+            !query ||
+            /^https?:\/\//i.test(String(query)) ||
+            query === 'Google Maps Link'
+          )
         ) {
-          await WebBrowser.openBrowserAsync(selectedItem.rawValue);
+          await WebBrowser.openBrowserAsync(selectedItem.parsedData?.url || selectedItem.rawValue);
           return;
         }
 
@@ -601,7 +680,10 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
               ? [{ label: 'work', email: selectedItem.parsedData.email }]
               : undefined,
             urlAddresses: selectedItem.parsedData?.website
-              ? [{ label: 'website', url: selectedItem.parsedData.website }]
+              ? [{ label: 'homepage', url: selectedItem.parsedData.website }]
+              : undefined,
+            addresses: selectedItem.parsedData?.address
+              ? [{ label: 'work', street: selectedItem.parsedData.address }]
               : undefined,
           },
           {
@@ -611,6 +693,10 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
         );
         return;
       }
+      case 'play-store':
+      case 'app-store':
+        await WebBrowser.openBrowserAsync(selectedItem.parsedData?.url || selectedItem.rawValue);
+        return;
       default:
         return;
     }
@@ -958,6 +1044,31 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
                       icon={
                         <Ionicons
                           name="person-add-outline"
+                          size={20}
+                          color={theme.text.primary}
+                        />
+                      }
+                    />
+                  </View>
+                  <View style={s.modalActionButton} />
+                </View>
+              ) : null}
+              {selectedItem.type === 'coupon' || selectedItem.type === 'whatsapp' ? (
+                <View style={[s.modalActionRow, s.modalActionRowSpacing]}>
+                  <View style={s.modalActionButton}>
+                    <Button
+                      title={
+                        selectedItem.type === 'coupon'
+                          ? 'Copy Code'
+                          : selectedItem.parsedData?.message
+                            ? 'Copy Message'
+                            : 'Copy Number'
+                      }
+                      onPress={handleCopySelectedSpecialValue}
+                      variant="secondary"
+                      icon={
+                        <Ionicons
+                          name="copy-outline"
                           size={20}
                           color={theme.text.primary}
                         />

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Share, Alert, Linking, Image, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Share, Linking, Image, ActivityIndicator, Platform } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import * as WebBrowser from 'expo-web-browser';
 import * as Contacts from 'expo-contacts';
@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Card } from '../ui/Card';
+import { NoticeDialog } from '../ui/NoticeDialog';
 import { SuccessDialog } from '../ui/SuccessDialog';
 import { QRCodeData, ScanSafetyState, ThreatCheckSource } from '../../constants/types';
 import { spacing, borderRadius, typography } from '../../constants/theme';
@@ -31,6 +32,17 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
     visible: false,
     title: '',
     message: '',
+  });
+  const [noticeDialog, setNoticeDialog] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    tone?: 'info' | 'success' | 'warning' | 'danger';
+  }>({
+    visible: false,
+    title: '',
+    message: '',
+    tone: 'info',
   });
 
   // Reset favicon error when data changes
@@ -59,10 +71,12 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
       case 'wifi': return '📶';
       case 'email': return '📧';
       case 'phone': return '📱';
+      case 'whatsapp': return '🟢';
       case 'location': return '📍';
       case 'calendar': return '🗓️';
       case 'text': return '📄';
       case 'barcode': return '🛒';
+      case 'coupon': return '🏷️';
       case 'sms': return '💬';
       case 'vcard': return '👤';
       default: return '📋';
@@ -75,12 +89,16 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
       case 'wifi': return 'WiFi';
       case 'email': return 'Email';
       case 'phone': return 'Phone';
+      case 'whatsapp': return 'WhatsApp';
       case 'location': return 'Location';
       case 'calendar': return 'Calendar';
       case 'text': return 'Text';
       case 'barcode': return 'Product';
+      case 'coupon': return 'Coupon';
       case 'sms': return 'SMS';
       case 'vcard': return 'Contact';
+      case 'play-store': return 'Google Play Store';
+      case 'app-store': return 'App Store';
       default: return 'Unknown';
     }
   };
@@ -124,6 +142,19 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
     return 'Successfully scanned';
   };
 
+  const showNotice = (
+    title: string,
+    message: string,
+    tone: 'info' | 'success' | 'warning' | 'danger' = 'info'
+  ) => {
+    setNoticeDialog({
+      visible: true,
+      title,
+      message,
+      tone,
+    });
+  };
+
   const handleOpenUrl = async () => {
     if (data.type === 'url') {
       await WebBrowser.openBrowserAsync(data.data.url);
@@ -138,9 +169,13 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
     if (
       typeof data.rawValue === 'string' &&
       /^https?:\/\//i.test(data.rawValue) &&
-      (!data.data.query || /^https?:\/\//i.test(String(data.data.query)))
+      (
+        !data.data.query ||
+        /^https?:\/\//i.test(String(data.data.query)) ||
+        data.data.query === 'Google Maps Link'
+      )
     ) {
-      return data.rawValue;
+      return data.data.url || data.rawValue;
     }
 
     if (data.data.query) {
@@ -211,6 +246,25 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
         .filter(Boolean)
         .join('\n');
     }
+
+    if (data.type === 'coupon') {
+      textToCopy = [
+        data.data.title ? `Offer: ${data.data.title}` : '',
+        data.data.code ? `Code: ${data.data.code}` : '',
+        data.data.details ? `Details: ${data.data.details}` : '',
+      ]
+        .filter(Boolean)
+        .join('\n');
+    }
+
+    if (data.type === 'whatsapp') {
+      textToCopy = [
+        data.data.phone ? `WhatsApp: ${data.data.phone}` : '',
+        data.data.message ? `Message: ${data.data.message}` : '',
+      ]
+        .filter(Boolean)
+        .join('\n');
+    }
     
     await Clipboard.setStringAsync(textToCopy);
     setSuccessDialog({
@@ -244,6 +298,16 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
     }
   };
 
+  const handleOpenWhatsApp = () => {
+    if (data.type !== 'whatsapp') {
+      return;
+    }
+
+    Linking.openURL(data.data.url || data.rawValue).catch(() => {
+      showNotice('Could Not Open WhatsApp', 'The WhatsApp link could not be opened on this device.', 'warning');
+    });
+  };
+
   const handleReplySms = () => {
     if (data.type !== 'sms') {
       return;
@@ -261,13 +325,13 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
       const isAvailable = await Contacts.isAvailableAsync();
 
       if (!isAvailable) {
-        Alert.alert('Contacts unavailable', 'This device does not support contact creation.');
+        showNotice('Contacts Unavailable', 'This device does not support contact creation.', 'warning');
         return;
       }
 
       const permission = await Contacts.requestPermissionsAsync();
       if (permission.status !== 'granted') {
-        Alert.alert('Permission needed', 'Allow contacts access to save this contact.');
+        showNotice('Permission Needed', 'Allow contacts access to save this contact.', 'warning');
         return;
       }
 
@@ -299,7 +363,10 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
             ? [{ label: 'work', email: data.data.email }]
             : undefined,
           urlAddresses: data.data.website
-            ? [{ label: 'website', url: data.data.website }]
+            ? [{ label: 'homepage', url: data.data.website }]
+            : undefined,
+          addresses: data.data.address
+            ? [{ label: 'work', street: data.data.address }]
             : undefined,
         }, {
           allowsEditing: true,
@@ -307,11 +374,49 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
         });
       }
     } catch (error) {
-      Alert.alert(
-        'Could not open contacts',
-        error instanceof Error ? error.message : 'The contact form could not be opened.'
+      showNotice(
+        'Could Not Open Contacts',
+        error instanceof Error ? error.message : 'The contact form could not be opened.',
+        'danger'
       );
     }
+  };
+
+  const handleAddToCalendar = () => {
+    if (data.type !== 'calendar') {
+      return;
+    }
+
+    const calendarData = data.data;
+    const eventTitle = calendarData.title || 'Calendar Event';
+    const eventStart = calendarData.start || calendarData.startRaw;
+    const eventEnd = calendarData.end || calendarData.endRaw;
+    const eventLocation = calendarData.location || '';
+    const eventDescription = calendarData.description || '';
+
+    // Create calendar URL format
+    let calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE`;
+    calendarUrl += `&text=${encodeURIComponent(eventTitle)}`;
+    
+    if (eventStart) {
+      calendarUrl += `&dates=${eventStart.replace(/[-:]/g, '')}/${eventEnd ? eventEnd.replace(/[-:]/g, '') : ''}`;
+    }
+    
+    if (eventLocation) {
+      calendarUrl += `&location=${encodeURIComponent(eventLocation)}`;
+    }
+    
+    if (eventDescription) {
+      calendarUrl += `&details=${encodeURIComponent(eventDescription)}`;
+    }
+
+    Linking.openURL(calendarUrl).catch(error => {
+      showNotice(
+        'Could Not Open Calendar',
+        'Unable to open calendar application. You can manually add this event.',
+        'warning'
+      );
+    });
   };
 
   const renderActionButtons = () => {
@@ -354,7 +459,13 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
           <Button
             key="connect"
             title="Connect to Network"
-            onPress={() => Alert.alert('WiFi Connection', 'This feature will be implemented in the next version.')}
+            onPress={() =>
+              showNotice(
+                'Wi-Fi Connection',
+                'Direct Wi-Fi connection will be added in a later version.',
+                'info'
+              )
+            }
             icon={<Ionicons name="wifi-outline" size={20} color="#FFFFFF" />}
           />
         );
@@ -367,6 +478,38 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
             icon={<Ionicons name="key-outline" size={20} color={theme.text.primary} />}
           />
         );
+        break;
+
+      case 'whatsapp':
+        buttons.push(
+          <Button
+            key="open-whatsapp"
+            title="Open WhatsApp"
+            onPress={handleOpenWhatsApp}
+            icon={<Ionicons name="logo-whatsapp" size={20} color="#FFFFFF" />}
+          />
+        );
+        if (data.data.message) {
+          buttons.push(
+            <Button
+              key="copy-message"
+              title="Copy Message"
+              onPress={() => Clipboard.setStringAsync(data.data.message)}
+              variant="secondary"
+              icon={<Ionicons name="copy-outline" size={20} color={theme.text.primary} />}
+            />
+          );
+        } else if (data.data.phone) {
+          buttons.push(
+            <Button
+              key="copy-number"
+              title="Copy Number"
+              onPress={() => Clipboard.setStringAsync(data.data.phone)}
+              variant="secondary"
+              icon={<Ionicons name="copy-outline" size={20} color={theme.text.primary} />}
+            />
+          );
+        }
         break;
 
       case 'email':
@@ -466,10 +609,19 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
       case 'calendar':
         buttons.push(
           <Button
+            key="calendar"
+            title="Add to Calendar"
+            onPress={handleAddToCalendar}
+            icon={<Ionicons name="calendar-outline" size={20} color="#FFFFFF" />}
+          />
+        );
+        buttons.push(
+          <Button
             key="copy"
             title="Copy Event"
             onPress={handleCopy}
-            icon={<Ionicons name="copy-outline" size={20} color="#FFFFFF" />}
+            variant="secondary"
+            icon={<Ionicons name="copy-outline" size={20} color={theme.text.primary} />}
           />
         );
         break;
@@ -487,6 +639,55 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
           <Button
             key="copy"
             title="Copy Contact"
+            onPress={handleCopy}
+            variant="secondary"
+            icon={<Ionicons name="copy-outline" size={20} color={theme.text.primary} />}
+          />
+        );
+        break;
+
+      case 'coupon':
+        if (data.data.code) {
+          buttons.push(
+            <Button
+              key="copy-code"
+              title="Copy Code"
+              onPress={() => Clipboard.setStringAsync(data.data.code)}
+              icon={<Ionicons name="pricetag-outline" size={20} color="#FFFFFF" />}
+            />
+          );
+        }
+        buttons.push(
+          <Button
+            key="copy-all"
+            title="Copy All"
+            onPress={handleCopy}
+            variant={data.data.code ? 'secondary' : 'primary'}
+            icon={
+              <Ionicons
+                name="copy-outline"
+                size={20}
+                color={data.data.code ? theme.text.primary : '#FFFFFF'}
+              />
+            }
+          />
+        );
+        break;
+
+      case 'play-store':
+      case 'app-store':
+        buttons.push(
+          <Button
+            key="open-store"
+            title={data.type === 'play-store' ? 'Open in Play Store' : 'Open in App Store'}
+            onPress={() => WebBrowser.openBrowserAsync(data.data.url || data.rawValue)}
+            icon={<Ionicons name="open-outline" size={20} color="#FFFFFF" />}
+          />
+        );
+        buttons.push(
+          <Button
+            key="copy-store-link"
+            title="Copy Link"
             onPress={handleCopy}
             variant="secondary"
             icon={<Ionicons name="copy-outline" size={20} color={theme.text.primary} />}
@@ -688,6 +889,32 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
           </Text>
         );
 
+      case 'whatsapp':
+        return (
+          <View style={styles.contentContainer}>
+            {data.data.phone ? (
+              <>
+                <Text style={[styles.contentLabel, { color: theme.text.secondary }]}>
+                  Phone Number
+                </Text>
+                <Text style={[styles.contentText, { color: theme.text.primary }]}>
+                  {data.data.phone}
+                </Text>
+              </>
+            ) : null}
+            {data.data.message ? (
+              <>
+                <Text style={[styles.contentLabel, { color: theme.text.secondary, marginTop: spacing.sm }]}>
+                  Message
+                </Text>
+                <Text style={[styles.contentText, { color: theme.text.primary }]}>
+                  {data.data.message}
+                </Text>
+              </>
+            ) : null}
+          </View>
+        );
+
       case 'sms':
         return (
           <View style={styles.contentContainer}>
@@ -807,6 +1034,16 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
                 </Text>
               </>
             ) : null}
+            {data.data.jobTitle ? (
+              <>
+                <Text style={[styles.contentLabel, { color: theme.text.secondary, marginTop: spacing.sm }]}>
+                  Job Title
+                </Text>
+                <Text style={[styles.contentText, { color: theme.text.primary }]}>
+                  {data.data.jobTitle}
+                </Text>
+              </>
+            ) : null}
             {data.data.phone ? (
               <>
                 <Text style={[styles.contentLabel, { color: theme.text.secondary, marginTop: spacing.sm }]}>
@@ -827,6 +1064,71 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
                 </Text>
               </>
             ) : null}
+            {data.data.website ? (
+              <>
+                <Text style={[styles.contentLabel, { color: theme.text.secondary, marginTop: spacing.sm }]}>
+                  Website
+                </Text>
+                <Text style={[styles.contentText, { color: theme.text.primary }]}>
+                  {data.data.website}
+                </Text>
+              </>
+            ) : null}
+            {data.data.address ? (
+              <>
+                <Text style={[styles.contentLabel, { color: theme.text.secondary, marginTop: spacing.sm }]}>
+                  Address
+                </Text>
+                <Text style={[styles.contentText, { color: theme.text.primary }]}>
+                  {data.data.address}
+                </Text>
+              </>
+            ) : null}
+          </View>
+        );
+
+      case 'coupon':
+        return (
+          <View style={styles.contentContainer}>
+            <Text style={[styles.contentLabel, { color: theme.text.secondary }]}>
+              Offer
+            </Text>
+            <Text style={[styles.contentText, { color: theme.text.primary }]}>
+              {data.data.title || 'Coupon'}
+            </Text>
+            {data.data.code ? (
+              <>
+                <Text style={[styles.contentLabel, { color: theme.text.secondary, marginTop: spacing.sm }]}>
+                  Code
+                </Text>
+                <Text style={[styles.contentText, { color: theme.text.primary }]}>
+                  {data.data.code}
+                </Text>
+              </>
+            ) : null}
+            {data.data.details ? (
+              <>
+                <Text style={[styles.contentLabel, { color: theme.text.secondary, marginTop: spacing.sm }]}>
+                  Details
+                </Text>
+                <Text style={[styles.contentText, { color: theme.text.primary }]}>
+                  {data.data.details}
+                </Text>
+              </>
+            ) : null}
+          </View>
+        );
+
+      case 'play-store':
+      case 'app-store':
+        return (
+          <View style={styles.contentContainer}>
+            <Text style={[styles.contentLabel, { color: theme.text.secondary }]}>
+              Store Link
+            </Text>
+            <Text style={[styles.contentText, { color: theme.text.primary }]}>
+              {data.data.url || data.rawValue}
+            </Text>
           </View>
         );
 
@@ -846,8 +1148,8 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: theme.border }]}>
         <View style={styles.headerLeft}>
-          {/* Favicon for URLs, emoji icon for other types */}
-          {data.type === 'url' ? (
+          {/* Favicon for URL-like links, emoji icon for other types */}
+          {data.type === 'url' || data.type === 'play-store' || data.type === 'app-store' ? (
             <View
               style={[
                 styles.faviconContainer,
@@ -934,6 +1236,13 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
         title={successDialog.title}
         message={successDialog.message}
         onClose={() => setSuccessDialog(prev => ({ ...prev, visible: false }))}
+      />
+      <NoticeDialog
+        visible={noticeDialog.visible}
+        title={noticeDialog.title}
+        message={noticeDialog.message}
+        tone={noticeDialog.tone}
+        onClose={() => setNoticeDialog({ visible: false, title: '', message: '', tone: 'info' })}
       />
     </View>
   );

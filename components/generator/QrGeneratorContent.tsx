@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import {
-  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -15,6 +14,7 @@ import * as Clipboard from 'expo-clipboard';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from '../ui/Card';
 import { Chip } from '../ui/Chip';
+import { NoticeDialog } from '../ui/NoticeDialog';
 import { SuccessDialog } from '../ui/SuccessDialog';
 import {
   borderRadius,
@@ -67,6 +67,15 @@ export function QrGeneratorContent() {
     title: '',
     message: '',
   });
+  const [noticeDialog, setNoticeDialog] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+  }>({
+    visible: false,
+    title: '',
+    message: '',
+  });
 
   const selectedTemplate = useMemo(
     () => getGeneratorTemplate(selectedTemplateId),
@@ -93,7 +102,11 @@ export function QrGeneratorContent() {
     const clipboardValue = (await Clipboard.getStringAsync()).trim();
 
     if (!clipboardValue) {
-      Alert.alert('Clipboard empty', 'Copy a link first, then try again.');
+      setNoticeDialog({
+        visible: true,
+        title: 'Clipboard Empty',
+        message: 'Copy a link first, then try again.',
+      });
       return;
     }
 
@@ -148,19 +161,22 @@ export function QrGeneratorContent() {
         return;
       }
 
-      Alert.alert(
-        Platform.OS === 'web' ? 'Download started' : 'Image saved',
-        Platform.OS === 'web'
-          ? `Your QR code is downloading as ${result.fileName}.`
-          : result.uri
-            ? `Saved as ${result.fileName}.`
-            : `${result.fileName} is ready in the app documents folder.`
-      );
+      setNoticeDialog({
+        visible: true,
+        title: Platform.OS === 'web' ? 'Download Started' : 'Image Saved',
+        message:
+          Platform.OS === 'web'
+            ? `Your QR code is downloading as ${result.fileName}.`
+            : result.uri
+              ? `Saved as ${result.fileName}.`
+              : `${result.fileName} is ready in the app documents folder.`,
+      });
     } catch (error) {
-      Alert.alert(
-        'Save failed',
-        error instanceof Error ? error.message : 'The QR code image could not be saved.'
-      );
+      setNoticeDialog({
+        visible: true,
+        title: 'Save Failed',
+        message: error instanceof Error ? error.message : 'The QR code image could not be saved.',
+      });
     } finally {
       setIsSaving(false);
     }
@@ -298,6 +314,12 @@ export function QrGeneratorContent() {
         title={successDialog.title}
         message={successDialog.message}
         onClose={() => setSuccessDialog(prev => ({ ...prev, visible: false }))}
+      />
+      <NoticeDialog
+        visible={noticeDialog.visible}
+        title={noticeDialog.title}
+        message={noticeDialog.message}
+        onClose={() => setNoticeDialog(prev => ({ ...prev, visible: false }))}
       />
     </>
   );
