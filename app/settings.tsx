@@ -93,7 +93,7 @@ export default function SettingsScreen() {
         <Pressable onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={24} color={theme.text.primary} />
         </Pressable>
-        <Text style={[styles.title, { color: theme.text.primary }]}>Settings</Text>
+        <Text style={[styles.title, { color: theme.text.primary }]}>Settings (UPDATED)</Text>
         <View style={styles.placeholder} />
       </View>
 
