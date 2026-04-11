@@ -12,7 +12,7 @@ const defaultSettings: SettingsState = {
   urlThreatScanning: true,
   confirmDeleteHistory: true,
   autoCopyScanned: false,
-  swipeNavigation: false,
+  swipeNavigation: true,
   defaultErrorCorrection: 'M',
   defaultOutputFormat: 'QR',
 };
