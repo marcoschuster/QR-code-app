@@ -31,7 +31,7 @@ export default function HistoryTab() {
     },
     onPanResponderRelease: (_, gestureState) => {
       const { dx } = gestureState;
-      const swipeThreshold = 50;
+      const swipeThreshold = 30;
 
       if (dx > swipeThreshold && currentTabIndex > 0) {
         // Swipe right - go to previous tab
