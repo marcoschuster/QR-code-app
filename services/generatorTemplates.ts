@@ -492,13 +492,16 @@ export function buildGeneratorContent(
 ) {
   switch (templateId) {
     case 'website':
+      return generateQRCode('url', { url: normalizeGeneralUrl(required(values, 'url')) });
     case 'youtube':
+      return generateQRCode('url', { url: normalizeYoutubeUrl(required(values, 'url')) });
     case 'app-store':
+      return generateQRCode('url', { url: normalizeAppStoreUrl(required(values, 'url')) });
     case 'play-store':
-      return generateQRCode('url', { url: normalizeQrLinkInput(required(values, 'url')) });
+      return generateQRCode('url', { url: normalizePlayStoreUrl(required(values, 'url')) });
     case 'discord':
       return generateQRCode('url', {
-        url: normalizeQrLinkInput(required(values, 'inviteUrl')),
+        url: normalizeDiscordInviteUrl(required(values, 'inviteUrl')),
       });
     case 'plain-text':
       return generateQRCode('text', { text: required(values, 'text') });
@@ -511,7 +514,7 @@ export function buildGeneratorContent(
       });
     case 'email':
       return generateQRCode('email', {
-        email: required(values, 'email'),
+        email: normalizeEmailAddress(required(values, 'email')),
         subject: optional(values, 'subject'),
         body: optional(values, 'body'),
       });
@@ -544,7 +547,7 @@ export function buildGeneratorContent(
         `DETAILS:${required(values, 'details')}`,
       ].join('\n');
     case 'paypal': {
-      const username = sanitizeHandle(required(values, 'username'));
+      const username = normalizePayPalUsername(required(values, 'username'));
       const amount = optional(values, 'amount');
       return amount
         ? normalizeQrLinkInput(`paypal.me/${username}/${amount}`)
@@ -568,23 +571,23 @@ export function buildGeneratorContent(
         : `https://wa.me/${phone}`;
     }
     case 'facetime':
-      return `facetime:${required(values, 'target')}`;
+      return `facetime:${normalizeFaceTimeTarget(required(values, 'target'))}`;
     case 'facetime-audio':
-      return `facetime-audio:${required(values, 'target')}`;
+      return `facetime-audio:${normalizeFaceTimeTarget(required(values, 'target'))}`;
     case 'instagram':
-      return normalizeQrLinkInput(`instagram.com/${sanitizeHandle(required(values, 'handle'))}`);
+      return normalizeQrLinkInput(`instagram.com/${normalizeSocialHandle(required(values, 'handle'), 'Instagram')}`);
     case 'linkedin':
-      return normalizeQrLinkInput(`www.linkedin.com/in/${sanitizeHandle(required(values, 'handle'))}`);
+      return normalizeQrLinkInput(`www.linkedin.com/in/${normalizeLinkedInSlug(required(values, 'handle'))}`);
     case 'tiktok': {
-      const handle = sanitizeHandle(required(values, 'handle'));
+      const handle = normalizeSocialHandle(required(values, 'handle'), 'TikTok');
       return normalizeQrLinkInput(`www.tiktok.com/@${handle}`);
     }
     case 'telegram':
-      return normalizeQrLinkInput(`t.me/${sanitizeHandle(required(values, 'username'))}`);
+      return normalizeQrLinkInput(`t.me/${normalizeTelegramUsername(required(values, 'username'))}`);
     case 'maps-search':
       return buildMapsSearchUrl(required(values, 'query'));
     case 'x-profile':
-      return normalizeQrLinkInput(`x.com/${sanitizeHandle(required(values, 'handle'))}`);
+      return normalizeQrLinkInput(`x.com/${normalizeXHandle(required(values, 'handle'))}`);
     case 'custom-data':
       return required(values, 'content');
     default:
@@ -608,6 +611,163 @@ function optional(values: Record<string, string>, key: string) {
 
 function sanitizeHandle(handle: string) {
   return handle.trim().replace(/^@+/, '').replace(/^\/+|\/+$/g, '');
+}
+
+function normalizeGeneralUrl(value: string) {
+  return normalizeQrLinkInput(value);
+}
+
+function normalizeYoutubeUrl(value: string) {
+  const url = normalizeExpectedUrl(value, ['youtube.com', 'youtu.be'], 'Enter a valid YouTube link.');
+  return url;
+}
+
+function normalizeDiscordInviteUrl(value: string) {
+  const url = normalizeExpectedUrl(
+    value,
+    ['discord.gg', 'discord.com', 'www.discord.com'],
+    'Enter a valid Discord invite link.'
+  );
+  const parsedUrl = new URL(url);
+  const hostname = parsedUrl.hostname.toLowerCase();
+
+  if (hostname === 'discord.gg') {
+    return url;
+  }
+
+  if (!parsedUrl.pathname.toLowerCase().startsWith('/invite/')) {
+    throw new Error('Use a Discord invite link from discord.gg or discord.com/invite/....');
+  }
+
+  return url;
+}
+
+function normalizePlayStoreUrl(value: string) {
+  const url = normalizeExpectedUrl(
+    value,
+    ['play.google.com'],
+    'Enter an official Google Play Store link.'
+  );
+  const parsedUrl = new URL(url);
+
+  if (parsedUrl.pathname.toLowerCase() !== '/store/apps/details' || !parsedUrl.searchParams.get('id')) {
+    throw new Error('Use a Google Play Store app link with an app id.');
+  }
+
+  return url;
+}
+
+function normalizeAppStoreUrl(value: string) {
+  const url = normalizeExpectedUrl(
+    value,
+    ['apps.apple.com'],
+    'Enter an official Apple App Store link.'
+  );
+  const parsedUrl = new URL(url);
+
+  if (!/\/app\//i.test(parsedUrl.pathname)) {
+    throw new Error('Use a valid App Store app link.');
+  }
+
+  return url;
+}
+
+function normalizeExpectedUrl(value: string, allowedDomains: string[], invalidMessage: string) {
+  const url = normalizeQrLinkInput(value);
+  const parsedUrl = new URL(url);
+  const hostname = parsedUrl.hostname.toLowerCase();
+
+  if (!allowedDomains.some((domain) => hostname === domain || hostname.endsWith(`.${domain}`))) {
+    throw new Error(invalidMessage);
+  }
+
+  return url;
+}
+
+function normalizeEmailAddress(value: string) {
+  const email = value.trim();
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new Error('Enter a valid email address.');
+  }
+
+  return email;
+}
+
+function normalizeFaceTimeTarget(value: string) {
+  const trimmedValue = value.trim();
+
+  if (trimmedValue.includes('@')) {
+    return normalizeEmailAddress(trimmedValue);
+  }
+
+  return normalizePhoneNumber(trimmedValue);
+}
+
+function normalizePayPalUsername(value: string) {
+  const username = sanitizeHandle(value);
+
+  if (looksLikeUrl(username) || username.includes('@') || !/^[a-zA-Z0-9._-]{3,50}$/.test(username)) {
+    throw new Error('Enter a valid PayPal.Me username, not a full link or email address.');
+  }
+
+  return username;
+}
+
+function normalizeSocialHandle(value: string, label: string) {
+  const handle = sanitizeHandle(value);
+
+  if (looksLikeUrl(handle) || handle.includes('@') || looksLikeEmail(handle) || looksLikeRawPhone(handle)) {
+    throw new Error(`Enter a valid ${label} handle, not a link, email address, or phone number.`);
+  }
+
+  if (!/^[a-zA-Z0-9._]{1,30}$/.test(handle)) {
+    throw new Error(`Enter a valid ${label} handle using letters, numbers, dots, or underscores.`);
+  }
+
+  return handle;
+}
+
+function normalizeLinkedInSlug(value: string) {
+  const slug = sanitizeHandle(value);
+
+  if (looksLikeUrl(slug) || looksLikeEmail(slug) || looksLikeRawPhone(slug)) {
+    throw new Error('Enter a LinkedIn profile slug, not a full link, email address, or phone number.');
+  }
+
+  if (!/^[a-zA-Z0-9-]{3,100}$/.test(slug)) {
+    throw new Error('Enter a valid LinkedIn slug using letters, numbers, and hyphens.');
+  }
+
+  return slug;
+}
+
+function normalizeTelegramUsername(value: string) {
+  const username = sanitizeHandle(value);
+
+  if (looksLikeUrl(username) || username.includes('@') || looksLikeEmail(username) || looksLikeRawPhone(username)) {
+    throw new Error('Enter a Telegram username, not a full link, email address, or phone number.');
+  }
+
+  if (!/^[a-zA-Z0-9_]{5,32}$/.test(username)) {
+    throw new Error('Enter a valid Telegram username using letters, numbers, or underscores.');
+  }
+
+  return username;
+}
+
+function normalizeXHandle(value: string) {
+  const handle = sanitizeHandle(value);
+
+  if (looksLikeUrl(handle) || handle.includes('@') || looksLikeEmail(handle) || looksLikeRawPhone(handle)) {
+    throw new Error('Enter an X handle, not a full link, email address, or phone number.');
+  }
+
+  if (!/^[a-zA-Z0-9_]{1,15}$/.test(handle)) {
+    throw new Error('Enter a valid X handle using letters, numbers, or underscores.');
+  }
+
+  return handle;
 }
 
 function digitsOnly(value: string) {
@@ -638,8 +798,8 @@ function buildVCard(values: Record<string, string>) {
   if (optional(values, 'company')) lines.push(`ORG:${optional(values, 'company')}`);
   if (optional(values, 'jobTitle')) lines.push(`TITLE:${optional(values, 'jobTitle')}`);
   if (optional(values, 'phone')) lines.push(`TEL:${normalizePhoneNumber(optional(values, 'phone'))}`);
-  if (optional(values, 'email')) lines.push(`EMAIL:${optional(values, 'email')}`);
-  if (optional(values, 'website')) lines.push(`URL:${normalizeQrLinkInput(optional(values, 'website'))}`);
+  if (optional(values, 'email')) lines.push(`EMAIL:${normalizeEmailAddress(optional(values, 'email'))}`);
+  if (optional(values, 'website')) lines.push(`URL:${normalizeGeneralUrl(optional(values, 'website'))}`);
   if (optional(values, 'address')) lines.push(`ADR:;;${optional(values, 'address')};;;;`);
 
   lines.push('END:VCARD');
@@ -765,51 +925,36 @@ function buildMapsSearchUrl(value: string) {
     throw new Error('Enter a location, address, or maps URL.');
   }
 
-  const normalizedUrlCandidate = tryNormalizeUrl(trimmedValue);
+  if (looksLikeUrl(trimmedValue)) {
+    const normalizedUrlCandidate = normalizeQrLinkInput(trimmedValue);
+    const parsedUrl = new URL(normalizedUrlCandidate);
 
-  if (!normalizedUrlCandidate) {
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(trimmedValue)}`;
+    if (!isOfficialMapsHostname(parsedUrl.hostname)) {
+      throw new Error('Use an official Google Maps or Apple Maps link, or plain location text.');
+    }
+
+    const extractedLocation = extractLocationFromMapsUrl(parsedUrl);
+
+    if (extractedLocation.kind === 'short-link') {
+      return normalizedUrlCandidate;
+    }
+
+    if (extractedLocation.kind === 'query') {
+      return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(extractedLocation.query)}`;
+    }
+
+    if (extractedLocation.kind === 'coordinates') {
+      return `https://www.google.com/maps/search/?api=1&query=${extractedLocation.latitude},${extractedLocation.longitude}`;
+    }
+
+    return normalizedUrlCandidate;
   }
 
-  const parsedUrl = tryParseUrl(normalizedUrlCandidate);
-
-  if (!parsedUrl) {
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(trimmedValue)}`;
-  }
-
-  const extractedLocation = extractLocationFromMapsUrl(parsedUrl);
-
-  if (extractedLocation.kind === 'short-link') {
-    throw new Error(
-      'Short map links like maps.app.goo.gl cannot be converted offline. Paste the expanded maps link or a plain address instead.'
-    );
-  }
-
-  if (extractedLocation.kind === 'query') {
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(extractedLocation.query)}`;
-  }
-
-  if (extractedLocation.kind === 'coordinates') {
-    return `https://www.google.com/maps/search/?api=1&query=${extractedLocation.latitude},${extractedLocation.longitude}`;
+  if (trimmedValue.length > 40) {
+    throw new Error('Plain text map searches must be 40 characters or fewer.');
   }
 
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(trimmedValue)}`;
-}
-
-function tryNormalizeUrl(value: string) {
-  try {
-    return normalizeQrLinkInput(value);
-  } catch {
-    return null;
-  }
-}
-
-function tryParseUrl(value: string) {
-  try {
-    return new URL(value);
-  } catch {
-    return null;
-  }
 }
 
 function extractLocationFromMapsUrl(url: URL):
@@ -867,6 +1012,40 @@ function extractLocationFromMapsUrl(url: URL):
   }
 
   return { kind: 'unknown' };
+}
+
+function isOfficialMapsHostname(hostname: string) {
+  const normalizedHostname = hostname.toLowerCase();
+
+  return (
+    normalizedHostname === 'maps.app.goo.gl' ||
+    normalizedHostname === 'goo.gl' ||
+    normalizedHostname === 'maps.apple.com' ||
+    normalizedHostname.includes('google.')
+  );
+}
+
+function looksLikeUrl(value: string) {
+  const trimmedValue = value.trim();
+
+  if (/^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(trimmedValue) || /^www\./i.test(trimmedValue)) {
+    return true;
+  }
+
+  if (/\s/.test(trimmedValue)) {
+    return false;
+  }
+
+  return /^[^\s/]+\.[a-z]{2,}(?:[/:?#]|$)/i.test(trimmedValue);
+}
+
+function looksLikeEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
+function looksLikeRawPhone(value: string) {
+  const compactValue = value.replace(/[()\-\s/+]/g, '');
+  return /^\d{6,}$/.test(compactValue);
 }
 
 function firstNonEmpty(...values: Array<string | null>) {
