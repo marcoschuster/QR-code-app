@@ -11,6 +11,7 @@ const defaultSettings: SettingsState = {
   beepOnScan: false,
   urlThreatScanning: true,
   confirmDeleteHistory: true,
+  autoCopyScanned: false,
   defaultErrorCorrection: 'M',
   defaultOutputFormat: 'QR',
 };

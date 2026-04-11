@@ -86,6 +86,7 @@ export interface SettingsState {
   beepOnScan: boolean;
   urlThreatScanning: boolean;
   confirmDeleteHistory: boolean;
+  autoCopyScanned: boolean;
   defaultErrorCorrection: 'L' | 'M' | 'Q' | 'H';
   defaultOutputFormat: 'QR' | 'EAN-13' | 'Code 128';
 }

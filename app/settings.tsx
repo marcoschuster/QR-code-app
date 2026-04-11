@@ -36,6 +36,7 @@ export default function SettingsScreen() {
     vibrateOnScan,
     beepOnScan,
     urlThreatScanning,
+    autoCopyScanned,
     updateSettings,
     resetSettings,
   } = useSettingsStore();
@@ -200,6 +201,21 @@ export default function SettingsScreen() {
               </View>
               <View style={[styles.switch, vibrateOnScan && { backgroundColor: theme.accent }]}>
                 <View style={[styles.switchThumb, vibrateOnScan && styles.switchThumbOn]} />
+              </View>
+            </Pressable>
+            
+            <Pressable
+              style={styles.settingItem}
+              onPress={() => handleToggle('autoCopyScanned', !autoCopyScanned)}
+            >
+              <View style={styles.settingLeft}>
+                <Ionicons name="copy-outline" size={20} color={theme.text.primary} />
+                <Text style={[styles.settingText, { color: theme.text.primary }]}>
+                  Auto-copy Scanned Links
+                </Text>
+              </View>
+              <View style={[styles.switch, autoCopyScanned && { backgroundColor: theme.accent }]}>
+                <View style={[styles.switchThumb, autoCopyScanned && styles.switchThumbOn]} />
               </View>
             </Pressable>
           </View>

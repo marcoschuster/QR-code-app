@@ -7,6 +7,7 @@ import { useHistoryStore } from '../../store/useHistoryStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { useScanAudio } from '../../hooks/useScanAudio';
 import * as Haptics from 'expo-haptics';
+import * as Clipboard from 'expo-clipboard';
 import { scanFromURLAsync } from 'expo-camera';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 
@@ -23,7 +24,7 @@ export function PhotoScanner({ visible, imageUri, onClose, onResult }: PhotoScan
   const [scanError, setScanError] = useState<string | null>(null);
   const [showLimitReached, setShowLimitReached] = useState(false);
   const { addItem } = useHistoryStore();
-  const { saveToHistory, beepOnScan, vibrateOnScan, urlThreatScanning } = useSettingsStore();
+  const { saveToHistory, beepOnScan, vibrateOnScan, urlThreatScanning, autoCopyScanned } = useSettingsStore();
   const { playScanSound } = useScanAudio();
 
   const handleQRCodeFound = useCallback(async (qrData: string, isActive: () => boolean) => {
@@ -101,6 +102,25 @@ export function PhotoScanner({ visible, imageUri, onClose, onResult }: PhotoScan
     try {
       onResult({ ...parsed, safety, historyItemId });
       
+      // Auto-copy scanned content to clipboard if setting is enabled
+      if (autoCopyScanned) {
+        try {
+          let contentToCopy = qrData;
+          if (parsed.type === 'url') {
+            contentToCopy = parsed.data.url;
+          } else if (parsed.type === 'phone') {
+            contentToCopy = parsed.data.phone;
+          } else if (parsed.type === 'email') {
+            contentToCopy = parsed.data.email;
+          } else if (parsed.type === 'sms') {
+            contentToCopy = parsed.data.phone;
+          }
+          await Clipboard.setStringAsync(contentToCopy);
+        } catch (e) {
+          console.warn('[PhotoScanner] auto-copy failed:', e);
+        }
+      }
+      
       // Only close automatically if we AREN'T showing the limit dialog
       // Otherwise, we let the dialog's confirm action handle it
       if (success) {
@@ -109,7 +129,7 @@ export function PhotoScanner({ visible, imageUri, onClose, onResult }: PhotoScan
     } catch (e) {
       console.error('[PhotoScanner] onResult crashed:', e);
     }
-  }, [addItem, beepOnScan, onClose, onResult, playScanSound, saveToHistory, vibrateOnScan, urlThreatScanning]);
+  }, [addItem, beepOnScan, onClose, onResult, playScanSound, saveToHistory, vibrateOnScan, urlThreatScanning, autoCopyScanned]);
 
   useEffect(() => {
     if (!visible || !imageUri) {

@@ -23,6 +23,7 @@ import { useSettingsStore } from '../../store/useSettingsStore';
 import { useScanAudio } from '../../hooks/useScanAudio';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
+import * as Clipboard from 'expo-clipboard';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 
 interface ScannerScreenProps {
@@ -78,7 +79,7 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
   const [zoom, setZoom] = useState(0);
   const photoScanSucceededRef = useRef(false);
   const { addItem } = useHistoryStore();
-  const { saveToHistory, beepOnScan, vibrateOnScan, urlThreatScanning } = useSettingsStore();
+  const { saveToHistory, beepOnScan, vibrateOnScan, urlThreatScanning, autoCopyScanned } = useSettingsStore();
   const { playScanSound } = useScanAudio();
 
   useEffect(() => {
@@ -161,6 +162,25 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
 
     try {
       onResult({ ...parsed, safety: initialSafety, historyItemId });
+      
+      // Auto-copy scanned content to clipboard if setting is enabled
+      if (autoCopyScanned) {
+        try {
+          let contentToCopy = encodedValue;
+          if (parsed.type === 'url') {
+            contentToCopy = parsed.data.url;
+          } else if (parsed.type === 'phone') {
+            contentToCopy = parsed.data.phone;
+          } else if (parsed.type === 'email') {
+            contentToCopy = parsed.data.email;
+          } else if (parsed.type === 'sms') {
+            contentToCopy = parsed.data.phone;
+          }
+          await Clipboard.setStringAsync(contentToCopy);
+        } catch (e) {
+          console.warn('[Scanner] auto-copy failed:', e);
+        }
+      }
     } catch (e) {
       console.error('[Scanner] onResult crashed:', e);
     }
