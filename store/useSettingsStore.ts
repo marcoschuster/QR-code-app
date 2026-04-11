@@ -33,6 +33,18 @@ export const useSettingsStore = create<SettingsStore>()(
     {
       name: 'qr-scanner-settings',
       storage: createJSONStorage(() => AsyncStorage),
+      version: 1,
+      migrate: (persistedState: any, version: number) => {
+        if (version === 0) {
+          // Migration from version 0 to 1: add new fields
+          return {
+            ...persistedState,
+            autoCopyScanned: persistedState.autoCopyScanned ?? false,
+            swipeNavigation: persistedState.swipeNavigation ?? true,
+          };
+        }
+        return persistedState;
+      },
     }
   )
 );
