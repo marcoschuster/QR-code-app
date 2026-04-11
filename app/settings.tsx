@@ -42,6 +42,9 @@ export default function SettingsScreen() {
     resetSettings,
   } = useSettingsStore();
 
+  console.log('[Settings] autoCopyScanned:', autoCopyScanned);
+  console.log('[Settings] swipeNavigation:', swipeNavigation);
+
   const handleAppearanceChange = (value: 'light' | 'dark' | 'system') => {
     updateSettings({ appearance: value });
   };
