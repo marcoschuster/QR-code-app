@@ -37,6 +37,7 @@ export default function SettingsScreen() {
     beepOnScan,
     urlThreatScanning,
     autoCopyScanned,
+    swipeNavigation,
     updateSettings,
     resetSettings,
   } = useSettingsStore();
@@ -216,6 +217,29 @@ export default function SettingsScreen() {
               </View>
               <View style={[styles.switch, autoCopyScanned && { backgroundColor: theme.accent }]}>
                 <View style={[styles.switchThumb, autoCopyScanned && styles.switchThumbOn]} />
+              </View>
+            </Pressable>
+          </View>
+        </View>
+
+        {/* Navigation */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.text.primary }]}>
+            Navigation
+          </Text>
+          <View style={[styles.sectionContent, { backgroundColor: theme.surface }]}>
+            <Pressable
+              style={styles.settingItem}
+              onPress={() => handleToggle('swipeNavigation', !swipeNavigation)}
+            >
+              <View style={styles.settingLeft}>
+                <Ionicons name="swap-horizontal-outline" size={20} color={theme.text.primary} />
+                <Text style={[styles.settingText, { color: theme.text.primary }]}>
+                  Swipe Between Tabs
+                </Text>
+              </View>
+              <View style={[styles.switch, swipeNavigation && { backgroundColor: theme.accent }]}>
+                <View style={[styles.switchThumb, swipeNavigation && styles.switchThumbOn]} />
               </View>
             </Pressable>
           </View>

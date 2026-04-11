@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { View, StyleSheet, StatusBar, Modal } from 'react-native';
+import { View, StyleSheet, StatusBar, Modal, PanResponder } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ScannerScreen } from '../../components/scanner/CameraView';
 import { ScanResultSheet } from '../../components/scanner/ScanResultSheet';
@@ -34,7 +34,7 @@ export default function ScannerTab() {
   const [scannerKey, setScannerKey] = useState(0);
   const threatCheckRunRef = useRef(0);
   const updateItem = useHistoryStore((state) => state.updateItem);
-  const { urlThreatScanning } = useSettingsStore();
+  const { urlThreatScanning, swipeNavigation } = useSettingsStore();
 
   const handleScanResult = async (data: any) => {
     console.log('[index] handleScanResult called, type:', data?.type);
@@ -149,8 +149,29 @@ export default function ScannerTab() {
     setActiveTab(tab);
   };
 
+  const tabs = ['scan', 'history', 'generate'];
+  const currentTabIndex = tabs.indexOf(activeTab);
+
+  const panResponder = swipeNavigation ? PanResponder.create({
+    onMoveShouldSetPanResponder: (_, gestureState) => {
+      return Math.abs(gestureState.dx) > 10;
+    },
+    onPanResponderRelease: (_, gestureState) => {
+      const { dx } = gestureState;
+      const swipeThreshold = 50;
+
+      if (dx > swipeThreshold && currentTabIndex > 0) {
+        // Swipe right - go to previous tab
+        handleTabChange(tabs[currentTabIndex - 1]);
+      } else if (dx < -swipeThreshold && currentTabIndex < tabs.length - 1) {
+        // Swipe left - go to next tab
+        handleTabChange(tabs[currentTabIndex + 1]);
+      }
+    },
+  }) : null;
+
   return (
-    <View style={st.root}>
+    <View style={st.root} {...(panResponder?.panHandlers || {})}>
       <StatusBar hidden />
 
       {activeTab === 'scan' && (
