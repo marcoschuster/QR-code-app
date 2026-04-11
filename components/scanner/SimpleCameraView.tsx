@@ -4,6 +4,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { lightTheme, darkTheme, spacing, borderRadius, typography } from '../../constants/theme';
+import { parseQRCode } from '../../services/qrParser';
 
 interface ScannerScreenProps {
   onResult: (data: any) => void;
@@ -30,11 +31,8 @@ export function ScannerScreen({ onResult }: ScannerScreenProps) {
     try {
       setIsScanning(false);
 
-      const parsedData = {
-        type: 'text' as const,
-        data: { text: result.data },
-        rawValue: result.data,
-      };
+      // Use the parseQRCode function to properly detect QR code types
+      const parsedData = parseQRCode(result.data);
 
       setTimeout(() => {
         onResult(parsedData);
