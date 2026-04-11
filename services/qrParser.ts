@@ -26,6 +26,11 @@ export function parseQRCode(rawValue: string): QRCodeData {
     return { type: 'sms', data: smsData, rawValue };
   }
 
+  const whatsappData = parseWhatsAppPayload(trimmedValue);
+  if (whatsappData) {
+    return { type: 'whatsapp', data: whatsappData, rawValue };
+  }
+
   const phoneData = parsePhonePayload(trimmedValue);
   if (phoneData) {
     return { type: 'phone', data: phoneData, rawValue };
@@ -39,6 +44,11 @@ export function parseQRCode(rawValue: string): QRCodeData {
   const calendarData = parseCalendarPayload(trimmedValue);
   if (calendarData) {
     return { type: 'calendar', data: calendarData, rawValue };
+  }
+
+  const couponData = parseCouponPayload(trimmedValue);
+  if (couponData) {
+    return { type: 'coupon', data: couponData, rawValue };
   }
 
   const locationData = parseLocationPayload(trimmedValue);
@@ -229,6 +239,25 @@ function parseVCardPayload(rawValue: string) {
   };
 }
 
+function parseCouponPayload(rawValue: string) {
+  const normalizedRawValue = normalizeStructuredRawValue(rawValue);
+  const lines = splitStructuredLines(normalizedRawValue);
+
+  const title = getLineValue(lines, 'COUPON');
+  const code = getLineValue(lines, 'CODE');
+  const details = getLineValue(lines, 'DETAILS');
+
+  if (!title && !code) {
+    return null;
+  }
+
+  return {
+    title: title || 'Coupon',
+    code,
+    details,
+  };
+}
+
 function parseCalendarPayload(rawValue: string) {
   const normalizedRawValue = normalizeStructuredRawValue(rawValue);
   const upperValue = normalizedRawValue.toUpperCase();
@@ -298,6 +327,48 @@ function parseLocationPayload(rawValue: string) {
   return null;
 }
 
+function parseWhatsAppPayload(rawValue: string) {
+  if (/^https?:\/\/wa\.me\//i.test(rawValue) || /^https?:\/\/(?:www\.)?api\.whatsapp\.com\/send/i.test(rawValue)) {
+    try {
+      const parsedUrl = new URL(rawValue);
+      const pathPhone = parsedUrl.pathname.replace(/^\/+/, '').trim();
+      const phone = digitsOnly(decodeQrComponent(pathPhone || parsedUrl.searchParams.get('phone') || ''));
+      const message = decodeQrComponent(parsedUrl.searchParams.get('text') || parsedUrl.searchParams.get('message') || '');
+
+      if (!phone && !message) {
+        return null;
+      }
+
+      return {
+        phone,
+        message,
+        url: rawValue,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  if (!/^whatsapp:/i.test(rawValue)) {
+    return null;
+  }
+
+  const payload = rawValue.replace(/^whatsapp:/i, '');
+  const params = new URLSearchParams(payload.replace(/^\?/, ''));
+  const phone = digitsOnly(decodeQrComponent(params.get('phone') || ''));
+  const message = decodeQrComponent(params.get('text') || params.get('message') || '');
+
+  if (!phone && !message) {
+    return null;
+  }
+
+  return {
+    phone,
+    message,
+    url: rawValue,
+  };
+}
+
 function parseUrlPayload(rawValue: string): QRCodeData | null {
   if (!/^https?:\/\//i.test(rawValue)) {
     return null;
@@ -305,6 +376,16 @@ function parseUrlPayload(rawValue: string): QRCodeData | null {
 
   try {
     const parsedUrl = new URL(rawValue);
+    const storeType = parseStoreUrl(parsedUrl);
+
+    if (storeType) {
+      return {
+        type: storeType,
+        data: { url: rawValue },
+        rawValue,
+      };
+    }
+
     const mapsLocation = parseMapsUrl(parsedUrl);
 
     if (mapsLocation) {
@@ -335,8 +416,20 @@ function parseUrlPayload(rawValue: string): QRCodeData | null {
 function parseMapsUrl(parsedUrl: URL) {
   const hostname = parsedUrl.hostname.toLowerCase();
 
-  if (!hostname.includes('google.') && !hostname.includes('maps.apple.com')) {
+  if (
+    !hostname.includes('google.') &&
+    !hostname.includes('maps.apple.com') &&
+    hostname !== 'maps.app.goo.gl' &&
+    hostname !== 'goo.gl'
+  ) {
     return null;
+  }
+
+  if (hostname === 'maps.app.goo.gl' || hostname === 'goo.gl') {
+    return {
+      url: parsedUrl.toString(),
+      query: 'Google Maps Link',
+    };
   }
 
   const query = decodeQrComponent(
@@ -363,6 +456,21 @@ function parseMapsUrl(parsedUrl: URL) {
       latitude,
       longitude,
     };
+  }
+
+  return null;
+}
+
+function parseStoreUrl(parsedUrl: URL) {
+  const hostname = parsedUrl.hostname.toLowerCase();
+  const pathname = parsedUrl.pathname.toLowerCase();
+
+  if (hostname.includes('play.google.com') && pathname.startsWith('/store/apps/details')) {
+    return 'play-store' as const;
+  }
+
+  if (hostname.includes('apps.apple.com') && pathname.startsWith('/')) {
+    return 'app-store' as const;
   }
 
   return null;
@@ -441,6 +549,10 @@ function decodeQrComponent(value: string) {
   } catch {
     return value;
   }
+}
+
+function digitsOnly(value: string) {
+  return value.replace(/[^\d]/g, '');
 }
 
 function formatVCardAddress(value: string) {

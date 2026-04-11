@@ -4,11 +4,15 @@ export type ScanType =
   | 'email'
   | 'phone'
   | 'sms'
+  | 'whatsapp'
   | 'text'
   | 'vcard'
   | 'barcode'
+  | 'coupon'
   | 'location'
-  | 'calendar';
+  | 'calendar'
+  | 'app-store'
+  | 'play-store';
 export type ThreatCheckSource = 'google-safe-browsing' | 'heuristic';
 
 export interface ScanSafetyState {
