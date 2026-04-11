@@ -36,14 +36,17 @@ export const useSettingsStore = create<SettingsStore>()(
       version: 1,
       migrate: (persistedState: any, version: number) => {
         if (version === 0) {
-          // Migration from version 0 to 1: add new fields
+          // Migration from version 0 to 1: ensure all fields exist
           return {
+            ...defaultSettings,
             ...persistedState,
-            autoCopyScanned: persistedState.autoCopyScanned ?? false,
-            swipeNavigation: persistedState.swipeNavigation ?? true,
           };
         }
-        return persistedState;
+        // Always merge with defaults to ensure new fields are present
+        return {
+          ...defaultSettings,
+          ...persistedState,
+        };
       },
     }
   )
