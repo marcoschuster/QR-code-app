@@ -153,22 +153,29 @@ export default function ScannerTab() {
   const currentTabIndex = tabs.indexOf(activeTab);
 
   const panResponder = swipeNavigation ? PanResponder.create({
-    onMoveShouldSetPanResponder: (_, gestureState) => {
-      return Math.abs(gestureState.dx) > 10;
+    onMoveShouldSetPanResponder: () => {
+      console.log('[Swipe] onMoveShouldSetPanResponder called');
+      return true;
     },
     onPanResponderRelease: (_, gestureState) => {
+      console.log('[Swipe] onPanResponderRelease called, dx:', gestureState.dx);
       const { dx } = gestureState;
-      const swipeThreshold = 30;
+      const swipeThreshold = 50;
 
       if (dx > swipeThreshold && currentTabIndex > 0) {
         // Swipe right - go to previous tab
+        console.log('[Swipe] Swipe right detected, going to:', tabs[currentTabIndex - 1]);
         handleTabChange(tabs[currentTabIndex - 1]);
       } else if (dx < -swipeThreshold && currentTabIndex < tabs.length - 1) {
         // Swipe left - go to next tab
+        console.log('[Swipe] Swipe left detected, going to:', tabs[currentTabIndex + 1]);
         handleTabChange(tabs[currentTabIndex + 1]);
       }
     },
   }) : null;
+
+  console.log('[Swipe] swipeNavigation setting:', swipeNavigation);
+  console.log('[Swipe] panHandlers exist:', panResponder !== null);
 
   return (
     <View style={st.root} {...(panResponder?.panHandlers || {})}>

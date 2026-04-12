@@ -1,0 +1,22 @@
+[
+  {
+    "name": "phone",
+    "content": "tel:+49691234567"
+  },
+  {
+    "name": "sms",
+    "content": "sms:+49691234567?body=Hello%20from%20test"
+  },
+  {
+    "name": "map",
+    "content": "geo:0,0?q=Frankfurt%20am%20Main"
+  },
+  {
+    "name": "calendar",
+    "content": "BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nSUMMARY:Annual Meetup\nDTSTART:20260410T183000\nDTEND:20260410T210000\nLOCATION:Berlin HQ\nDESCRIPTION:Agenda, notes, or event details\nEND:VEVENT\nEND:VCALENDAR"
+  },
+  {
+    "name": "contact",
+    "content": "BEGIN:VCARD\nVERSION:3.0\nN:Doe;John;;;\nFN:John Doe\nORG:Acme Inc.\nTITLE:Sales Director\nTEL;TYPE=CELL:+49691234567\nEMAIL:john@example.com\nURL:https://example.com\nADR:;;Mainzer Landstrasse 1, Frankfurt;;;\nEND:VCARD"
+  }
+]

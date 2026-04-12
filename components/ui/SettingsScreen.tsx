@@ -38,6 +38,8 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
     vibrateOnScan,
     beepOnScan,
     urlThreatScanning,
+    autoCopyScanned,
+    swipeNavigation,
     confirmDeleteHistory,
     updateSettings,
     resetSettings,
@@ -279,6 +281,60 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
                   </View>
                   <View style={[styles.switchTrack, beepOnScan && { backgroundColor: theme.accent }]}>
                     <View style={[styles.switchThumb, beepOnScan && styles.switchThumbOn]} />
+                  </View>
+                </Pressable>
+
+                <View style={[styles.divider, { backgroundColor: theme.border }]} />
+
+                <Pressable
+                  style={styles.settingItem}
+                  onPress={() => handleToggle('autoCopyScanned', !autoCopyScanned)}
+                >
+                  <View style={styles.settingLeft}>
+                    <View style={[styles.iconWrapper, { backgroundColor: '#007AFF20' }]}>
+                      <Ionicons name="copy-outline" size={20} color="#007AFF" />
+                    </View>
+                    <View style={styles.settingTextContainer}>
+                      <Text style={[styles.settingText, { color: theme.text.primary }]}>
+                        Auto-copy Scanned Links
+                      </Text>
+                      <Text style={[styles.settingHint, { color: theme.text.secondary }]}>
+                        Copy scanned URLs to clipboard
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={[styles.switchTrack, autoCopyScanned && { backgroundColor: theme.accent }]}>
+                    <View style={[styles.switchThumb, autoCopyScanned && styles.switchThumbOn]} />
+                  </View>
+                </Pressable>
+              </View>
+            </View>
+
+            {/* Navigation Section */}
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: theme.text.secondary }]}>
+                NAVIGATION
+              </Text>
+              <View style={[styles.sectionContent, { backgroundColor: theme.surface }]}>
+                <Pressable
+                  style={styles.settingItem}
+                  onPress={() => handleToggle('swipeNavigation', !swipeNavigation)}
+                >
+                  <View style={styles.settingLeft}>
+                    <View style={[styles.iconWrapper, { backgroundColor: '#5856D620' }]}>
+                      <Ionicons name="swap-horizontal-outline" size={20} color="#5856D6" />
+                    </View>
+                    <View style={styles.settingTextContainer}>
+                      <Text style={[styles.settingText, { color: theme.text.primary }]}>
+                        Swipe Between Tabs
+                      </Text>
+                      <Text style={[styles.settingHint, { color: theme.text.secondary }]}>
+                        Swipe left/right to switch tabs
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={[styles.switchTrack, swipeNavigation && { backgroundColor: theme.accent }]}>
+                    <View style={[styles.switchThumb, swipeNavigation && styles.switchThumbOn]} />
                   </View>
                 </Pressable>
               </View>

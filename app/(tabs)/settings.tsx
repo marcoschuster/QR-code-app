@@ -8,6 +8,8 @@ import { useHistoryStore } from '../store/useHistoryStore';
 import { lightTheme, darkTheme, spacing, borderRadius, typography } from '../constants/theme';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 
+console.log('========== SETTINGS.TSX LOADED ==========');
+
 export default function SettingsScreen() {
   console.log('[Settings] SettingsScreen mounting');
   const colorScheme = useColorScheme();
@@ -185,7 +187,7 @@ export default function SettingsScreen() {
               <View style={styles.settingLeft}>
                 <Ionicons name="time-outline" size={20} color={theme.text.primary} />
                 <Text style={[styles.settingText, { color: theme.text.primary }]}>
-                  Save to History
+                  Save to History (TEST)
                 </Text>
               </View>
               <View style={[styles.switch, saveToHistory && { backgroundColor: theme.accent }]}>

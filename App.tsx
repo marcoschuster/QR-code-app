@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { View, StyleSheet, StatusBar, Linking } from 'react-native';
+import { View, StyleSheet, StatusBar, Linking, PanResponder } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { ScannerScreen } from './components/scanner/CameraView';
 import { ScanResultSheet } from './components/scanner/ScanResultSheet';
@@ -40,7 +40,7 @@ export default function App() {
   const threatCheckRunRef = useRef(0);
 
   const updateItem = useHistoryStore((state) => state.updateItem);
-  const { vibrateOnScan, autoOpenUrls, urlThreatScanning } = useSettingsStore();
+  const { vibrateOnScan, autoOpenUrls, urlThreatScanning, swipeNavigation } = useSettingsStore();
   const { theme } = useAppTheme();
 
   const handleScanResult = async (data: QRCodeData & { safety?: ScanSafetyState; historyItemId?: string }) => {
@@ -149,8 +149,39 @@ export default function App() {
     }
   };
 
+  const tabs = ['scan', 'generate', 'history'];
+  const currentTabIndex = tabs.indexOf(activeTab);
+
+  const panResponder = swipeNavigation ? PanResponder.create({
+    onMoveShouldSetPanResponder: (_, gestureState) => {
+      // Only capture horizontal swipes, not taps or vertical gestures
+      const { dx, dy } = gestureState;
+      const isHorizontalSwipe = Math.abs(dx) > Math.abs(dy);
+      const hasMovedEnough = Math.abs(dx) > 10;
+      return isHorizontalSwipe && hasMovedEnough;
+    },
+    onPanResponderRelease: (_, gestureState) => {
+      console.log('[App Swipe] onPanResponderRelease called, dx:', gestureState.dx);
+      const { dx } = gestureState;
+      const swipeThreshold = 50;
+
+      if (dx > swipeThreshold && currentTabIndex > 0) {
+        // Swipe right - go to previous tab
+        console.log('[App Swipe] Swipe right detected, going to:', tabs[currentTabIndex - 1]);
+        handleTabChange(tabs[currentTabIndex - 1]);
+      } else if (dx < -swipeThreshold && currentTabIndex < tabs.length - 1) {
+        // Swipe left - go to next tab
+        console.log('[App Swipe] Swipe left detected, going to:', tabs[currentTabIndex + 1]);
+        handleTabChange(tabs[currentTabIndex + 1]);
+      }
+    },
+  }) : null;
+
+  console.log('[App Swipe] swipeNavigation setting:', swipeNavigation);
+  console.log('[App Swipe] panHandlers exist:', panResponder !== null);
+
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
+    <View style={[styles.container, { backgroundColor: theme.background }]} {...(panResponder?.panHandlers || {})}>
       <StatusBar hidden />
       
       {activeTab === 'scan' && !showResult && (

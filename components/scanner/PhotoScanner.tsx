@@ -18,6 +18,14 @@ interface PhotoScannerProps {
   onResult: (data: any) => void;
 }
 
+const getAutoCopyLinkValue = (parsed: any) => {
+  if (!parsed || typeof parsed.rawValue !== 'string' || !/^https?:\/\//i.test(parsed.rawValue)) {
+    return null;
+  }
+
+  return parsed.data?.url || parsed.rawValue;
+};
+
 export function PhotoScanner({ visible, imageUri, onClose, onResult }: PhotoScannerProps) {
   const [isScanning, setIsScanning] = useState(false);
   const [scanned, setScanned] = useState(false);
@@ -102,20 +110,14 @@ export function PhotoScanner({ visible, imageUri, onClose, onResult }: PhotoScan
     try {
       onResult({ ...parsed, safety, historyItemId });
       
-      // Auto-copy scanned content to clipboard if setting is enabled
+      // Auto-copy only link-based scans when the setting is enabled.
       if (autoCopyScanned) {
         try {
-          let contentToCopy = qrData;
-          if (parsed.type === 'url') {
-            contentToCopy = parsed.data.url;
-          } else if (parsed.type === 'phone') {
-            contentToCopy = parsed.data.phone;
-          } else if (parsed.type === 'email') {
-            contentToCopy = parsed.data.email;
-          } else if (parsed.type === 'sms') {
-            contentToCopy = parsed.data.phone;
+          const contentToCopy = getAutoCopyLinkValue(parsed);
+
+          if (contentToCopy) {
+            await Clipboard.setStringAsync(contentToCopy);
           }
-          await Clipboard.setStringAsync(contentToCopy);
         } catch (e) {
           console.warn('[PhotoScanner] auto-copy failed:', e);
         }

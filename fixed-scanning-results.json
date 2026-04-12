@@ -1,0 +1,37 @@
+[
+  {
+    "name": "calendar",
+    "expectedType": "calendar",
+    "detectedType": "unknown",
+    "status": "FAIL",
+    "scannedTexts": []
+  },
+  {
+    "name": "contact",
+    "expectedType": "vcard",
+    "detectedType": "unknown",
+    "status": "FAIL",
+    "scannedTexts": []
+  },
+  {
+    "name": "map",
+    "expectedType": "location",
+    "detectedType": "unknown",
+    "status": "FAIL",
+    "scannedTexts": []
+  },
+  {
+    "name": "phone",
+    "expectedType": "phone",
+    "detectedType": "unknown",
+    "status": "FAIL",
+    "scannedTexts": []
+  },
+  {
+    "name": "sms",
+    "expectedType": "sms",
+    "detectedType": "unknown",
+    "status": "FAIL",
+    "scannedTexts": []
+  }
+]

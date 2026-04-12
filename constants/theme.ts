@@ -3,7 +3,7 @@ import { ThemeColors } from './types';
 export const lightTheme: ThemeColors = {
   background: '#FFFFFF',
   surface: '#F4F4F5',
-  accent: '#0A84FF',
+  accent: '#FF0000',
   danger: '#FF453A',
   success: '#30D158',
   warning: '#FFD60A',
@@ -19,7 +19,7 @@ export const lightTheme: ThemeColors = {
 export const darkTheme: ThemeColors = {
   background: '#000000',
   surface: '#111214',
-  accent: '#0A84FF',
+  accent: '#FF0000',
   danger: '#FF453A',
   success: '#30D158',
   warning: '#FFD60A',

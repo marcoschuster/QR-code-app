@@ -1,0 +1,93 @@
+[
+  {
+    "name": "calendar",
+    "expected": [
+      "Add to Calendar",
+      "Copy Event"
+    ],
+    "found": [],
+    "status": "FAIL",
+    "scannedTexts": [
+      "",
+      "Scan Details",
+      "Name",
+      "",
+      "+49691234567"
+    ]
+  },
+  {
+    "name": "contact",
+    "expected": [
+      "Add to Contacts",
+      "Copy Contact"
+    ],
+    "found": [
+      "Add to Contacts"
+    ],
+    "status": "FAIL",
+    "scannedTexts": [
+      "",
+      "Scan Details",
+      "Name",
+      "",
+      "+49691234567"
+    ]
+  },
+  {
+    "name": "map",
+    "expected": [
+      "Open Map",
+      "Copy Content"
+    ],
+    "found": [
+      "Copy Content"
+    ],
+    "status": "FAIL",
+    "scannedTexts": [
+      "",
+      "Scan Details",
+      "Name",
+      "",
+      "+49691234567"
+    ]
+  },
+  {
+    "name": "phone",
+    "expected": [
+      "Call Number",
+      "Add to Contacts",
+      "Copy Content"
+    ],
+    "found": [
+      "Call Number",
+      "Add to Contacts",
+      "Copy Content"
+    ],
+    "status": "PASS",
+    "scannedTexts": [
+      "",
+      "Scan Details",
+      "Name",
+      "",
+      "+49691234567"
+    ]
+  },
+  {
+    "name": "sms",
+    "expected": [
+      "Reply",
+      "Copy Content"
+    ],
+    "found": [
+      "Copy Content"
+    ],
+    "status": "FAIL",
+    "scannedTexts": [
+      "",
+      "Scan Details",
+      "Name",
+      "",
+      "+49691234567"
+    ]
+  }
+]

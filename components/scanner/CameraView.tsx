@@ -37,6 +37,13 @@ const ZOOM_CONTROL_POINTS: number[] = [0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9];
 const MAX_ZOOM = ZOOM_CONTROL_POINTS[ZOOM_CONTROL_POINTS.length - 1] ?? 0.6;
 
 const clampValue = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+const getAutoCopyLinkValue = (parsed: any) => {
+  if (!parsed || typeof parsed.rawValue !== 'string' || !/^https?:\/\//i.test(parsed.rawValue)) {
+    return null;
+  }
+
+  return parsed.data?.url || parsed.rawValue;
+};
 
 const getNearestPointIndex = (points: number[], value: number) =>
   points.reduce((bestIndex, point, index) => {
@@ -163,20 +170,14 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
     try {
       onResult({ ...parsed, safety: initialSafety, historyItemId });
       
-      // Auto-copy scanned content to clipboard if setting is enabled
+      // Auto-copy only link-based scans when the setting is enabled.
       if (autoCopyScanned) {
         try {
-          let contentToCopy = encodedValue;
-          if (parsed.type === 'url') {
-            contentToCopy = parsed.data.url;
-          } else if (parsed.type === 'phone') {
-            contentToCopy = parsed.data.phone;
-          } else if (parsed.type === 'email') {
-            contentToCopy = parsed.data.email;
-          } else if (parsed.type === 'sms') {
-            contentToCopy = parsed.data.phone;
+          const contentToCopy = getAutoCopyLinkValue(parsed);
+
+          if (contentToCopy) {
+            await Clipboard.setStringAsync(contentToCopy);
           }
-          await Clipboard.setStringAsync(contentToCopy);
         } catch (e) {
           console.warn('[Scanner] auto-copy failed:', e);
         }

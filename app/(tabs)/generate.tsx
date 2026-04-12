@@ -29,12 +29,10 @@ export default function GenerateScreen() {
   const currentTabIndex = tabs.indexOf('generate');
 
   const panResponder = swipeNavigation ? PanResponder.create({
-    onMoveShouldSetPanResponder: (_, gestureState) => {
-      return Math.abs(gestureState.dx) > 10;
-    },
+    onMoveShouldSetPanResponder: () => true,
     onPanResponderRelease: (_, gestureState) => {
       const { dx } = gestureState;
-      const swipeThreshold = 30;
+      const swipeThreshold = 50;
 
       if (dx > swipeThreshold && currentTabIndex > 0) {
         // Swipe right - go to previous tab

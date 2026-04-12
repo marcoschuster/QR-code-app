@@ -1,0 +1,5 @@
+env: load .env
+env: export EXPO_DEBUG EXPO_DEV_TIMEOUT EXPO_NO_DOCTOR EXPO_PUBLIC_GOOGLE_SAFE_BROWSING_API_KEY EXPO_SKIP_VALIDATION METRO_SERVER_TIMEOUT NODE_OPTIONS
+Starting project at C:\Work\Products\Tools\qr-scanner-app
+› Port 8081 is being used by another process
+› Skipping dev server

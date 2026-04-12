@@ -1,0 +1,38 @@
+CALENDAR:
+BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+SUMMARY:Annual Meetup
+DTSTART:20260410T183000
+DTEND:20260410T210000
+LOCATION:Berlin HQ
+DESCRIPTION:Agenda, notes, or event details
+END:VEVENT
+END:VCALENDAR
+==================================================
+
+CONTACT:
+BEGIN:VCARD
+VERSION:3.0
+N:Doe;John;;;
+FN:John Doe
+ORG:Acme Inc.
+TITLE:Sales Director
+TEL;TYPE=CELL:+49691234567
+EMAIL:john@example.com
+URL:https://example.com
+ADR:;;Mainzer Landstrasse 1, Frankfurt;;;
+END:VCARD
+==================================================
+
+PHONE:
+tel:+49691234567
+==================================================
+
+SMS:
+sms:+49691234567?body=Hello from test
+==================================================
+
+MAP:
+geo:0,0?q=Frankfurt am Main
+==================================================

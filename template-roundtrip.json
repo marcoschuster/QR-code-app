@@ -1,0 +1,265 @@
+[
+  {
+    "id": "website",
+    "title": "Website Link",
+    "content": "https://example.com",
+    "parsedType": "url",
+    "parsedData": {
+      "url": "https://example.com"
+    }
+  },
+  {
+    "id": "plain-text",
+    "title": "Plain Text",
+    "content": "Hello test payload",
+    "parsedType": "text",
+    "parsedData": {
+      "text": "Hello test payload"
+    }
+  },
+  {
+    "id": "phone",
+    "title": "Phone Number",
+    "content": "tel:+49691234567",
+    "parsedType": "phone",
+    "parsedData": {
+      "phone": "+49691234567"
+    }
+  },
+  {
+    "id": "sms",
+    "title": "SMS Message",
+    "content": "sms:+49691234567?body=Hello%20from%20test",
+    "parsedType": "sms",
+    "parsedData": {
+      "phone": " 49691234567",
+      "body": "Hello from test"
+    }
+  },
+  {
+    "id": "email",
+    "title": "Email",
+    "content": "mailto:hello@example.com?subject=Subject&body=Body%20text",
+    "parsedType": "email",
+    "parsedData": {
+      "email": "hello@example.com",
+      "subject": "Subject",
+      "body": "Body text"
+    }
+  },
+  {
+    "id": "wifi",
+    "title": "Wi-Fi Network",
+    "content": "WIFI:T:WPA;S:Office WiFi;P:Secret123;;",
+    "parsedType": "wifi",
+    "parsedData": {
+      "security": "WPA",
+      "ssid": "Office WiFi",
+      "password": "Secret123"
+    }
+  },
+  {
+    "id": "contact",
+    "title": "Business Contact",
+    "content": "BEGIN:VCARD\nVERSION:3.0\nFN:Max Mustermann\nN:Mustermann;Max;;;\nORG:Acme GmbH\nTITLE:Sales\nTEL:+49691234567\nEMAIL:max@example.com\nURL:https://acme.de\nADR:;;Mainzer Landstrasse 1, Frankfurt;;;;\nEND:VCARD",
+    "parsedType": "vcard",
+    "parsedData": {
+      "firstName": "Max",
+      "lastName": "Mustermann",
+      "phone": " 49691234567",
+      "email": "max@example.com",
+      "company": "Acme GmbH",
+      "jobTitle": "Sales",
+      "website": "https://acme.de",
+      "address": ";;Mainzer Landstrasse 1, Frankfurt;;;;"
+    }
+  },
+  {
+    "id": "location",
+    "title": "Location Pin",
+    "content": "geo:50.1109,8.6821",
+    "parsedType": "location",
+    "parsedData": {
+      "latitude": 50.1109,
+      "longitude": 8.6821
+    }
+  },
+  {
+    "id": "event",
+    "title": "Calendar Event",
+    "content": "BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nSUMMARY:Annual Meetup\nDTSTART:20260501T183000\nDTEND:20260501T210000\nLOCATION:Berlin HQ\nDESCRIPTION:Agenda and notes\nEND:VEVENT\nEND:VCALENDAR",
+    "parsedType": "calendar",
+    "parsedData": {
+      "title": "Annual Meetup",
+      "startRaw": "20260501T183000",
+      "endRaw": "20260501T210000",
+      "start": "2026-05-01 18:30",
+      "end": "2026-05-01 21:00",
+      "location": "Berlin HQ",
+      "description": "Agenda and notes"
+    }
+  },
+  {
+    "id": "product-code",
+    "title": "Product Code",
+    "content": "5901234123457",
+    "parsedType": "barcode",
+    "parsedData": {
+      "barcode": "5901234123457"
+    }
+  },
+  {
+    "id": "coupon",
+    "title": "Coupon",
+    "content": "COUPON:Spring Discount\nCODE:SPRING20\nDETAILS:Valid until May 31",
+    "parsedType": "text",
+    "parsedData": {
+      "text": "COUPON:Spring Discount\nCODE:SPRING20\nDETAILS:Valid until May 31"
+    }
+  },
+  {
+    "id": "paypal",
+    "title": "PayPal.Me",
+    "content": "https://paypal.me/acme/25.00",
+    "parsedType": "url",
+    "parsedData": {
+      "url": "https://paypal.me/acme/25.00"
+    }
+  },
+  {
+    "id": "bitcoin",
+    "title": "Bitcoin Address",
+    "content": "bitcoin:bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh?amount=0.005&label=Invoice+42",
+    "parsedType": "text",
+    "parsedData": {
+      "text": "bitcoin:bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh?amount=0.005&label=Invoice+42"
+    }
+  },
+  {
+    "id": "whatsapp",
+    "title": "WhatsApp Chat",
+    "content": "https://wa.me/49691234567?text=Hello%20there",
+    "parsedType": "url",
+    "parsedData": {
+      "url": "https://wa.me/49691234567?text=Hello%20there"
+    }
+  },
+  {
+    "id": "facetime",
+    "title": "FaceTime Call",
+    "content": "facetime:user@example.com",
+    "parsedType": "text",
+    "parsedData": {
+      "text": "facetime:user@example.com"
+    }
+  },
+  {
+    "id": "facetime-audio",
+    "title": "FaceTime Audio",
+    "content": "facetime-audio:user@example.com",
+    "parsedType": "text",
+    "parsedData": {
+      "text": "facetime-audio:user@example.com"
+    }
+  },
+  {
+    "id": "youtube",
+    "title": "YouTube Link",
+    "content": "https://youtube.com/watch?v=dQw4w9WgXcQ",
+    "parsedType": "url",
+    "parsedData": {
+      "url": "https://youtube.com/watch?v=dQw4w9WgXcQ"
+    }
+  },
+  {
+    "id": "instagram",
+    "title": "Instagram Profile",
+    "content": "https://instagram.com/yourbrand",
+    "parsedType": "url",
+    "parsedData": {
+      "url": "https://instagram.com/yourbrand"
+    }
+  },
+  {
+    "id": "linkedin",
+    "title": "LinkedIn Profile",
+    "content": "https://www.linkedin.com/in/john-doe-123456",
+    "parsedType": "url",
+    "parsedData": {
+      "url": "https://www.linkedin.com/in/john-doe-123456"
+    }
+  },
+  {
+    "id": "tiktok",
+    "title": "TikTok Profile",
+    "content": "https://www.tiktok.com/@creatorname",
+    "parsedType": "url",
+    "parsedData": {
+      "url": "https://www.tiktok.com/@creatorname"
+    }
+  },
+  {
+    "id": "telegram",
+    "title": "Telegram",
+    "content": "https://t.me/channelname",
+    "parsedType": "url",
+    "parsedData": {
+      "url": "https://t.me/channelname"
+    }
+  },
+  {
+    "id": "discord",
+    "title": "Discord Invite",
+    "content": "https://discord.gg/yourinvite",
+    "parsedType": "url",
+    "parsedData": {
+      "url": "https://discord.gg/yourinvite"
+    }
+  },
+  {
+    "id": "app-store",
+    "title": "App Store",
+    "content": "https://apps.apple.com/app/example/id123456789",
+    "parsedType": "url",
+    "parsedData": {
+      "url": "https://apps.apple.com/app/example/id123456789"
+    }
+  },
+  {
+    "id": "play-store",
+    "title": "Play Store",
+    "content": "https://play.google.com/store/apps/details?id=com.example.app",
+    "parsedType": "url",
+    "parsedData": {
+      "url": "https://play.google.com/store/apps/details?id=com.example.app"
+    }
+  },
+  {
+    "id": "maps-search",
+    "title": "Map Search",
+    "content": "https://www.google.com/maps/search/?api=1&query=Frankfurt%20am%20Main",
+    "parsedType": "location",
+    "parsedData": {
+      "query": "Frankfurt am Main",
+      "url": "https://www.google.com/maps/search/?api=1&query=Frankfurt%20am%20Main"
+    }
+  },
+  {
+    "id": "x-profile",
+    "title": "X Profile",
+    "content": "https://x.com/username",
+    "parsedType": "url",
+    "parsedData": {
+      "url": "https://x.com/username"
+    }
+  },
+  {
+    "id": "custom-data",
+    "title": "Custom Data",
+    "content": "RAW:CUSTOM:VALUE",
+    "parsedType": "text",
+    "parsedData": {
+      "text": "RAW:CUSTOM:VALUE"
+    }
+  }
+]

@@ -1,0 +1,58 @@
+[
+  {
+    "name": "calendar",
+    "expected": [
+      "Add to Calendar",
+      "Copy Event"
+    ],
+    "found": [],
+    "status": "FAIL"
+  },
+  {
+    "name": "contact",
+    "expected": [
+      "Add to Contacts",
+      "Copy Contact"
+    ],
+    "found": [
+      "Add to Contacts"
+    ],
+    "status": "FAIL"
+  },
+  {
+    "name": "map",
+    "expected": [
+      "Open Map",
+      "Copy Content"
+    ],
+    "found": [
+      "Copy Content"
+    ],
+    "status": "FAIL"
+  },
+  {
+    "name": "phone",
+    "expected": [
+      "Call Number",
+      "Add to Contacts",
+      "Copy Content"
+    ],
+    "found": [
+      "Call Number",
+      "Add to Contacts",
+      "Copy Content"
+    ],
+    "status": "PASS"
+  },
+  {
+    "name": "sms",
+    "expected": [
+      "Reply",
+      "Copy Content"
+    ],
+    "found": [
+      "Copy Content"
+    ],
+    "status": "FAIL"
+  }
+]
