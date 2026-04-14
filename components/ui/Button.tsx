@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { spacing, borderRadius, typography } from '../../constants/theme';
 import { useAppTheme } from '../../hooks/useAppTheme';
 
@@ -12,15 +13,16 @@ interface ButtonProps {
   icon?: React.ReactNode;
 }
 
-export function Button({ 
-  title, 
-  onPress, 
-  variant = 'primary', 
-  size = 'medium', 
+export function Button({
+  title,
+  onPress,
+  variant = 'primary',
+  size = 'medium',
   disabled = false,
-  icon 
+  icon
 }: ButtonProps) {
   const { theme } = useAppTheme();
+  const hasGradient = variant === 'primary' && theme.accentGradient && theme.accentGradient.length >= 2;
 
   const getButtonStyle = () => {
     const baseStyle = {
@@ -50,7 +52,7 @@ export function Button({
 
     const variantStyles = {
       primary: {
-        backgroundColor: disabled ? theme.text.tertiary : theme.accent,
+        backgroundColor: hasGradient ? undefined : (disabled ? theme.text.tertiary : theme.accent),
       },
       secondary: {
         backgroundColor: disabled ? theme.text.tertiary : theme.surface,
@@ -102,26 +104,76 @@ export function Button({
     };
   };
 
+  const buttonContent = (
+    <>
+      {icon && <View style={styles.icon}>{icon}</View>}
+      <Text style={getTextStyle()} numberOfLines={1} ellipsizeMode="tail">
+        {title}
+      </Text>
+    </>
+  );
+
+  const buttonStyle = getButtonStyle();
+
   return (
     <Pressable
       style={({ pressed }) => [
         styles.button,
-        getButtonStyle(),
+        hasGradient && !disabled ? { ...buttonStyle, borderWidth: 0 } : buttonStyle,
         pressed && styles.pressed,
       ]}
       onPress={onPress}
       disabled={disabled}
     >
-      {icon && <View style={styles.icon}>{icon}</View>}
-      <Text style={getTextStyle()} numberOfLines={1} ellipsizeMode="tail">
-        {title}
-      </Text>
+      {hasGradient && !disabled ? (
+        <>
+          <LinearGradient
+            colors={theme.accentGradient as any}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[styles.absoluteGradient, { borderRadius: borderRadius.sm, borderWidth: 1, borderColor: theme.accent }]}
+          />
+          {buttonContent}
+        </>
+      ) : (
+        buttonContent
+      )}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   button: {
+    gap: spacing.sm,
+  },
+  buttonWrapper: {
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  absoluteGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  gradientBackground: {
+    flex: 1,
+  },
+  gradientWrapper: {
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  gradientContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gradientContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: spacing.sm,
   },
   pressed: {

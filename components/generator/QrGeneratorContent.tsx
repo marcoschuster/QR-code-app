@@ -10,6 +10,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Clipboard from 'expo-clipboard';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from '../ui/Card';
@@ -408,42 +409,59 @@ function ActionButton({
   disabled = false,
 }: ActionButtonProps) {
   const isPrimary = variant === 'primary';
+  const hasGradient = isPrimary && !disabled && theme.accentGradient && theme.accentGradient.length >= 2;
   const backgroundColor = disabled
     ? isDark
       ? '#1A1C1F'
       : '#ECEEF1'
-    : isPrimary
-      ? isDark
-        ? '#1A1C1F'
-        : '#ECEEF1'
+    : isPrimary && !hasGradient
+      ? theme.accent
       : isDark
         ? '#090A0C'
         : '#FFFFFF';
   const borderColor = disabled
     ? theme.border
     : isPrimary
-      ? isDark
-        ? '#2B2E34'
-        : '#DDE2E8'
+      ? theme.accent
       : theme.border;
-  const iconColor = disabled ? theme.text.tertiary : theme.text.primary;
-  const textColor = disabled ? theme.text.tertiary : theme.text.primary;
+  const iconColor = disabled ? theme.text.tertiary : isPrimary ? '#FFFFFF' : theme.text.primary;
+  const textColor = disabled ? theme.text.tertiary : isPrimary ? '#FFFFFF' : theme.text.primary;
+
+  const buttonContent = (
+    <>
+      <Ionicons name={icon} size={18} color={iconColor} />
+      <Text style={[styles.actionButtonText, { color: textColor }]}>{title}</Text>
+    </>
+  );
 
   return (
     <Pressable
       style={({ pressed }) => [
         styles.actionButton,
         {
-          backgroundColor,
-          borderColor,
+          backgroundColor: hasGradient ? undefined : backgroundColor,
+          borderColor: hasGradient ? theme.accent : borderColor,
+          borderWidth: 1,
           opacity: pressed ? 0.82 : 1,
+          overflow: hasGradient ? 'hidden' : 'visible',
         },
       ]}
       onPress={onPress}
       disabled={disabled}
     >
-      <Ionicons name={icon} size={18} color={iconColor} />
-      <Text style={[styles.actionButtonText, { color: textColor }]}>{title}</Text>
+      {hasGradient ? (
+        <>
+          <LinearGradient
+            colors={theme.accentGradient as any}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.actionButtonAbsoluteGradient}
+          />
+          {buttonContent}
+        </>
+      ) : (
+        buttonContent
+      )}
     </Pressable>
   );
 }
@@ -559,6 +577,36 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.sm,
     paddingHorizontal: spacing.md,
+  },
+  actionButtonGradientWrapper: {
+    width: '100%',
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  actionButtonAbsoluteGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  actionButtonGradientContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+  },
+  actionButtonGradient: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
   },
   actionButtonText: {
     fontFamily: typography.fontFamily,
