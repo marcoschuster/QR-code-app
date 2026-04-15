@@ -96,6 +96,14 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
     }
   }, [permission?.granted]);
 
+  useEffect(() => {
+    return () => {
+      // Cleanup when component unmounts
+      setScanned(true);
+      setTorchOn(false);
+    };
+  }, []);
+
   // ── Barcode scan handler ───────────────────────────────────────────────────
   const handleBarcodeScanned = async (result: { data: string; raw?: string; bounds?: {origin: {x: number; y: number}; size: {width: number; height: number}} }) => {
     if (scanned) return;
