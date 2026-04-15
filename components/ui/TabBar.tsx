@@ -1,8 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { spacing, typography } from '../../constants/theme';
 import { useAppTheme } from '../../hooks/useAppTheme';
+import { spacing, typography } from '../../constants/theme';
 
 interface TabBarProps {
   activeTab: string;
@@ -75,14 +76,6 @@ export function TabBar({ activeTab, onTabChange, hidden = false }: TabBarProps) 
                     size={24}
                     color={isActive ? theme.accent : theme.text.secondary}
                   />
-                  {isActive && (
-                    <View
-                      style={[
-                        styles.activeDot,
-                        { backgroundColor: theme.accent },
-                      ]}
-                    />
-                  )}
                 </View>
                 <Text
                   style={[
