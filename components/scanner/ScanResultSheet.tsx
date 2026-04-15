@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Share, Linking, Image, ActivityIndicator, Platform } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import * as WebBrowser from 'expo-web-browser';
-import * as Contacts from 'expo-contacts';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -19,6 +18,14 @@ interface ScanResultSheetProps {
   data: QRCodeData & {
     safety?: ScanSafetyState;
   };
+}
+
+async function loadContactsModule() {
+  try {
+    return await import('expo-contacts');
+  } catch {
+    return null;
+  }
 }
 
 export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps) {
@@ -322,6 +329,17 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
 
   const handleAddToContacts = async () => {
     try {
+      const Contacts = await loadContactsModule();
+
+      if (!Contacts) {
+        showNotice(
+          'Contacts Unavailable',
+          'This app build does not include contact support yet. Rebuild the app to use this action.',
+          'warning'
+        );
+        return;
+      }
+
       const isAvailable = await Contacts.isAvailableAsync();
 
       if (!isAvailable) {

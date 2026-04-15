@@ -21,6 +21,7 @@ import { getThreatCheckSourceHint } from '../../services/threatCheck';
 import { useHistoryStore } from '../../store/useHistoryStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { useScanAudio } from '../../hooks/useScanAudio';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import * as Clipboard from 'expo-clipboard';
@@ -381,6 +382,7 @@ function ZoomControl({
   value: number;
   onValueChange: (value: number) => void;
 }) {
+  const { theme } = useAppTheme();
   const animatedZoom = useRef(new Animated.Value(value)).current;
   const fineTuneAnim = useRef(new Animated.Value(0)).current;
   const zoomRef = useRef(value);
@@ -596,7 +598,7 @@ function ZoomControl({
           >
             <View style={s.zoomThumbTouch}>
               <View style={s.zoomThumbOuter}>
-                <View style={s.zoomThumbInner} />
+                <View style={[s.zoomThumbInner, { backgroundColor: theme.accent }]} />
               </View>
             </View>
           </Animated.View>
