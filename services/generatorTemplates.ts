@@ -29,7 +29,13 @@ export type GeneratorTemplateId =
   | 'play-store'
   | 'maps-search'
   | 'x-profile'
-  | 'custom-data';
+  | 'custom-data'
+  | 'ean-13'
+  | 'ean-8'
+  | 'upc-a'
+  | 'code-128'
+  | 'code-39'
+  | 'itf-14';
 
 export interface GeneratorFieldOption {
   label: string;
@@ -471,6 +477,82 @@ export const GENERATOR_TEMPLATES: GeneratorTemplate[] = [
       },
     ],
   },
+  {
+    id: 'ean-13',
+    title: 'EAN-13',
+    description: 'Generate a 13-digit European Article Number barcode for retail products.',
+    fields: [
+      {
+        key: 'barcode',
+        label: 'Barcode (12 digits)',
+        placeholder: '590123412345',
+        keyboardType: 'number-pad',
+      },
+    ],
+  },
+  {
+    id: 'ean-8',
+    title: 'EAN-8',
+    description: 'Generate an 8-digit EAN barcode for small retail products.',
+    fields: [
+      {
+        key: 'barcode',
+        label: 'Barcode (7 digits)',
+        placeholder: '5901234',
+        keyboardType: 'number-pad',
+      },
+    ],
+  },
+  {
+    id: 'upc-a',
+    title: 'UPC-A',
+    description: 'Generate a 12-digit Universal Product Code barcode for retail items.',
+    fields: [
+      {
+        key: 'barcode',
+        label: 'Barcode (11 digits)',
+        placeholder: '12345678901',
+        keyboardType: 'number-pad',
+      },
+    ],
+  },
+  {
+    id: 'code-128',
+    title: 'Code 128',
+    description: 'Generate a Code 128 barcode for alphanumeric data with high density.',
+    fields: [
+      {
+        key: 'data',
+        label: 'Data',
+        placeholder: 'ABC123',
+      },
+    ],
+  },
+  {
+    id: 'code-39',
+    title: 'Code 39',
+    description: 'Generate a Code 39 barcode for alphanumeric data (letters A-Z, digits 0-9).',
+    fields: [
+      {
+        key: 'data',
+        label: 'Data',
+        placeholder: 'ABC123',
+      },
+    ],
+  },
+  {
+    id: 'itf-14',
+    title: 'ITF-14',
+    description: 'Generate a 14-digit Interleaved 2 of 5 barcode for shipping containers.',
+    fields: [
+      {
+        key: 'barcode',
+        label: 'Barcode (13 digits)',
+        placeholder: '1234567890123',
+        keyboardType: 'number-pad',
+      },
+    ],
+  },
 ];
 
 export function getGeneratorTemplate(templateId: GeneratorTemplateId) {
@@ -590,9 +672,91 @@ export function buildGeneratorContent(
       return normalizeQrLinkInput(`x.com/${normalizeXHandle(required(values, 'handle'))}`);
     case 'custom-data':
       return required(values, 'content');
+    case 'ean-13': {
+      const barcode = required(values, 'barcode').replace(/\s+/g, '');
+      if (!/^\d{12}$/.test(barcode)) {
+        throw new Error('Enter a 12-digit EAN-13 barcode (checksum will be calculated).');
+      }
+      return generateQRCode('barcode', { barcode: calculateEAN13Checksum(barcode) });
+    }
+    case 'ean-8': {
+      const barcode = required(values, 'barcode').replace(/\s+/g, '');
+      if (!/^\d{7}$/.test(barcode)) {
+        throw new Error('Enter a 7-digit EAN-8 barcode (checksum will be calculated).');
+      }
+      return generateQRCode('barcode', { barcode: calculateEAN8Checksum(barcode) });
+    }
+    case 'upc-a': {
+      const barcode = required(values, 'barcode').replace(/\s+/g, '');
+      if (!/^\d{11}$/.test(barcode)) {
+        throw new Error('Enter an 11-digit UPC-A barcode (checksum will be calculated).');
+      }
+      return generateQRCode('barcode', { barcode: calculateUPAChecksum(barcode) });
+    }
+    case 'code-128': {
+      const data = required(values, 'data').trim();
+      if (!/^[A-Z0-9\s\-\.\$\/\+\%]+$/.test(data)) {
+        throw new Error('Code 128 supports uppercase letters, digits, and special characters.');
+      }
+      return generateQRCode('barcode', { barcode: data, barcodeType: 'CODE_128' });
+    }
+    case 'code-39': {
+      const data = required(values, 'data').trim().toUpperCase();
+      if (!/^[A-Z0-9\-\.\ \$\/\+\%]+$/.test(data)) {
+        throw new Error('Code 39 supports uppercase letters, digits, and special characters.');
+      }
+      return generateQRCode('barcode', { barcode: data, barcodeType: 'CODE_39' });
+    }
+    case 'itf-14': {
+      const barcode = required(values, 'barcode').replace(/\s+/g, '');
+      if (!/^\d{13}$/.test(barcode)) {
+        throw new Error('Enter a 13-digit ITF-14 barcode (checksum will be calculated).');
+      }
+      return generateQRCode('barcode', { barcode: calculateITF14Checksum(barcode) });
+    }
     default:
       return required(values, 'content');
   }
+}
+
+function calculateEAN13Checksum(barcode: string): string {
+  const digits = barcode.split('').map(Number);
+  let sum = 0;
+  for (let i = 0; i < digits.length; i++) {
+    sum += digits[i] * (i % 2 === 0 ? 1 : 3);
+  }
+  const checksum = (10 - (sum % 10)) % 10;
+  return barcode + checksum;
+}
+
+function calculateEAN8Checksum(barcode: string): string {
+  const digits = barcode.split('').map(Number);
+  let sum = 0;
+  for (let i = 0; i < digits.length; i++) {
+    sum += digits[i] * (i % 2 === 0 ? 3 : 1);
+  }
+  const checksum = (10 - (sum % 10)) % 10;
+  return barcode + checksum;
+}
+
+function calculateUPAChecksum(barcode: string): string {
+  const digits = barcode.split('').map(Number);
+  let sum = 0;
+  for (let i = 0; i < digits.length; i++) {
+    sum += digits[i] * (i % 2 === 0 ? 3 : 1);
+  }
+  const checksum = (10 - (sum % 10)) % 10;
+  return barcode + checksum;
+}
+
+function calculateITF14Checksum(barcode: string): string {
+  const digits = barcode.split('').map(Number);
+  let sum = 0;
+  for (let i = 0; i < digits.length; i++) {
+    sum += digits[i] * (i % 2 === 0 ? 3 : 1);
+  }
+  const checksum = (10 - (sum % 10)) % 10;
+  return barcode + checksum;
 }
 
 function required(values: Record<string, string>, key: string) {
