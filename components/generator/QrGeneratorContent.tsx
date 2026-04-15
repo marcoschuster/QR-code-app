@@ -244,7 +244,7 @@ export function QrGeneratorContent() {
             {barcodeTemplates.length > 0 && (
               <>
                 <View style={[styles.separator, { backgroundColor: theme.border }]} />
-                <Text style={[styles.barcodeSectionTitle, { color: theme.text.secondary }]}>Barcodes</Text>
+                <Text style={[styles.barcodeSectionTitle, { color: theme.text.tertiary }]}>Barcodes</Text>
                 <View style={styles.templateGrid}>
                   {barcodeTemplates.map((template) => (
                     <Chip
@@ -558,6 +558,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: spacing.sm,
     marginTop: spacing.xs,
+    marginLeft: spacing.xs,
   },
   templateDescription: {
     fontFamily: typography.fontFamily,
