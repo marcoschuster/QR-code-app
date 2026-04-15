@@ -77,6 +77,13 @@ export function QrGeneratorContent() {
     title: '',
     message: '',
   });
+  const [typesCollapsed, setTypesCollapsed] = useState(true);
+
+  // 6 most important/most used types
+  const importantTypes: GeneratorTemplateId[] = ['website', 'plain-text', 'phone', 'sms', 'email', 'wifi'];
+  const displayedTemplates = typesCollapsed
+    ? GENERATOR_TEMPLATES.filter(t => importantTypes.includes(t.id))
+    : GENERATOR_TEMPLATES;
 
   const selectedTemplate = useMemo(
     () => getGeneratorTemplate(selectedTemplateId),
@@ -203,10 +210,19 @@ export function QrGeneratorContent() {
           </View>
 
           <Card style={styles.sectionCard} padding={spacing.lg}>
-            <Text style={[styles.sectionLabel, { color: theme.text.secondary }]}>Code Type</Text>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionLabel, { color: theme.text.secondary }]}>Code Type</Text>
+              <Pressable onPress={() => setTypesCollapsed(!typesCollapsed)} style={styles.collapseButton}>
+                <Ionicons 
+                  name={typesCollapsed ? 'chevron-down' : 'chevron-up'} 
+                  size={20} 
+                  color={theme.text.secondary} 
+                />
+              </Pressable>
+            </View>
 
             <View style={styles.templateGrid}>
-              {GENERATOR_TEMPLATES.map((template) => (
+              {displayedTemplates.map((template) => (
                 <Chip
                   key={template.id}
                   title={template.title}
@@ -492,6 +508,15 @@ const styles = StyleSheet.create({
   },
   sectionCard: {
     marginBottom: spacing.lg,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.md,
+  },
+  collapseButton: {
+    padding: spacing.xs,
   },
   templateGrid: {
     flexDirection: 'row',
