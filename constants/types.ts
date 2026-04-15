@@ -64,6 +64,8 @@ export interface ThemeColors {
   background: string;
   surface: string;
   accent: string;
+  accentGradient?: string[];
+  accentStrongGradient?: string[];
   danger: string;
   success: string;
   warning: string;
@@ -78,8 +80,26 @@ export interface ThemeColors {
 
 export type AppearanceMode = 'light' | 'dark' | 'system';
 
+export type AccentColor =
+  | 'red'
+  | 'blue'
+  | 'green'
+  | 'purple'
+  | 'orange'
+  | 'pink'
+  | 'teal'
+  | 'indigo'
+  | 'sunset'
+  | 'ocean'
+  | 'forest'
+  | 'berry'
+  | 'aurora'
+  | 'midnight'
+  | 'fire';
+
 export interface SettingsState {
   appearance: AppearanceMode;
+  accentColor: AccentColor;
   autoOpenUrls: boolean;
   saveToHistory: boolean;
   vibrateOnScan: boolean;

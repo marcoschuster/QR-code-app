@@ -1,4 +1,52 @@
-import { ThemeColors } from './types';
+import { ThemeColors, AccentColor } from './types';
+
+export const accentColors: Record<AccentColor, { primary: string; gradient?: string[] }> = {
+  red: { primary: '#FF3B30' },
+  blue: { primary: '#007AFF' },
+  green: { primary: '#34C759' },
+  purple: { primary: '#AF52DE' },
+  orange: { primary: '#FF9500' },
+  pink: { primary: '#FF2D55' },
+  teal: { primary: '#5AC8FA' },
+  indigo: { primary: '#5856D6' },
+  sunset: { primary: '#FF6B35', gradient: ['#FF4500', '#FF6B35', '#FFD700'] },
+  ocean: { primary: '#0066CC', gradient: ['#0066CC', '#1E90FF', '#00BFFF'] },
+  forest: { primary: '#228B22', gradient: ['#228B22', '#32CD32', '#7CFC00'] },
+  berry: { primary: '#8A2BE2', gradient: ['#8A2BE2', '#9400D3', '#DA70D6'] },
+  aurora: { primary: '#00F5D4', gradient: ['#00CED1', '#00F5D4', '#7FFF00'] },
+  midnight: { primary: '#4169E1', gradient: ['#4169E1', '#1E90FF', '#87CEEB'] },
+  fire: { primary: '#FF4500', gradient: ['#FF4500', '#FF6B35', '#FFA500'] },
+};
+
+export const getAccentColor = (accentColor: AccentColor): string => {
+  return accentColors[accentColor].primary;
+};
+
+export const getAccentGradient = (accentColor: AccentColor): string[] | undefined => {
+  return accentColors[accentColor].gradient;
+};
+
+// Stronger gradients for small UI elements (chips, sort buttons, navigation icons, etc.)
+export const getStrongAccentGradient = (accentColor: AccentColor): string[] | undefined => {
+  const strongGradients: Record<AccentColor, string[] | undefined> = {
+    red: undefined,
+    blue: undefined,
+    green: undefined,
+    purple: undefined,
+    orange: undefined,
+    pink: undefined,
+    teal: undefined,
+    indigo: undefined,
+    sunset: ['#8B0000', '#FF0000', '#FFFF00'],
+    ocean: ['#000033', '#0000FF', '#00FFFF'],
+    forest: ['#003300', '#00FF00', '#FFFF00'],
+    berry: ['#2E0854', '#9400D3', '#FF69B4'],
+    aurora: ['#006666', '#00FFFF', '#00FF00'],
+    midnight: ['#000022', '#4169E1', '#87CEEB'],
+    fire: ['#4A0000', '#FF4500', '#FFD700'],
+  };
+  return strongGradients[accentColor];
+};
 
 export const lightTheme: ThemeColors = {
   background: '#FFFFFF',
