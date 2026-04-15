@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -13,9 +13,8 @@ import {
   Platform,
   Alert,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Clipboard from 'expo-clipboard';
-import * as Contacts from 'expo-contacts';
-import * as Calendar from 'expo-calendar';
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import { useHistoryStore } from '../../store/useHistoryStore';
@@ -267,6 +266,39 @@ const getHistoryPrimaryAction = (item: HistoryItem) => {
     default:
       return null;
   }
+};
+
+async function loadContactsModule() {
+  try {
+    return await import('expo-contacts');
+  } catch {
+    return null;
+  }
+}
+
+const buildHistoryCalendarUrl = (item: HistoryItem) => {
+  const eventTitle = item.parsedData?.title || getHistoryItemName(item);
+  const eventStart = item.parsedData?.startRaw || item.parsedData?.start;
+  const eventEnd = item.parsedData?.endRaw || item.parsedData?.end;
+  const eventLocation = item.parsedData?.location || '';
+  const eventDescription = item.parsedData?.description || '';
+  let calendarUrl = 'https://calendar.google.com/calendar/render?action=TEMPLATE';
+
+  calendarUrl += `&text=${encodeURIComponent(eventTitle)}`;
+
+  if (eventStart) {
+    calendarUrl += `&dates=${String(eventStart).replace(/[-:]/g, '')}/${eventEnd ? String(eventEnd).replace(/[-:]/g, '') : ''}`;
+  }
+
+  if (eventLocation) {
+    calendarUrl += `&location=${encodeURIComponent(eventLocation)}`;
+  }
+
+  if (eventDescription) {
+    calendarUrl += `&details=${encodeURIComponent(eventDescription)}`;
+  }
+
+  return calendarUrl;
 };
 
 interface HistoryScreenProps {
@@ -635,17 +667,17 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
           return;
         }
 
-        await Calendar.createEventInCalendarAsync({
-          title: selectedItem.parsedData?.title || getHistoryItemName(selectedItem),
-          startDate,
-          endDate,
-          location: selectedItem.parsedData?.location || undefined,
-          notes: selectedItem.parsedData?.description || undefined,
-          allDay: !String(selectedItem.parsedData?.startRaw || '').includes('T'),
-        });
+        await Linking.openURL(buildHistoryCalendarUrl(selectedItem));
         return;
       }
       case 'vcard': {
+        const Contacts = await loadContactsModule();
+
+        if (!Contacts) {
+          Alert.alert('Contacts unavailable', 'This app build does not include contact support yet. Rebuild the app to use this action.');
+          return;
+        }
+
         const isAvailable = await Contacts.isAvailableAsync();
 
         if (!isAvailable) {
@@ -707,6 +739,13 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
       return;
     }
 
+    const Contacts = await loadContactsModule();
+
+    if (!Contacts) {
+      Alert.alert('Contacts unavailable', 'This app build does not include contact support yet. Rebuild the app to use this action.');
+      return;
+    }
+
     const isAvailable = await Contacts.isAvailableAsync();
 
     if (!isAvailable) {
@@ -764,46 +803,80 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
         </View>
         <View style={[s.sortControl, { backgroundColor: theme.surface, borderColor: theme.border }]}>
           <Pressable
-            style={[
-              s.sortOption,
-              sortMode === 'date' && { backgroundColor: theme.accent },
-            ]}
+            style={s.sortOption}
             onPress={() => setSortMode('date')}
           >
-            <Ionicons
-              name="time-outline"
-              size={14}
-              color={sortMode === 'date' ? '#FFFFFF' : theme.text.secondary}
-            />
-            <Text
-              style={[
-                s.sortOptionText,
-                { color: sortMode === 'date' ? '#FFFFFF' : theme.text.secondary },
-              ]}
-            >
-              Date
-            </Text>
+            {sortMode === 'date' && theme.accentGradient && theme.accentGradient.length >= 2 ? (
+              <LinearGradient
+                colors={theme.accentGradient as any}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[s.sortOptionGradient, { borderWidth: 1, borderColor: theme.accent }]}
+              >
+                <Ionicons
+                  name="time-outline"
+                  size={14}
+                  color="#FFFFFF"
+                />
+                <Text style={[s.sortOptionText, { color: '#FFFFFF' }]}>
+                  Date
+                </Text>
+              </LinearGradient>
+            ) : (
+              <>
+                <Ionicons
+                  name="time-outline"
+                  size={14}
+                  color={sortMode === 'date' ? '#FFFFFF' : theme.text.secondary}
+                />
+                <Text
+                  style={[
+                    s.sortOptionText,
+                    { color: sortMode === 'date' ? '#FFFFFF' : theme.text.secondary },
+                  ]}
+                >
+                  Date
+                </Text>
+              </>
+            )}
           </Pressable>
           <Pressable
-            style={[
-              s.sortOption,
-              sortMode === 'name' && { backgroundColor: theme.accent },
-            ]}
+            style={s.sortOption}
             onPress={() => setSortMode('name')}
           >
-            <Ionicons
-              name="text-outline"
-              size={14}
-              color={sortMode === 'name' ? '#FFFFFF' : theme.text.secondary}
-            />
-            <Text
-              style={[
-                s.sortOptionText,
-                { color: sortMode === 'name' ? '#FFFFFF' : theme.text.secondary },
-              ]}
-            >
-              Name
-            </Text>
+            {sortMode === 'name' && theme.accentGradient && theme.accentGradient.length >= 2 ? (
+              <LinearGradient
+                colors={theme.accentGradient as any}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[s.sortOptionGradient, { borderWidth: 1, borderColor: theme.accent }]}
+              >
+                <Ionicons
+                  name="text-outline"
+                  size={14}
+                  color="#FFFFFF"
+                />
+                <Text style={[s.sortOptionText, { color: '#FFFFFF' }]}>
+                  Name
+                </Text>
+              </LinearGradient>
+            ) : (
+              <>
+                <Ionicons
+                  name="text-outline"
+                  size={14}
+                  color={sortMode === 'name' ? '#FFFFFF' : theme.text.secondary}
+                />
+                <Text
+                  style={[
+                    s.sortOptionText,
+                    { color: sortMode === 'name' ? '#FFFFFF' : theme.text.secondary },
+                  ]}
+                >
+                  Name
+                </Text>
+              </>
+            )}
           </Pressable>
         </View>
       </View>
@@ -1230,9 +1303,20 @@ function HistoryItemComponent({
               {truncateText(getHistoryItemName(item), 32)}
             </Text>
             {isGrouped ? (
-              <View style={[s.scanCount, { backgroundColor: theme.accent }]}>
-                <Text style={s.scanCountText}>{item.scanCount}</Text>
-              </View>
+              theme.accentStrongGradient && theme.accentStrongGradient.length >= 2 ? (
+                <LinearGradient
+                  colors={theme.accentStrongGradient as any}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={[s.scanCount, { borderWidth: 1, borderColor: theme.accent }]}
+                >
+                  <Text style={s.scanCountText}>{item.scanCount}</Text>
+                </LinearGradient>
+              ) : (
+                <View style={[s.scanCount, { backgroundColor: theme.accent }]}>
+                  <Text style={s.scanCountText}>{item.scanCount}</Text>
+                </View>
+              )
             ) : null}
           </View>
           {displayUrl ? (
@@ -1414,21 +1498,33 @@ const s = StyleSheet.create({
   sortControl: {
     flexDirection: 'row',
     alignSelf: 'flex-end',
-    borderRadius: 18,
+    borderRadius: 20,
     borderWidth: 1,
-    padding: 3,
+    padding: 2,
     marginTop: 14,
   },
   sortOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    borderRadius: 15,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
+    justifyContent: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 16,
+    flex: 1,
+  },
+  sortOptionGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 16,
+    flex: 1,
   },
   sortOptionText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
   },
   listContent: {
