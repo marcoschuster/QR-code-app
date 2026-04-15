@@ -35,7 +35,11 @@ export type GeneratorTemplateId =
   | 'upc-a'
   | 'code-128'
   | 'code-39'
-  | 'itf-14';
+  | 'itf-14'
+  | 'code-93'
+  | 'pharmacode'
+  | 'msi-plesey'
+  | 'codabar';
 
 export interface GeneratorFieldOption {
   label: string;
@@ -553,6 +557,56 @@ export const GENERATOR_TEMPLATES: GeneratorTemplate[] = [
       },
     ],
   },
+  {
+    id: 'code-93',
+    title: 'Code 93',
+    description: 'Generate a Code 93 barcode for alphanumeric data with higher density than Code 39.',
+    fields: [
+      {
+        key: 'data',
+        label: 'Data',
+        placeholder: 'ABC123',
+      },
+    ],
+  },
+  {
+    id: 'pharmacode',
+    title: 'Pharmacode',
+    description: 'Generate a Pharmacode barcode for pharmaceutical packaging (3-131070).',
+    fields: [
+      {
+        key: 'barcode',
+        label: 'Barcode (3-131070)',
+        placeholder: '12345',
+        keyboardType: 'number-pad',
+      },
+    ],
+  },
+  {
+    id: 'msi-plesey',
+    title: 'MSI Plessey',
+    description: 'Generate an MSI Plessey barcode for numeric data.',
+    fields: [
+      {
+        key: 'barcode',
+        label: 'Barcode',
+        placeholder: '123456',
+        keyboardType: 'number-pad',
+      },
+    ],
+  },
+  {
+    id: 'codabar',
+    title: 'Codabar',
+    description: 'Generate a Codabar barcode for alphanumeric data (A, B, C, D, 0-9, -, $, :, /, ., +).',
+    fields: [
+      {
+        key: 'data',
+        label: 'Data',
+        placeholder: 'A12345B',
+      },
+    ],
+  },
 ];
 
 export function getGeneratorTemplate(templateId: GeneratorTemplateId) {
@@ -713,6 +767,34 @@ export function buildGeneratorContent(
         throw new Error('Enter a 13-digit ITF-14 barcode (checksum will be calculated).');
       }
       return generateQRCode('barcode', { barcode: calculateITF14Checksum(barcode) });
+    }
+    case 'code-93': {
+      const data = required(values, 'data').trim().toUpperCase();
+      if (!/^[A-Z0-9\-\.\$\/\+\%\s]+$/.test(data)) {
+        throw new Error('Code 93 supports uppercase letters, digits, and special characters.');
+      }
+      return generateQRCode('barcode', { barcode: data, barcodeType: 'CODE_93' });
+    }
+    case 'pharmacode': {
+      const barcode = Number(required(values, 'barcode').replace(/\s+/g, ''));
+      if (isNaN(barcode) || barcode < 3 || barcode > 131070) {
+        throw new Error('Pharmacode must be a number between 3 and 131070.');
+      }
+      return generateQRCode('barcode', { barcode: barcode.toString(), barcodeType: 'PHARMA' });
+    }
+    case 'msi-plesey': {
+      const barcode = required(values, 'barcode').replace(/\s+/g, '');
+      if (!/^\d+$/.test(barcode)) {
+        throw new Error('MSI Plessey supports only numeric data.');
+      }
+      return generateQRCode('barcode', { barcode, barcodeType: 'MSI' });
+    }
+    case 'codabar': {
+      const data = required(values, 'data').trim().toUpperCase();
+      if (!/^[A-D][0-9\-\$\:\/\.\+]*[A-D]$/.test(data)) {
+        throw new Error('Codabar must start and end with A, B, C, or D, and contain only digits and special characters.');
+      }
+      return generateQRCode('barcode', { barcode: data, barcodeType: 'CODABAR' });
     }
     default:
       return required(values, 'content');
