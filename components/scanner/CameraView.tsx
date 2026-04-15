@@ -390,7 +390,7 @@ function ZoomControl({
   const fineTuneActiveRef = useRef(false);
   const longPressTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const touchStartXRef = useRef(0);
-  const [trackWidth, setTrackWidth] = useState(1);
+  const [trackWidth, setTrackWidth] = useState(214);
   const [fineTuneActive, setFineTuneActive] = useState(false);
   const minPoint = points[0] ?? 0;
   const maxPoint = points[points.length - 1] ?? MAX_ZOOM;
