@@ -493,6 +493,7 @@ function ZoomControl({
   const thumbResponderHandlers = {
     onStartShouldSetResponder: () => true,
     onMoveShouldSetResponder: () => true,
+    onMoveShouldSetResponderCapture: () => true,
     onResponderGrant: (event: { nativeEvent: { pageX: number } }) => {
       touchStartXRef.current = event.nativeEvent.pageX;
       dragStartZoomRef.current = zoomRef.current;
@@ -520,6 +521,39 @@ function ZoomControl({
     },
     onResponderTerminate: () => {
       clearLongPressTimeout();
+      if (fineTuneActiveRef.current) {
+        stopFineTune();
+      }
+    },
+  };
+
+  const railResponderHandlers = {
+    onStartShouldSetResponder: () => false,
+    onMoveShouldSetResponder: () => fineTuneActiveRef.current,
+    onMoveShouldSetResponderCapture: () => fineTuneActiveRef.current,
+    onResponderGrant: (event: { nativeEvent: { pageX: number } }) => {
+      if (fineTuneActiveRef.current) {
+        touchStartXRef.current = event.nativeEvent.pageX;
+        dragStartZoomRef.current = zoomRef.current;
+      }
+    },
+    onResponderMove: (event: { nativeEvent: { pageX: number } }) => {
+      if (!fineTuneActiveRef.current) {
+        return;
+      }
+
+      const dx = event.nativeEvent.pageX - touchStartXRef.current;
+      const deltaZoom = (dx / thumbTravelWidth) * (maxPoint - minPoint);
+      const nextZoom = clampValue(dragStartZoomRef.current + deltaZoom, minPoint, maxPoint);
+
+      updateZoomImmediate(nextZoom);
+    },
+    onResponderRelease: () => {
+      if (fineTuneActiveRef.current) {
+        stopFineTune();
+      }
+    },
+    onResponderTerminate: () => {
       if (fineTuneActiveRef.current) {
         stopFineTune();
       }
@@ -558,7 +592,7 @@ function ZoomControl({
       </Pressable>
 
       <View style={s.zoomRailContainer}>
-        <View style={s.zoomRailTapArea} onLayout={handleRailLayout}>
+        <View style={s.zoomRailTapArea} onLayout={handleRailLayout} {...railResponderHandlers}>
           {!fineTuneActive ? (
             <View style={s.zoomTapZones}>
               {points.map((point) => (
@@ -694,14 +728,14 @@ const s = StyleSheet.create({
     position: 'absolute',
     top: 0,
     bottom: 0,
-    marginLeft: -11,
-    width: 22,
+    marginLeft: -20,
+    width: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
   zoomThumbTouch: {
-    width: 34,
-    height: 34,
+    width: 50,
+    height: 50,
     alignItems: 'center',
     justifyContent: 'center',
   },
