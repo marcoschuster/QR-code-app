@@ -34,7 +34,7 @@ export default function ScannerTab() {
   const [scannerKey, setScannerKey] = useState(0);
   const threatCheckRunRef = useRef(0);
   const updateItem = useHistoryStore((state) => state.updateItem);
-  const { urlThreatScanning, swipeNavigation } = useSettingsStore();
+  const { urlThreatScanning, swipeNavigation, fineTuneActive } = useSettingsStore();
 
   const handleScanResult = async (data: any) => {
     console.log('[index] handleScanResult called, type:', data?.type);
@@ -152,7 +152,7 @@ export default function ScannerTab() {
   const tabs = ['scan', 'history', 'generate'];
   const currentTabIndex = tabs.indexOf(activeTab);
 
-  const panResponder = swipeNavigation ? PanResponder.create({
+  const panResponder = swipeNavigation && !fineTuneActive ? PanResponder.create({
     onMoveShouldSetPanResponder: () => {
       console.log('[Swipe] onMoveShouldSetPanResponder called');
       return true;

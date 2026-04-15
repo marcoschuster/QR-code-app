@@ -87,7 +87,7 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
   const [zoom, setZoom] = useState(0);
   const photoScanSucceededRef = useRef(false);
   const { addItem } = useHistoryStore();
-  const { saveToHistory, beepOnScan, vibrateOnScan, urlThreatScanning, autoCopyScanned } = useSettingsStore();
+  const { saveToHistory, beepOnScan, vibrateOnScan, urlThreatScanning, autoCopyScanned, setFineTuneActive } = useSettingsStore();
   const { playScanSound } = useScanAudio();
 
   useEffect(() => {
