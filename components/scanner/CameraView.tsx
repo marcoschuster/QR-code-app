@@ -31,6 +31,7 @@ interface ScannerScreenProps {
   onResult: (data: any) => void;
   onSettingsPress?: () => void;
   onReset?: () => void;
+  onFineTuneActiveChange?: (active: boolean) => void;
 }
 
 let lastKnownCameraPermissionGranted = false;
@@ -73,7 +74,7 @@ const getNextPointIndex = (points: number[], value: number, direction: -1 | 1) =
   return Math.min(points.length - 1, nearestIndex + 1);
 };
 
-export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScreenProps) {
+export function ScannerScreen({ onResult, onSettingsPress, onReset, onFineTuneActiveChange }: ScannerScreenProps) {
   const router = useRouter();
   const [permission, requestPermission] = useCameraPermissions();
   const [cameraFacing, setCameraFacing] = useState<'back' | 'front'>('back');
@@ -87,7 +88,7 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset }: ScannerScr
   const [zoom, setZoom] = useState(0);
   const photoScanSucceededRef = useRef(false);
   const { addItem } = useHistoryStore();
-  const { saveToHistory, beepOnScan, vibrateOnScan, urlThreatScanning, autoCopyScanned, setFineTuneActive } = useSettingsStore();
+  const { saveToHistory, beepOnScan, vibrateOnScan, urlThreatScanning, autoCopyScanned } = useSettingsStore();
   const { playScanSound } = useScanAudio();
 
   useEffect(() => {
@@ -425,7 +426,7 @@ function ZoomControl({
 
   const setFineTuneVisible = (visible: boolean) => {
     fineTuneActiveRef.current = visible;
-    setFineTuneActive(visible);
+    onFineTuneActiveChange?.(visible);
     Animated.spring(fineTuneAnim, {
       toValue: visible ? 1 : 0,
       useNativeDriver: false,

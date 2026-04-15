@@ -110,5 +110,4 @@ export interface SettingsState {
   swipeNavigation: boolean;
   defaultErrorCorrection: 'L' | 'M' | 'Q' | 'H';
   defaultOutputFormat: 'QR' | 'EAN-13' | 'Code 128';
-  fineTuneActive: boolean;
 }

@@ -16,13 +16,11 @@ const defaultSettings: SettingsState = {
   swipeNavigation: true,
   defaultErrorCorrection: 'M',
   defaultOutputFormat: 'QR',
-  fineTuneActive: false,
 };
 
 interface SettingsStore extends SettingsState {
   updateSettings: (updates: Partial<SettingsState>) => void;
   resetSettings: () => void;
-  setFineTuneActive: (active: boolean) => void;
 }
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -32,7 +30,6 @@ export const useSettingsStore = create<SettingsStore>()(
       updateSettings: (updates) =>
         set((state) => ({ ...state, ...updates })),
       resetSettings: () => set(defaultSettings),
-      setFineTuneActive: (active) => set({ fineTuneActive: active }),
     }),
     {
       name: 'qr-scanner-settings',
