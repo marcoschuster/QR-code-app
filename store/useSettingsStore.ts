@@ -5,6 +5,7 @@ import { AppearanceMode, SettingsState } from '../constants/types';
 
 const defaultSettings: SettingsState = {
   appearance: 'system',
+  accentColor: 'red',
   autoOpenUrls: false,
   saveToHistory: true,
   vibrateOnScan: true,
