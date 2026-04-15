@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Alert, Linking, Modal } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useSettingsStore } from '../../store/useSettingsStore';
@@ -7,6 +8,7 @@ import { useTestAudio } from '../../hooks/useTestAudio';
 import { spacing, typography } from '../../constants/theme';
 import { useAppTheme } from '../../hooks/useAppTheme';
 import { ConfirmDialog } from './ConfirmDialog';
+import { ColorOrbitPicker } from './ColorOrbitPicker';
 
 interface SettingsScreenProps {
   visible: boolean;
@@ -16,6 +18,7 @@ interface SettingsScreenProps {
 export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
   const { theme, isDark } = useAppTheme();
   const { playTestSound } = useTestAudio();
+  const [accentColorExpanded, setAccentColorExpanded] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
     visible: boolean;
     title: string;
@@ -33,6 +36,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
   
   const {
     appearance,
+    accentColor,
     autoOpenUrls,
     saveToHistory,
     vibrateOnScan,
@@ -58,6 +62,11 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
   const handleAppearanceChange = (value: 'light' | 'dark' | 'system') => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     updateSettings({ appearance: value });
+  };
+
+  const handleAccentColorChange = (value: any) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    updateSettings({ accentColor: value });
   };
 
   const handleOpenSystemSettings = () => {
@@ -207,9 +216,20 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
                       </Text>
                     </View>
                   </View>
-                  <View style={[styles.switchTrack, autoOpenUrls && { backgroundColor: theme.accent }]}>
-                    <View style={[styles.switchThumb, autoOpenUrls && styles.switchThumbOn]} />
-                  </View>
+                  {autoOpenUrls && theme.accentGradient && theme.accentGradient.length >= 2 ? (
+                    <LinearGradient
+                      colors={theme.accentGradient as any}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={[styles.switchTrack, { borderWidth: 1, borderColor: theme.accent }]}
+                    >
+                      <View style={[styles.switchThumb, styles.switchThumbOn]} />
+                    </LinearGradient>
+                  ) : (
+                    <View style={[styles.switchTrack, autoOpenUrls && { backgroundColor: theme.accent }]}>
+                      <View style={[styles.switchThumb, autoOpenUrls && styles.switchThumbOn]} />
+                    </View>
+                  )}
                 </Pressable>
 
                 <View style={[styles.divider, { backgroundColor: theme.border }]} />
@@ -231,9 +251,20 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
                       </Text>
                     </View>
                   </View>
-                  <View style={[styles.switchTrack, saveToHistory && { backgroundColor: theme.accent }]}>
-                    <View style={[styles.switchThumb, saveToHistory && styles.switchThumbOn]} />
-                  </View>
+                  {saveToHistory && theme.accentGradient && theme.accentGradient.length >= 2 ? (
+                    <LinearGradient
+                      colors={theme.accentGradient as any}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={[styles.switchTrack, { borderWidth: 1, borderColor: theme.accent }]}
+                    >
+                      <View style={[styles.switchThumb, styles.switchThumbOn]} />
+                    </LinearGradient>
+                  ) : (
+                    <View style={[styles.switchTrack, saveToHistory && { backgroundColor: theme.accent }]}>
+                      <View style={[styles.switchThumb, saveToHistory && styles.switchThumbOn]} />
+                    </View>
+                  )}
                 </Pressable>
 
                 <View style={[styles.divider, { backgroundColor: theme.border }]} />
@@ -255,9 +286,20 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
                       </Text>
                     </View>
                   </View>
-                  <View style={[styles.switchTrack, vibrateOnScan && { backgroundColor: theme.accent }]}>
-                    <View style={[styles.switchThumb, vibrateOnScan && styles.switchThumbOn]} />
-                  </View>
+                  {vibrateOnScan && theme.accentGradient && theme.accentGradient.length >= 2 ? (
+                    <LinearGradient
+                      colors={theme.accentGradient as any}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={[styles.switchTrack, { borderWidth: 1, borderColor: theme.accent }]}
+                    >
+                      <View style={[styles.switchThumb, styles.switchThumbOn]} />
+                    </LinearGradient>
+                  ) : (
+                    <View style={[styles.switchTrack, vibrateOnScan && { backgroundColor: theme.accent }]}>
+                      <View style={[styles.switchThumb, vibrateOnScan && styles.switchThumbOn]} />
+                    </View>
+                  )}
                 </Pressable>
 
                 <View style={[styles.divider, { backgroundColor: theme.border }]} />
@@ -279,9 +321,20 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
                       </Text>
                     </View>
                   </View>
-                  <View style={[styles.switchTrack, beepOnScan && { backgroundColor: theme.accent }]}>
+                  {beepOnScan && theme.accentGradient && theme.accentGradient.length >= 2 ? (
+                    <LinearGradient
+                      colors={theme.accentGradient as any}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={[styles.switchTrack, { borderWidth: 1, borderColor: theme.accent }]}
+                    >
+                      <View style={[styles.switchThumb, styles.switchThumbOn]} />
+                    </LinearGradient>
+                  ) : (
+                    <View style={[styles.switchTrack, beepOnScan && { backgroundColor: theme.accent }]}>
                     <View style={[styles.switchThumb, beepOnScan && styles.switchThumbOn]} />
-                  </View>
+                    </View>
+                  )}
                 </Pressable>
 
                 <View style={[styles.divider, { backgroundColor: theme.border }]} />
@@ -303,9 +356,20 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
                       </Text>
                     </View>
                   </View>
-                  <View style={[styles.switchTrack, autoCopyScanned && { backgroundColor: theme.accent }]}>
+                  {autoCopyScanned && theme.accentGradient && theme.accentGradient.length >= 2 ? (
+                    <LinearGradient
+                      colors={theme.accentGradient as any}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={[styles.switchTrack, { borderWidth: 1, borderColor: theme.accent }]}
+                    >
+                      <View style={[styles.switchThumb, styles.switchThumbOn]} />
+                    </LinearGradient>
+                  ) : (
+                    <View style={[styles.switchTrack, autoCopyScanned && { backgroundColor: theme.accent }]}>
                     <View style={[styles.switchThumb, autoCopyScanned && styles.switchThumbOn]} />
-                  </View>
+                    </View>
+                  )}
                 </Pressable>
               </View>
             </View>
@@ -333,9 +397,20 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
                       </Text>
                     </View>
                   </View>
-                  <View style={[styles.switchTrack, swipeNavigation && { backgroundColor: theme.accent }]}>
+                  {swipeNavigation && theme.accentGradient && theme.accentGradient.length >= 2 ? (
+                    <LinearGradient
+                      colors={theme.accentGradient as any}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={[styles.switchTrack, { borderWidth: 1, borderColor: theme.accent }]}
+                    >
+                      <View style={[styles.switchThumb, styles.switchThumbOn]} />
+                    </LinearGradient>
+                  ) : (
+                    <View style={[styles.switchTrack, swipeNavigation && { backgroundColor: theme.accent }]}>
                     <View style={[styles.switchThumb, swipeNavigation && styles.switchThumbOn]} />
-                  </View>
+                    </View>
+                  )}
                 </Pressable>
               </View>
             </View>
@@ -363,9 +438,20 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
                       </Text>
                     </View>
                   </View>
-                  <View style={[styles.switchTrack, urlThreatScanning && { backgroundColor: theme.accent }]}>
+                  {urlThreatScanning && theme.accentGradient && theme.accentGradient.length >= 2 ? (
+                    <LinearGradient
+                      colors={theme.accentGradient as any}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={[styles.switchTrack, { borderWidth: 1, borderColor: theme.accent }]}
+                    >
+                      <View style={[styles.switchThumb, styles.switchThumbOn]} />
+                    </LinearGradient>
+                  ) : (
+                    <View style={[styles.switchTrack, urlThreatScanning && { backgroundColor: theme.accent }]}>
                     <View style={[styles.switchThumb, urlThreatScanning && styles.switchThumbOn]} />
-                  </View>
+                    </View>
+                  )}
                 </Pressable>
 
                 <View style={[styles.divider, { backgroundColor: theme.border }]} />
@@ -387,9 +473,20 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
                       </Text>
                     </View>
                   </View>
-                  <View style={[styles.switchTrack, confirmDeleteHistory && { backgroundColor: theme.accent }]}>
+                  {confirmDeleteHistory && theme.accentGradient && theme.accentGradient.length >= 2 ? (
+                    <LinearGradient
+                      colors={theme.accentGradient as any}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={[styles.switchTrack, { borderWidth: 1, borderColor: theme.accent }]}
+                    >
+                      <View style={[styles.switchThumb, styles.switchThumbOn]} />
+                    </LinearGradient>
+                  ) : (
+                    <View style={[styles.switchTrack, confirmDeleteHistory && { backgroundColor: theme.accent }]}>
                     <View style={[styles.switchThumb, confirmDeleteHistory && styles.switchThumbOn]} />
-                  </View>
+                    </View>
+                  )}
                 </Pressable>
 
                 <View style={[styles.divider, { backgroundColor: theme.border }]} />
@@ -476,6 +573,41 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
                     {appearance === 'system' && <View style={[styles.radioDot, { backgroundColor: theme.accent }]} />}
                   </View>
                 </Pressable>
+
+                <View style={[styles.divider, { backgroundColor: theme.border }]} />
+
+                <Pressable
+                  style={styles.settingItem}
+                  onPress={() => setAccentColorExpanded(!accentColorExpanded)}
+                >
+                  <View style={styles.settingLeft}>
+                    <View style={[styles.iconWrapper, { backgroundColor: theme.accent + '20' }]}>
+                      <Ionicons name="color-palette-outline" size={20} color={theme.accent} />
+                    </View>
+                    <View style={styles.settingTextContainer}>
+                      <Text style={[styles.settingText, { color: theme.text.primary }]}>
+                        Accent Color
+                      </Text>
+                      <Text style={[styles.settingHint, { color: theme.text.secondary }]}>
+                        {accentColor.charAt(0).toUpperCase() + accentColor.slice(1)}
+                      </Text>
+                    </View>
+                  </View>
+                  <Ionicons
+                    name={accentColorExpanded ? 'chevron-up' : 'chevron-down'}
+                    size={20}
+                    color={theme.text.tertiary}
+                  />
+                </Pressable>
+
+                {accentColorExpanded && (
+                  <View style={styles.colorPickerContainer}>
+                    <ColorOrbitPicker
+                      selectedColor={accentColor}
+                      onSelect={handleAccentColorChange}
+                    />
+                  </View>
+                )}
               </View>
             </View>
 
@@ -627,13 +759,19 @@ const styles = StyleSheet.create({
     marginTop: 20,
     paddingHorizontal: 16,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 4,
+  },
   sectionTitle: {
     fontFamily: typography.fontFamily,
     fontSize: 11,
     fontWeight: '600',
     letterSpacing: 1,
     marginBottom: 8,
-    marginLeft: 4,
+    marginLeft: 0,
   },
   sectionContent: {
     borderRadius: 14,
@@ -682,6 +820,10 @@ const styles = StyleSheet.create({
   divider: {
     height: 0.5,
     marginLeft: 64,
+  },
+  colorPickerContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
   switchTrack: {
     width: 48,
