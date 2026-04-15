@@ -85,6 +85,15 @@ export function QrGeneratorContent() {
     ? GENERATOR_TEMPLATES.filter(t => importantTypes.includes(t.id))
     : GENERATOR_TEMPLATES;
 
+  // Barcode types
+  const barcodeTypes: GeneratorTemplateId[] = [
+    'ean-13', 'ean-8', 'upc-a', 'code-128', 'code-39', 'itf-14',
+    'code-93', 'pharmacode', 'msi-plesey', 'codabar'
+  ];
+
+  const qrCodeTemplates = displayedTemplates.filter(t => !barcodeTypes.includes(t.id));
+  const barcodeTemplates = displayedTemplates.filter(t => barcodeTypes.includes(t.id));
+
   const selectedTemplate = useMemo(
     () => getGeneratorTemplate(selectedTemplateId),
     [selectedTemplateId]
@@ -213,16 +222,16 @@ export function QrGeneratorContent() {
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionLabel, { color: theme.text.secondary }]}>Code Type</Text>
               <Pressable onPress={() => setTypesCollapsed(!typesCollapsed)} style={styles.collapseButton}>
-                <Ionicons 
-                  name={typesCollapsed ? 'chevron-down' : 'chevron-up'} 
-                  size={20} 
-                  color={theme.text.secondary} 
+                <Ionicons
+                  name={typesCollapsed ? 'chevron-down' : 'chevron-up'}
+                  size={20}
+                  color={theme.text.secondary}
                 />
               </Pressable>
             </View>
 
             <View style={styles.templateGrid}>
-              {displayedTemplates.map((template) => (
+              {qrCodeTemplates.map((template) => (
                 <Chip
                   key={template.id}
                   title={template.title}
@@ -231,6 +240,23 @@ export function QrGeneratorContent() {
                 />
               ))}
             </View>
+
+            {barcodeTemplates.length > 0 && (
+              <>
+                <View style={[styles.separator, { backgroundColor: theme.border }]} />
+                <Text style={[styles.barcodeSectionTitle, { color: theme.text.secondary }]}>Barcodes</Text>
+                <View style={styles.templateGrid}>
+                  {barcodeTemplates.map((template) => (
+                    <Chip
+                      key={template.id}
+                      title={template.title}
+                      selected={template.id === selectedTemplateId}
+                      onPress={() => handleTemplateSelect(template.id)}
+                    />
+                  ))}
+                </View>
+              </>
+            )}
           </Card>
 
           <Card style={styles.sectionCard} padding={spacing.lg}>
@@ -522,6 +548,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.sm,
+  },
+  separator: {
+    height: 1,
+    marginVertical: spacing.md,
+  },
+  barcodeSectionTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: spacing.sm,
+    marginTop: spacing.xs,
   },
   templateDescription: {
     fontFamily: typography.fontFamily,
