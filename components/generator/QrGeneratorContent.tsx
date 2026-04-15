@@ -558,7 +558,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: spacing.sm,
     marginTop: spacing.xs,
-    marginLeft: spacing.xs,
+    marginLeft: spacing.sm,
   },
   templateDescription: {
     fontFamily: typography.fontFamily,
