@@ -484,22 +484,18 @@ function ZoomControl({
 
   const thumbResponderHandlers = {
     onStartShouldSetResponder: () => true,
+    onMoveShouldSetResponder: () => true,
     onResponderGrant: (event: { nativeEvent: { pageX: number } }) => {
       touchStartXRef.current = event.nativeEvent.pageX;
       dragStartZoomRef.current = zoomRef.current;
+      // Activate fine tune immediately on press
+      handleFineTuneStart();
       clearLongPressTimeout();
-      longPressTimeoutRef.current = setTimeout(() => {
-        handleFineTuneStart();
-        longPressTimeoutRef.current = null;
-      }, 220);
     },
     onResponderMove: (event: { nativeEvent: { pageX: number } }) => {
       const dx = event.nativeEvent.pageX - touchStartXRef.current;
 
       if (!fineTuneActiveRef.current) {
-        if (Math.abs(dx) > 6) {
-          clearLongPressTimeout();
-        }
         return;
       }
 
