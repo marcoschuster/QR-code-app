@@ -165,13 +165,23 @@ export default function ScannerTab() {
   // Combined panResponder that always handles swipe down and conditionally handles horizontal swipes
   const panResponder = useRef(
     PanResponder.create({
-      onMoveShouldSetPanResponder: () => {
+      onStartShouldSetPanResponder: () => {
+        console.log('[TabBarToggle] onStartShouldSetPanResponder called');
         return !fineTuneActiveRef.current;
       },
-      onPanResponderMove: () => {
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        console.log('[TabBarToggle] onMoveShouldSetPanResponder called, dy:', gestureState.dy, 'dx:', gestureState.dx);
+        return !fineTuneActiveRef.current;
+      },
+      onPanResponderGrant: () => {
+        console.log('[TabBarToggle] onPanResponderGrant called');
+      },
+      onPanResponderMove: (_, gestureState) => {
+        console.log('[TabBarToggle] onPanResponderMove, dy:', gestureState.dy, 'dx:', gestureState.dx);
         return !fineTuneActiveRef.current;
       },
       onPanResponderRelease: (_, gestureState) => {
+        console.log('[TabBarToggle] onPanResponderRelease, dy:', gestureState.dy, 'dx:', gestureState.dx);
         if (fineTuneActiveRef.current) {
           return;
         }
@@ -180,7 +190,7 @@ export default function ScannerTab() {
 
         // Handle vertical swipe down to toggle TabBar (always enabled)
         if (dy > swipeThreshold && Math.abs(dy) > Math.abs(dx)) {
-          console.log('[Swipe] Swipe down detected, toggling TabBar');
+          console.log('[TabBarToggle] Swipe down detected, toggling TabBar');
           handleToggleTabBar();
           return;
         }
