@@ -499,6 +499,7 @@ function ZoomControl({
     onStartShouldSetResponderCapture: () => true,
     onMoveShouldSetResponder: () => true,
     onMoveShouldSetResponderCapture: () => true,
+    onResponderTerminationRequest: () => !fineTuneActiveRef.current,
     onResponderGrant: (event: { nativeEvent: { pageX: number } }) => {
       touchStartXRef.current = event.nativeEvent.pageX;
       dragStartZoomRef.current = zoomRef.current;
