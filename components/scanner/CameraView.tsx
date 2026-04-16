@@ -502,7 +502,6 @@ function ZoomControl({
     onResponderGrant: (event: { nativeEvent: { pageX: number } }) => {
       touchStartXRef.current = event.nativeEvent.pageX;
       dragStartZoomRef.current = zoomRef.current;
-      console.log('[ZoomControl] onResponderGrant - touchStartXRef set to:', touchStartXRef.current);
       // Activate fine tune immediately on press
       handleFineTuneStart();
       clearLongPressTimeout();
@@ -517,7 +516,6 @@ function ZoomControl({
       const deltaZoom = (dx / thumbTravelWidth) * (maxPoint - minPoint);
       const nextZoom = clampValue(dragStartZoomRef.current + deltaZoom, minPoint, maxPoint);
 
-      console.log('[ZoomControl] onResponderMove - pageX:', event.nativeEvent.pageX, 'touchStartXRef:', touchStartXRef.current, 'dx:', dx, 'thumbTravelWidth:', thumbTravelWidth, 'deltaZoom:', deltaZoom, 'nextZoom:', nextZoom);
       updateZoomImmediate(nextZoom);
     },
     onResponderRelease: () => {
