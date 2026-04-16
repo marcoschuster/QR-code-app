@@ -162,7 +162,16 @@ export default function ScannerTab() {
       console.log('[Swipe] onMoveShouldSetPanResponder called');
       return !fineTuneActiveRef.current;
     },
+    onPanResponderMove: () => {
+      // Prevent swipe when fine tune is active
+      return !fineTuneActiveRef.current;
+    },
     onPanResponderRelease: (_, gestureState) => {
+      // Only handle swipe if fine tune is not active
+      if (fineTuneActiveRef.current) {
+        console.log('[Swipe] Swipe ignored - fine tune is active');
+        return;
+      }
       console.log('[Swipe] onPanResponderRelease called, dx:', gestureState.dx);
       const { dx } = gestureState;
       const swipeThreshold = 50;
