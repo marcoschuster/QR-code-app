@@ -536,8 +536,8 @@ function ZoomControl({
 
   const railResponderHandlers = {
     onStartShouldSetResponder: () => false,
-    onMoveShouldSetResponder: () => fineTuneActiveRef.current,
-    onMoveShouldSetResponderCapture: () => fineTuneActiveRef.current,
+    onMoveShouldSetResponder: () => false,
+    onMoveShouldSetResponderCapture: () => false,
     onResponderGrant: (event: { nativeEvent: { pageX: number } }) => {
       if (fineTuneActiveRef.current) {
         touchStartXRef.current = event.nativeEvent.pageX;
