@@ -428,6 +428,7 @@ function ZoomControl({
   }, []);
 
   const setFineTuneVisible = (visible: boolean) => {
+    console.log('[ZoomControl] setFineTuneVisible called with:', visible);
     fineTuneActiveRef.current = visible;
     onFineTuneActiveChange?.(visible);
     Animated.spring(fineTuneAnim, {
@@ -479,6 +480,7 @@ function ZoomControl({
 
   const handleFineTuneStart = () => {
     dragStartZoomRef.current = zoomRef.current;
+    console.log('[ZoomControl] handleFineTuneStart called');
     setFineTuneVisible(true);
     void Haptics.selectionAsync().catch(() => {});
   };
