@@ -162,50 +162,45 @@ export default function ScannerTab() {
   const tabs = ['scan', 'history', 'generate'];
   const currentTabIndex = tabs.indexOf(activeTab);
 
-  const panResponder = swipeNavigation ? PanResponder.create({
-    onMoveShouldSetPanResponder: () => {
-      console.log('[Swipe] onMoveShouldSetPanResponder called');
-      return !fineTuneActiveRef.current;
-    },
-    onPanResponderMove: () => {
-      // Prevent swipe when fine tune is active
-      return !fineTuneActiveRef.current;
-    },
-    onPanResponderRelease: (_, gestureState) => {
-      // Only handle swipe if fine tune is not active
-      if (fineTuneActiveRef.current) {
-        console.log('[Swipe] Swipe ignored - fine tune is active');
-        return;
-      }
-      console.log('[Swipe] onPanResponderRelease called, dx:', gestureState.dx, 'dy:', gestureState.dy);
-      const { dx, dy } = gestureState;
-      const swipeThreshold = 50;
+  // Combined panResponder that always handles swipe down and conditionally handles horizontal swipes
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: () => {
+        return !fineTuneActiveRef.current;
+      },
+      onPanResponderMove: () => {
+        return !fineTuneActiveRef.current;
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (fineTuneActiveRef.current) {
+          return;
+        }
+        const { dx, dy } = gestureState;
+        const swipeThreshold = 50;
 
-      // Handle vertical swipe down to toggle TabBar
-      if (dy > swipeThreshold && Math.abs(dy) > Math.abs(dx)) {
-        console.log('[Swipe] Swipe down detected, toggling TabBar');
-        handleToggleTabBar();
-        return;
-      }
+        // Handle vertical swipe down to toggle TabBar (always enabled)
+        if (dy > swipeThreshold && Math.abs(dy) > Math.abs(dx)) {
+          console.log('[Swipe] Swipe down detected, toggling TabBar');
+          handleToggleTabBar();
+          return;
+        }
 
-      // Handle horizontal swipe for tab navigation
-      if (dx > swipeThreshold && currentTabIndex > 0) {
-        // Swipe right - go to previous tab
-        console.log('[Swipe] Swipe right detected, going to:', tabs[currentTabIndex - 1]);
-        handleTabChange(tabs[currentTabIndex - 1]);
-      } else if (dx < -swipeThreshold && currentTabIndex < tabs.length - 1) {
-        // Swipe left - go to next tab
-        console.log('[Swipe] Swipe left detected, going to:', tabs[currentTabIndex + 1]);
-        handleTabChange(tabs[currentTabIndex + 1]);
-      }
-    },
-  }) : null;
-
-  console.log('[Swipe] swipeNavigation setting:', swipeNavigation);
-  console.log('[Swipe] panHandlers exist:', panResponder !== null);
+        // Handle horizontal swipe for tab navigation (only if swipeNavigation is enabled)
+        if (swipeNavigation) {
+          if (dx > swipeThreshold && currentTabIndex > 0) {
+            console.log('[Swipe] Swipe right detected, going to:', tabs[currentTabIndex - 1]);
+            handleTabChange(tabs[currentTabIndex - 1]);
+          } else if (dx < -swipeThreshold && currentTabIndex < tabs.length - 1) {
+            console.log('[Swipe] Swipe left detected, going to:', tabs[currentTabIndex + 1]);
+            handleTabChange(tabs[currentTabIndex + 1]);
+          }
+        }
+      },
+    })
+  ).current;
 
   return (
-    <View style={st.root} {...(panResponder?.panHandlers || {})}>
+    <View style={st.root} {...panResponder.panHandlers}>
       <StatusBar hidden />
 
       {activeTab === 'scan' && (
