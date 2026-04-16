@@ -131,7 +131,7 @@ export function Button({
             colors={theme.accentGradient as any}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={[styles.absoluteGradient, { borderRadius: borderRadius.sm, borderWidth: 1, borderColor: theme.accent }]}
+            style={[styles.absoluteGradient, { borderRadius: borderRadius.sm }]}
           />
           {buttonContent}
         </>
