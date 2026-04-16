@@ -11,9 +11,9 @@ const STROKE_WIDTH = 4;
 const RADIUS = 8;
 const IDLE_DELAY_MS = 3000;
 const IDLE_PAUSE_MS = 900;
-type IdleMode = 'shiver' | 'ripple' | 'morph' | 'tilt' | 'orbit' | 'glide';
+type IdleMode = 'shiver' | 'ripple' | 'morph' | 'tilt' | 'pulse' | 'glide';
 
-const IDLE_MODES: IdleMode[] = ['shiver', 'ripple', 'morph', 'tilt', 'orbit', 'glide'];
+const IDLE_MODES: IdleMode[] = ['shiver', 'ripple', 'morph', 'tilt', 'pulse', 'glide'];
 const BASE_ANCHORS = [
   { x: 0, y: 0 },
   { x: DEFAULT_SIZE - CORNER_LENGTH, y: 0 },
@@ -31,52 +31,9 @@ const MODE_DURATIONS: Record<IdleMode, number> = {
   ripple: 2500,
   morph: 3200,
   tilt: 2400,
-  orbit: 3900,
+  pulse: 2800,
   glide: 2600,
 };
-const ORBIT_INPUT_RANGE = [0, 0.12, 0.28, 0.5, 0.7, 0.84, 0.94, 1];
-const ORBIT_POINTS = [
-  [
-    { x: 0, y: 0 },
-    { x: 88, y: 26 },
-    { x: 194, y: 34 },
-    { x: 202, y: 182 },
-    { x: 42, y: 200 },
-    { x: 82, y: 146 },
-    { x: 44, y: 78 },
-    { x: 0, y: 0 },
-  ],
-  [
-    { x: DEFAULT_SIZE - CORNER_LENGTH, y: 0 },
-    { x: 106, y: 24 },
-    { x: 212, y: 38 },
-    { x: 194, y: 190 },
-    { x: 52, y: 188 },
-    { x: 92, y: 136 },
-    { x: 116, y: 78 },
-    { x: DEFAULT_SIZE - CORNER_LENGTH, y: 0 },
-  ],
-  [
-    { x: 0, y: DEFAULT_SIZE - CORNER_LENGTH },
-    { x: 98, y: 42 },
-    { x: 202, y: 48 },
-    { x: 210, y: 198 },
-    { x: 40, y: 206 },
-    { x: 80, y: 158 },
-    { x: 32, y: 126 },
-    { x: 0, y: DEFAULT_SIZE - CORNER_LENGTH },
-  ],
-  [
-    { x: DEFAULT_SIZE - CORNER_LENGTH, y: DEFAULT_SIZE - CORNER_LENGTH },
-    { x: 118, y: 46 },
-    { x: 214, y: 54 },
-    { x: 204, y: 204 },
-    { x: 50, y: 198 },
-    { x: 92, y: 154 },
-    { x: 110, y: 124 },
-    { x: DEFAULT_SIZE - CORNER_LENGTH, y: DEFAULT_SIZE - CORNER_LENGTH },
-  ],
-] as const;
 
 interface Bounds {
   origin: { x: number; y: number };
@@ -123,8 +80,8 @@ function getModeEasing(mode: IdleMode) {
       return Easing.inOut(Easing.cubic);
     case 'tilt':
       return Easing.inOut(Easing.quad);
-    case 'orbit':
-      return Easing.bezier(0.2, 0.72, 0.16, 1);
+    case 'pulse':
+      return Easing.inOut(Easing.sin);
     case 'glide':
       return Easing.inOut(Easing.sin);
     default:
@@ -401,23 +358,22 @@ export function Reticle({ targetBounds, isLocking }: ReticleProps) {
       });
     }
 
-    if (idleMode === 'orbit') {
-      const points = ORBIT_POINTS[index];
+    if (idleMode === 'pulse') {
       translateX = idleProgress.interpolate({
-        inputRange: ORBIT_INPUT_RANGE,
-        outputRange: points.map((point) => point.x - baseAnchor.x),
+        inputRange: [0, 0.2, 0.4, 0.6, 0.8, 1],
+        outputRange: [0, direction.x * 3, direction.x * 5, direction.x * 3, direction.x * 1, 0],
       });
       translateY = idleProgress.interpolate({
-        inputRange: ORBIT_INPUT_RANGE,
-        outputRange: points.map((point) => point.y - baseAnchor.y),
-      });
-      rotate = idleProgress.interpolate({
-        inputRange: [0, 0.18, 0.48, 0.78, 0.92, 1],
-        outputRange: ['0deg', '8deg', '112deg', '242deg', '334deg', '360deg'],
+        inputRange: [0, 0.2, 0.4, 0.6, 0.8, 1],
+        outputRange: [0, direction.y * 3, direction.y * 5, direction.y * 3, direction.y * 1, 0],
       });
       scale = idleProgress.interpolate({
-        inputRange: [0, 0.18, 0.46, 0.74, 0.9, 1],
-        outputRange: [1, 0.97, 1.02, 0.965, 0.992, 1],
+        inputRange: [0, 0.25, 0.5, 0.75, 1],
+        outputRange: [1, 1.03, 1.06, 1.03, 1],
+      });
+      rotate = idleProgress.interpolate({
+        inputRange: [0, 0.25, 0.5, 0.75, 1],
+        outputRange: ['0deg', '2deg', '0deg', '-2deg', '0deg'],
       });
     }
 
