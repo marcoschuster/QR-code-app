@@ -177,10 +177,18 @@ export default function ScannerTab() {
         console.log('[Swipe] Swipe ignored - fine tune is active');
         return;
       }
-      console.log('[Swipe] onPanResponderRelease called, dx:', gestureState.dx);
-      const { dx } = gestureState;
+      console.log('[Swipe] onPanResponderRelease called, dx:', gestureState.dx, 'dy:', gestureState.dy);
+      const { dx, dy } = gestureState;
       const swipeThreshold = 50;
 
+      // Handle vertical swipe down to toggle TabBar
+      if (dy > swipeThreshold && Math.abs(dy) > Math.abs(dx)) {
+        console.log('[Swipe] Swipe down detected, toggling TabBar');
+        handleToggleTabBar();
+        return;
+      }
+
+      // Handle horizontal swipe for tab navigation
       if (dx > swipeThreshold && currentTabIndex > 0) {
         // Swipe right - go to previous tab
         console.log('[Swipe] Swipe right detected, going to:', tabs[currentTabIndex - 1]);

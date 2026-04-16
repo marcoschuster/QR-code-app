@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, Animated, PanResponder } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppTheme } from '../../hooks/useAppTheme';
@@ -16,22 +16,6 @@ export function TabBar({ activeTab, onTabChange, hidden = false, onToggleHidden 
   const { theme, isDark } = useAppTheme();
   const translateY = useRef(new Animated.Value(0)).current;
   const opacity = useRef(new Animated.Value(1)).current;
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        return gestureState.dy > 10 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx);
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        const { dy } = gestureState;
-        const swipeThreshold = 50;
-
-        if (dy > swipeThreshold) {
-          onToggleHidden?.();
-        }
-      },
-    })
-  ).current;
 
   useEffect(() => {
     Animated.parallel([
@@ -64,7 +48,6 @@ export function TabBar({ activeTab, onTabChange, hidden = false, onToggleHidden 
           transform: [{ translateY }],
         },
       ]}
-      {...panResponder.panHandlers}
     >
       <View
         style={[
