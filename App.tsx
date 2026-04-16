@@ -189,6 +189,7 @@ export default function App() {
           <ScannerScreen
             key={scannerKey}
             onResult={handleScanResult}
+            onFineTuneActiveChange={() => {}}
             onSettingsPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               setShowSettings(true);
