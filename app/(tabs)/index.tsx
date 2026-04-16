@@ -165,13 +165,14 @@ export default function ScannerTab() {
   // Combined panResponder that always handles swipe down and conditionally handles horizontal swipes
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => {
-        console.log('[TabBarToggle] onStartShouldSetPanResponder called');
+      onStartShouldSetPanResponderCapture: () => {
+        console.log('[TabBarToggle] onStartShouldSetPanResponderCapture called');
         return !fineTuneActiveRef.current;
       },
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        console.log('[TabBarToggle] onMoveShouldSetPanResponder called, dy:', gestureState.dy, 'dx:', gestureState.dx);
-        return !fineTuneActiveRef.current;
+      onMoveShouldSetPanResponderCapture: (_, gestureState) => {
+        console.log('[TabBarToggle] onMoveShouldSetPanResponderCapture called, dy:', gestureState.dy, 'dx:', gestureState.dx);
+        // Only capture if it's clearly a vertical swipe down
+        return !fineTuneActiveRef.current && gestureState.dy > 10 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx);
       },
       onPanResponderGrant: () => {
         console.log('[TabBarToggle] onPanResponderGrant called');
