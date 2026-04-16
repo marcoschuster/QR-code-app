@@ -32,6 +32,7 @@ export default function ScannerTab() {
   const [scanResult, setScanResult] = useState<any>(null);
   const [showResult, setShowResult] = useState(false);
   const [scannerKey, setScannerKey] = useState(0);
+  const [tabBarHidden, setTabBarHidden] = useState(false);
   const threatCheckRunRef = useRef(0);
   const updateItem = useHistoryStore((state) => state.updateItem);
   const { urlThreatScanning, swipeNavigation } = useSettingsStore();
@@ -154,6 +155,10 @@ export default function ScannerTab() {
     setActiveTab(tab);
   };
 
+  const handleToggleTabBar = () => {
+    setTabBarHidden(prev => !prev);
+  };
+
   const tabs = ['scan', 'history', 'generate'];
   const currentTabIndex = tabs.indexOf(activeTab);
 
@@ -222,7 +227,7 @@ export default function ScannerTab() {
         </View>
       </Modal>
 
-      <TabBar activeTab={activeTab} onTabChange={handleTabChange} />
+      <TabBar activeTab={activeTab} onTabChange={handleTabChange} hidden={tabBarHidden} onToggleHidden={handleToggleTabBar} />
     </View>
   );
 }
