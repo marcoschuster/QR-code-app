@@ -517,6 +517,7 @@ function ZoomControl({
       const deltaZoom = (dx / thumbTravelWidth) * (maxPoint - minPoint);
       const nextZoom = clampValue(dragStartZoomRef.current + deltaZoom, minPoint, maxPoint);
 
+      console.log('[ZoomControl] onResponderMove - dx:', dx, 'thumbTravelWidth:', thumbTravelWidth, 'deltaZoom:', deltaZoom, 'nextZoom:', nextZoom);
       updateZoomImmediate(nextZoom);
     },
     onResponderRelease: () => {
