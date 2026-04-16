@@ -332,6 +332,7 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset, onFineTuneAc
             points={ZOOM_CONTROL_POINTS}
             value={zoom}
             onValueChange={setZoom}
+            onFineTuneActiveChange={onFineTuneActiveChange}
           />
         ) : null}
 
@@ -386,10 +387,12 @@ function ZoomControl({
   points,
   value,
   onValueChange,
+  onFineTuneActiveChange,
 }: {
   points: number[];
   value: number;
   onValueChange: (value: number) => void;
+  onFineTuneActiveChange?: (active: boolean) => void;
 }) {
   const { theme } = useAppTheme();
   const animatedZoom = useRef(new Animated.Value(value)).current;

@@ -8,9 +8,10 @@ import { parseQRCode } from '../../services/qrParser';
 
 interface ScannerScreenProps {
   onResult: (data: any) => void;
+  onFineTuneActiveChange?: (active: boolean) => void;
 }
 
-export function ScannerScreen({ onResult }: ScannerScreenProps) {
+export function ScannerScreen({ onResult, onFineTuneActiveChange }: ScannerScreenProps) {
   const colorScheme = useColorScheme();
   const theme = colorScheme === 'dark' ? darkTheme : lightTheme;
 
