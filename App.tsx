@@ -6,6 +6,7 @@ import { ScanResultSheet } from './components/scanner/ScanResultSheet';
 import { TabBar } from './components/ui/TabBar';
 import { HistoryScreen } from './components/ui/HistoryScreen';
 import { SettingsScreen } from './components/ui/SettingsScreen';
+import { LiquidGlassBackground } from './components/ui/LiquidGlassBackground';
 import { QrGeneratorContent } from './components/generator/QrGeneratorContent';
 import { QRCodeData, ScanSafetyState } from './constants/types';
 import { checkUrlSafety, getThreatCheckSourceHint } from './services/threatCheck';
@@ -197,8 +198,9 @@ export default function App() {
   console.log('[App Swipe] panHandlers exist:', panResponder !== null);
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]} {...(panResponder?.panHandlers || {})}>
+    <View style={[styles.container, { backgroundColor: '#050816' }]} {...(panResponder?.panHandlers || {})}>
       <StatusBar hidden />
+      <LiquidGlassBackground />
       
       {activeTab === 'scan' && !showResult && (
         <View style={styles.tabContent}>
@@ -234,7 +236,7 @@ export default function App() {
       />
 
       {showResult && scanResult && (
-        <View style={[StyleSheet.absoluteFill, styles.resultOverlay]}>
+        <View style={[StyleSheet.absoluteFill, styles.resultOverlay, { backgroundColor: theme.backdrop }]}>
           <ScanResultSheet
             visible={showResult}
             onClose={handleCloseResult}

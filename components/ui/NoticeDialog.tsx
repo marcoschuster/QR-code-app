@@ -40,13 +40,13 @@ export function NoticeDialog({
           tint={isDark ? 'dark' : 'light'}
           style={StyleSheet.absoluteFill}
         />
-        <Pressable style={s.backdrop} onPress={onClose} />
+        <Pressable style={[s.backdrop, { backgroundColor: theme.backdrop }]} onPress={onClose} />
 
         <View
           style={[
             s.dialog,
             {
-              backgroundColor: theme.surface,
+              backgroundColor: theme.surfaceStrong,
               shadowColor: theme.shadow,
               borderColor: theme.border,
             },

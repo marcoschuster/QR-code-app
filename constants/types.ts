@@ -63,9 +63,16 @@ export interface QRCodeData {
 export interface ThemeColors {
   background: string;
   surface: string;
+  surfaceStrong: string;
   accent: string;
   accentGradient?: string[];
   accentStrongGradient?: string[];
+  surfaceGradient?: string[];
+  backgroundGradient?: string[];
+  backgroundAccentGradient?: string[];
+  backgroundBlobs?: string[];
+  glassHighlight: string;
+  backdrop: string;
   danger: string;
   success: string;
   warning: string;

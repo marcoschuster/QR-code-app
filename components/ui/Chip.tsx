@@ -15,8 +15,8 @@ export function Chip({ title, selected = false, onPress }: ChipProps) {
   const hasGradient = selected && theme.accentGradient && theme.accentGradient.length >= 2;
 
   const chipStyle = {
-    backgroundColor: selected && !hasGradient ? theme.accent : 'transparent',
-    borderWidth: selected ? 1 : 0,
+    backgroundColor: selected && !hasGradient ? theme.accent : theme.surfaceStrong,
+    borderWidth: 1,
     borderColor: selected ? theme.accent : theme.border,
     borderRadius: borderRadius.lg,
     paddingHorizontal: spacing.md,
@@ -62,6 +62,7 @@ const styles = StyleSheet.create({
   chip: {
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   absoluteGradient: {
     position: 'absolute',

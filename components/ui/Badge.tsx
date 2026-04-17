@@ -36,24 +36,24 @@ export function Badge({ title, variant = 'default', size = 'medium', onPress }: 
 
     const variantStyles = {
       default: {
-        backgroundColor: theme.surface,
+        backgroundColor: theme.surfaceStrong,
         borderWidth: 1,
         borderColor: theme.border,
       },
       success: {
-        backgroundColor: theme.success + '20',
+        backgroundColor: theme.success + '18',
         borderWidth: 1,
-        borderColor: theme.success,
+        borderColor: theme.success + '99',
       },
       danger: {
-        backgroundColor: theme.danger + '20',
+        backgroundColor: theme.danger + '18',
         borderWidth: 1,
-        borderColor: theme.danger,
+        borderColor: theme.danger + '99',
       },
       warning: {
-        backgroundColor: theme.warning + '20',
+        backgroundColor: theme.warning + '18',
         borderWidth: 1,
-        borderColor: theme.warning,
+        borderColor: theme.warning + '99',
       },
     };
 

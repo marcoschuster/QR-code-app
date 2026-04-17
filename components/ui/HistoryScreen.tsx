@@ -414,7 +414,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
     title: '',
     message: '',
   });
-  const { theme, isDark } = useAppTheme();
+  const { theme } = useAppTheme();
   const lastScrollY = useRef(0);
   const tabBarHidden = useRef(false);
   const groupedItems = getGroupedItems();
@@ -875,7 +875,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
           </Pressable>
         </View>
         <View style={s.headerControlsRow}>
-          <View style={[s.sortControl, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <View style={[s.sortControl, { backgroundColor: theme.surfaceStrong, borderColor: theme.border }]}>
             <Pressable
               style={s.sortOption}
               onPress={() => setSortMode('date')}
@@ -1022,44 +1022,44 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
             </View>
 
             <View style={s.insightsGrid}>
-              <View style={[s.insightTile, { backgroundColor: theme.background, borderColor: theme.border }]}>
+              <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
                 <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.totalScans}</Text>
                 <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Total scans</Text>
               </View>
-              <View style={[s.insightTile, { backgroundColor: theme.background, borderColor: theme.border }]}>
+              <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
                 <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.uniqueCodes}</Text>
                 <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Unique codes</Text>
               </View>
-              <View style={[s.insightTile, { backgroundColor: theme.background, borderColor: theme.border }]}>
+              <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
                 <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.thisWeekScans}</Text>
                 <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Last 7 days</Text>
               </View>
-              <View style={[s.insightTile, { backgroundColor: theme.background, borderColor: theme.border }]}>
+              <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
                 <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.favorites}</Text>
                 <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Favorites</Text>
               </View>
             </View>
 
             <View style={s.insightHighlights}>
-              <View style={[s.insightChip, { backgroundColor: theme.background, borderColor: theme.border }]}>
+              <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
                 <Ionicons name="layers-outline" size={15} color={theme.accent} />
                 <Text style={[s.insightChipText, { color: theme.text.primary }]}>
                   Top type: {insights.topTypeLabel}
                 </Text>
               </View>
-              <View style={[s.insightChip, { backgroundColor: theme.background, borderColor: theme.border }]}>
+              <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
                 <Ionicons name="repeat-outline" size={15} color={theme.accent} />
                 <Text style={[s.insightChipText, { color: theme.text.primary }]}>
                   Repeats: {insights.repeatedCodes}
                 </Text>
               </View>
-              <View style={[s.insightChip, { backgroundColor: theme.background, borderColor: theme.border }]}>
+              <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
                 <Ionicons name="shield-checkmark-outline" size={15} color={theme.success} />
                 <Text style={[s.insightChipText, { color: theme.text.primary }]}>
                   Safe links: {insights.safeLinks}
                 </Text>
               </View>
-              <View style={[s.insightChip, { backgroundColor: theme.background, borderColor: theme.border }]}>
+              <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
                 <Ionicons name="warning-outline" size={15} color={theme.danger} />
                 <Text style={[s.insightChipText, { color: theme.text.primary }]}>
                   Flagged: {insights.riskyLinks}
@@ -1077,7 +1077,6 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
             onRemoveScan={handleRemoveScan}
             onPress={() => setSelectedItem(item)}
             theme={theme}
-            isDark={isDark}
           />
         )}
         scrollEventThrottle={16}
@@ -1125,12 +1124,15 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
           onRequestClose={closeRenameDialog}
         >
           <View style={s.actionMenuOverlay}>
-            <Pressable style={s.actionMenuBackdrop} onPress={closeRenameDialog} />
+            <Pressable
+              style={[s.actionMenuBackdrop, { backgroundColor: theme.backdrop }]}
+              onPress={closeRenameDialog}
+            />
             <View
               style={[
                 s.renameDialog,
                 {
-                  backgroundColor: theme.surface,
+                  backgroundColor: theme.surfaceStrong,
                   borderColor: theme.border,
                   shadowColor: theme.shadow,
                 },
@@ -1143,7 +1145,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
                   {
                     color: theme.text.primary,
                     borderColor: theme.border,
-                    backgroundColor: theme.background,
+                    backgroundColor: theme.surface,
                   },
                 ]}
                 value={renameValue}
@@ -1189,7 +1191,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
               style={[
                 s.modalHeader,
                 {
-                  backgroundColor: theme.surface,
+                  backgroundColor: theme.surfaceStrong,
                   borderBottomColor: theme.border,
                 },
               ]}
@@ -1202,7 +1204,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
             </View>
 
             <ScrollView style={s.modalContent}>
-              <View style={[s.detailCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+              <View style={[s.detailCard, { backgroundColor: theme.surfaceStrong, borderColor: theme.border }]}>
                 <View style={s.detailHeaderRow}>
                   <Text style={[s.detailLabel, { color: theme.text.secondary }]}>Name</Text>
                   <Pressable onPress={() => isEditingName ? handleSaveName() : setIsEditingName(true)}>
@@ -1253,7 +1255,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
               style={[
                 s.modalActions,
                 {
-                  backgroundColor: theme.surface,
+                  backgroundColor: theme.surfaceStrong,
                   borderTopColor: theme.border,
                 },
               ]}
@@ -1347,7 +1349,7 @@ function DetailCard({ label, value, theme }: { label: string; value: string; the
       style={[
         s.detailCard,
         {
-          backgroundColor: theme.surface,
+          backgroundColor: theme.surfaceStrong,
           shadowColor: theme.shadow,
           borderColor: theme.border,
         },
@@ -1432,7 +1434,6 @@ function HistoryItemComponent({
   onRemoveScan,
   onPress,
   theme,
-  isDark,
 }: {
   item: HistoryItem;
   isExpanded: boolean;
@@ -1441,7 +1442,6 @@ function HistoryItemComponent({
   onRemoveScan: (itemId: string, scanId: string) => void;
   onPress: () => void;
   theme: ThemeColors;
-  isDark: boolean;
 }) {
   const [imgError, setImgError] = useState(false);
   const domain = getDomainFromUrl(item.rawValue);
@@ -1454,7 +1454,7 @@ function HistoryItemComponent({
       style={[
         s.historyCard,
         {
-          backgroundColor: theme.surface,
+          backgroundColor: theme.surfaceStrong,
           borderColor: theme.border,
           shadowColor: theme.shadow,
         },
@@ -1535,7 +1535,7 @@ function HistoryItemComponent({
         <View
           style={[
             s.expandedContent,
-            { backgroundColor: isDark ? '#090909' : '#FAFAFB' },
+            { backgroundColor: theme.surface, borderTopColor: theme.border },
           ]}
         >
           <Text style={[s.expandedTitle, { color: theme.text.primary }]}>Individual Scans:</Text>
@@ -1618,12 +1618,15 @@ function HistoryItemMenu({
       onRequestClose={onClose}
     >
       <View style={s.actionMenuOverlay}>
-        <Pressable style={s.actionMenuBackdrop} onPress={onClose} />
+        <Pressable
+          style={[s.actionMenuBackdrop, { backgroundColor: theme.backdrop }]}
+          onPress={onClose}
+        />
         <View
           style={[
             s.actionMenu,
             {
-              backgroundColor: theme.surface,
+              backgroundColor: theme.surfaceStrong,
               borderColor: theme.border,
               shadowColor: theme.shadow,
             },
@@ -1940,7 +1943,6 @@ const s = StyleSheet.create({
   },
   actionMenuBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.4)',
   },
   actionMenu: {
     width: '100%',

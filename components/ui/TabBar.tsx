@@ -13,7 +13,7 @@ interface TabBarProps {
 }
 
 export function TabBar({ activeTab, onTabChange, hidden = false, onToggleHidden }: TabBarProps) {
-  const { theme, isDark } = useAppTheme();
+  const { theme } = useAppTheme();
   const translateY = useRef(new Animated.Value(0)).current;
   const opacity = useRef(new Animated.Value(1)).current;
 
@@ -53,12 +53,19 @@ export function TabBar({ activeTab, onTabChange, hidden = false, onToggleHidden 
         style={[
           styles.shell,
           {
-            backgroundColor: isDark ? 'rgba(8,8,8,0.94)' : 'rgba(255,255,255,0.96)',
-            borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+            backgroundColor: theme.surfaceStrong,
+            borderColor: theme.border,
             shadowColor: theme.shadow,
           },
         ]}
       >
+        <LinearGradient
+          colors={(theme.surfaceGradient || [theme.surfaceStrong, theme.surface]) as any}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFillObject}
+        />
+        <View style={[styles.topHighlight, { backgroundColor: theme.glassHighlight }]} />
         <View style={styles.tabBar}>
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
@@ -71,7 +78,15 @@ export function TabBar({ activeTab, onTabChange, hidden = false, onToggleHidden 
                 ]}
                 onPress={() => onTabChange(tab.id)}
               >
-                <View style={styles.iconContainer}>
+                <View
+                  style={[
+                    styles.iconContainer,
+                    isActive && {
+                      backgroundColor: theme.glassHighlight,
+                      borderColor: theme.border,
+                    },
+                  ]}
+                >
                   <Ionicons
                     name={(isActive ? tab.activeIcon : tab.icon) as keyof typeof Ionicons.glyphMap}
                     size={24}
@@ -107,32 +122,45 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   shell: {
-    borderRadius: 28,
+    overflow: 'hidden',
+    borderRadius: 32,
     borderWidth: 1,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.12,
-    shadowRadius: 20,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 18 },
+    shadowOpacity: 0.24,
+    shadowRadius: 30,
+    elevation: 14,
+  },
+  topHighlight: {
+    position: 'absolute',
+    top: 0,
+    left: 20,
+    right: 20,
+    height: 1,
+    opacity: 0.95,
   },
   tabBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    width: 248,
-    gap: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    width: 270,
+    gap: 12,
   },
   tab: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
+    paddingVertical: 6,
   },
   iconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-    height: 24,
+    minWidth: 40,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   activeDot: {
     position: 'absolute',

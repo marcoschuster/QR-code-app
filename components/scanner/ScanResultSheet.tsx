@@ -29,7 +29,7 @@ async function loadContactsModule() {
 }
 
 export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps) {
-  const { theme, isDark } = useAppTheme();
+  const { theme } = useAppTheme();
   const [faviconError, setFaviconError] = useState(false);
   const [successDialog, setSuccessDialog] = useState<{
     visible: boolean;
@@ -1164,14 +1164,25 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Header */}
-      <View style={[styles.header, { borderBottomColor: theme.border }]}>
+      <View
+        style={[
+          styles.header,
+          {
+            backgroundColor: theme.surfaceStrong,
+            borderBottomColor: theme.border,
+          },
+        ]}
+      >
         <View style={styles.headerLeft}>
           {/* Favicon for URL-like links, emoji icon for other types */}
           {data.type === 'url' || data.type === 'play-store' || data.type === 'app-store' ? (
             <View
               style={[
                 styles.faviconContainer,
-                { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' },
+                {
+                  backgroundColor: theme.surface,
+                  borderColor: theme.border,
+                },
               ]}
             >
               {getDomainFromUrl(data.data.url) && !faviconError ? (
@@ -1243,7 +1254,16 @@ export function ScanResultSheet({ visible, onClose, data }: ScanResultSheetProps
       </ScrollView>
 
       {/* Close button */}
-      <Pressable style={[styles.closeButton, { borderTopColor: theme.border }]} onPress={onClose}>
+      <Pressable
+        style={[
+          styles.closeButton,
+          {
+            backgroundColor: theme.surfaceStrong,
+            borderTopColor: theme.border,
+          },
+        ]}
+        onPress={onClose}
+      >
         <Text style={[styles.closeButtonText, { color: theme.text.secondary }]}>
           Close
         </Text>
@@ -1293,6 +1313,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
+    borderWidth: 1,
   },
   favicon: {
     width: 28,

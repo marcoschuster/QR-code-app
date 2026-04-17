@@ -23,10 +23,11 @@ export function Button({
 }: ButtonProps) {
   const { theme } = useAppTheme();
   const hasGradient = variant === 'primary' && theme.accentGradient && theme.accentGradient.length >= 2;
+  const radius = 18;
 
   const getButtonStyle = () => {
     const baseStyle = {
-      borderRadius: borderRadius.sm,
+      borderRadius: radius,
       alignItems: 'center' as const,
       justifyContent: 'center' as const,
       flexDirection: 'row' as const,
@@ -55,7 +56,7 @@ export function Button({
         backgroundColor: hasGradient ? undefined : (disabled ? theme.text.tertiary : theme.accent),
       },
       secondary: {
-        backgroundColor: disabled ? theme.text.tertiary : theme.surface,
+        backgroundColor: disabled ? theme.text.tertiary : theme.surfaceStrong,
         borderWidth: 1,
         borderColor: disabled ? theme.text.tertiary : theme.border,
       },
@@ -120,6 +121,7 @@ export function Button({
       style={({ pressed }) => [
         styles.button,
         hasGradient && !disabled ? { ...buttonStyle, borderWidth: 0 } : buttonStyle,
+        variant !== 'secondary' && !disabled ? { shadowColor: theme.shadow } : null,
         pressed && styles.pressed,
       ]}
       onPress={onPress}
@@ -131,7 +133,7 @@ export function Button({
             colors={theme.accentGradient as any}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={[styles.absoluteGradient, { borderRadius: borderRadius.sm }]}
+            style={[styles.absoluteGradient, { borderRadius: radius }]}
           />
           {buttonContent}
         </>
@@ -145,6 +147,11 @@ export function Button({
 const styles = StyleSheet.create({
   button: {
     gap: spacing.sm,
+    overflow: 'hidden',
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.18,
+    shadowRadius: 22,
+    elevation: 8,
   },
   buttonWrapper: {
     borderWidth: 1,

@@ -16,7 +16,7 @@ interface SettingsScreenProps {
 }
 
 export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
-  const { theme, isDark } = useAppTheme();
+  const { theme } = useAppTheme();
   const { playTestSound } = useTestAudio();
   const [accentColorExpanded, setAccentColorExpanded] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -140,7 +140,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
         <Pressable
           style={[
             styles.backdrop,
-            { backgroundColor: isDark ? 'rgba(0, 0, 0, 0.72)' : 'rgba(0, 0, 0, 0.5)' },
+            { backgroundColor: theme.backdrop },
           ]}
           onPress={handleClose}
         />
@@ -149,7 +149,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
           style={[
             styles.modal,
             {
-              backgroundColor: theme.background,
+              backgroundColor: theme.surfaceStrong,
               shadowColor: theme.shadow,
               borderColor: theme.border,
             },
@@ -170,7 +170,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
               <Text style={[styles.sectionTitle, { color: theme.text.secondary }]}>
                 PERMISSIONS
               </Text>
-              <View style={[styles.sectionContent, { backgroundColor: theme.surface }]}>
+              <View style={[styles.sectionContent, { backgroundColor: theme.surface, borderColor: theme.border }]}>
                 <Pressable
                   style={styles.settingItem}
                   onPress={handleOpenSystemSettings}
@@ -198,7 +198,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
               <Text style={[styles.sectionTitle, { color: theme.text.secondary }]}>
                 SCANNING
               </Text>
-              <View style={[styles.sectionContent, { backgroundColor: theme.surface }]}>
+              <View style={[styles.sectionContent, { backgroundColor: theme.surface, borderColor: theme.border }]}>
                 <Pressable
                   style={styles.settingItem}
                   onPress={() => handleToggle('autoOpenUrls', !autoOpenUrls)}
@@ -379,7 +379,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
               <Text style={[styles.sectionTitle, { color: theme.text.secondary }]}>
                 NAVIGATION
               </Text>
-              <View style={[styles.sectionContent, { backgroundColor: theme.surface }]}>
+              <View style={[styles.sectionContent, { backgroundColor: theme.surface, borderColor: theme.border }]}>
                 <Pressable
                   style={styles.settingItem}
                   onPress={() => handleToggle('swipeNavigation', !swipeNavigation)}
@@ -420,7 +420,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
               <Text style={[styles.sectionTitle, { color: theme.text.secondary }]}>
                 PRIVACY & SAFETY
               </Text>
-              <View style={[styles.sectionContent, { backgroundColor: theme.surface }]}>
+              <View style={[styles.sectionContent, { backgroundColor: theme.surface, borderColor: theme.border }]}>
                 <Pressable
                   style={styles.settingItem}
                   onPress={() => handleToggle('urlThreatScanning', !urlThreatScanning)}
@@ -518,7 +518,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
               <Text style={[styles.sectionTitle, { color: theme.text.secondary }]}>
                 APPEARANCE
               </Text>
-              <View style={[styles.sectionContent, { backgroundColor: theme.surface }]}>
+              <View style={[styles.sectionContent, { backgroundColor: theme.surface, borderColor: theme.border }]}>
                 <Pressable
                   style={styles.settingItem}
                   onPress={() => handleAppearanceChange('light')}
@@ -616,7 +616,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
               <Text style={[styles.sectionTitle, { color: theme.text.secondary }]}>
                 DEBUG
               </Text>
-              <View style={[styles.sectionContent, { backgroundColor: theme.surface }]}>
+              <View style={[styles.sectionContent, { backgroundColor: theme.surface, borderColor: theme.border }]}>
                 <Pressable
                   style={styles.settingItem}
                   onPress={handleTestAudio}
@@ -666,7 +666,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
               <Text style={[styles.sectionTitle, { color: theme.text.secondary }]}>
                 ABOUT
               </Text>
-              <View style={[styles.sectionContent, { backgroundColor: theme.surface }]}>
+              <View style={[styles.sectionContent, { backgroundColor: theme.surface, borderColor: theme.border }]}>
                 <View style={styles.settingItem}>
                   <View style={styles.settingLeft}>
                     <View style={[styles.iconWrapper, { backgroundColor: '#0A84FF20' }]}>
@@ -722,7 +722,7 @@ const styles = StyleSheet.create({
   modal: {
     width: '88%',
     height: '80%', // Change from maxHeight to height
-    borderRadius: 20,
+    borderRadius: 28,
     overflow: 'hidden',
     borderWidth: 1,
     shadowOffset: { width: 0, height: 10 },
@@ -776,6 +776,7 @@ const styles = StyleSheet.create({
   sectionContent: {
     borderRadius: 14,
     overflow: 'hidden',
+    borderWidth: 1,
   },
   settingItem: {
     flexDirection: 'row',

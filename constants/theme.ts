@@ -49,25 +49,39 @@ export const getStrongAccentGradient = (accentColor: AccentColor): string[] | un
 };
 
 export const lightTheme: ThemeColors = {
-  background: '#FFFFFF',
-  surface: '#F4F4F5',
+  background: 'rgba(237, 244, 255, 0.84)',
+  surface: 'rgba(255,255,255,0.46)',
+  surfaceStrong: 'rgba(255,255,255,0.72)',
   accent: '#FF0000',
+  surfaceGradient: ['rgba(255,255,255,0.78)', 'rgba(255,255,255,0.32)'],
+  backgroundGradient: ['#EEF4FF', '#D9E7FF', '#F9FBFF'],
+  backgroundAccentGradient: ['rgba(124,58,237,0.18)', 'rgba(79,70,229,0.12)', 'rgba(6,182,212,0.08)'],
+  backgroundBlobs: ['rgba(99,102,241,0.48)', 'rgba(168,85,247,0.38)', 'rgba(34,211,238,0.32)'],
+  glassHighlight: 'rgba(255,255,255,0.24)',
+  backdrop: 'rgba(17, 24, 39, 0.28)',
   danger: '#FF453A',
   success: '#30D158',
   warning: '#FFD60A',
   text: {
-    primary: '#000000',
-    secondary: '#5F5F67',
-    tertiary: '#86868F',
+    primary: '#0F172A',
+    secondary: '#475569',
+    tertiary: '#64748B',
   },
-  border: '#D7D7DC',
-  shadow: '#000000',
+  border: 'rgba(255,255,255,0.58)',
+  shadow: '#1E1B4B',
 };
 
 export const darkTheme: ThemeColors = {
-  background: '#000000',
-  surface: '#111214',
+  background: 'rgba(8, 10, 24, 0.84)',
+  surface: 'rgba(255,255,255,0.10)',
+  surfaceStrong: 'rgba(255,255,255,0.18)',
   accent: '#FF0000',
+  surfaceGradient: ['rgba(255,255,255,0.22)', 'rgba(255,255,255,0.08)'],
+  backgroundGradient: ['#070912', '#141A39', '#0A2740'],
+  backgroundAccentGradient: ['rgba(79,70,229,0.34)', 'rgba(124,58,237,0.24)', 'rgba(6,182,212,0.16)'],
+  backgroundBlobs: ['rgba(79,70,229,0.46)', 'rgba(124,58,237,0.34)', 'rgba(6,182,212,0.28)'],
+  glassHighlight: 'rgba(255,255,255,0.16)',
+  backdrop: 'rgba(3, 6, 18, 0.52)',
   danger: '#FF453A',
   success: '#30D158',
   warning: '#FFD60A',
@@ -76,8 +90,8 @@ export const darkTheme: ThemeColors = {
     secondary: '#B6B6BC',
     tertiary: '#8B8B93',
   },
-  border: '#26272B',
-  shadow: '#000000',
+  border: 'rgba(255,255,255,0.16)',
+  shadow: '#020617',
 };
 
 export const spacing = {
