@@ -32,6 +32,7 @@ interface ScannerScreenProps {
   onSettingsPress?: () => void;
   onReset?: () => void;
   onFineTuneActiveChange?: (active: boolean) => void;
+  tabBarHidden?: boolean;
 }
 
 let lastKnownCameraPermissionGranted = false;
@@ -74,7 +75,13 @@ const getNextPointIndex = (points: number[], value: number, direction: -1 | 1) =
   return Math.min(points.length - 1, nearestIndex + 1);
 };
 
-export function ScannerScreen({ onResult, onSettingsPress, onReset, onFineTuneActiveChange }: ScannerScreenProps) {
+export function ScannerScreen({
+  onResult,
+  onSettingsPress,
+  onReset,
+  onFineTuneActiveChange,
+  tabBarHidden = false,
+}: ScannerScreenProps) {
   const router = useRouter();
   const [permission, requestPermission] = useCameraPermissions();
   const [cameraFacing, setCameraFacing] = useState<'back' | 'front'>('back');
@@ -87,6 +94,7 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset, onFineTuneAc
   const [showLimitReached, setShowLimitReached] = useState(false);
   const [zoom, setZoom] = useState(0);
   const photoScanSucceededRef = useRef(false);
+  const bottomOffset = useRef(new Animated.Value(tabBarHidden ? 84 : 160)).current;
   const { addItem } = useHistoryStore();
   const { saveToHistory, beepOnScan, vibrateOnScan, urlThreatScanning, autoCopyScanned } = useSettingsStore();
   const { playScanSound } = useScanAudio();
@@ -104,6 +112,14 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset, onFineTuneAc
       setTorchOn(false);
     };
   }, []);
+
+  useEffect(() => {
+    Animated.timing(bottomOffset, {
+      toValue: tabBarHidden ? 84 : 160,
+      duration: 220,
+      useNativeDriver: false,
+    }).start();
+  }, [bottomOffset, tabBarHidden]);
 
   // ── Barcode scan handler ───────────────────────────────────────────────────
   const handleBarcodeScanned = async (result: { data: string; raw?: string; bounds?: {origin: {x: number; y: number}; size: {width: number; height: number}} }) => {
@@ -324,9 +340,7 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset, onFineTuneAc
       </View>
 
       {/* Bottom — button sits above the tab bar */}
-      <View style={s.bottom}>
-        <Text style={s.hint}>Point at any code to scan</Text>
-
+      <Animated.View style={[s.bottom, { bottom: bottomOffset }]}>
         {!scanned && !showPhotoScanner ? (
           <ZoomControl
             points={ZOOM_CONTROL_POINTS}
@@ -349,7 +363,7 @@ export function ScannerScreen({ onResult, onSettingsPress, onReset, onFineTuneAc
             <Text style={s.rescanTxt}>Tap to Scan Again</Text>
           </Pressable>
         )}
-      </View>
+      </Animated.View>
 
       {/* Photo Scanner Modal */}
       <PhotoScanner
@@ -669,8 +683,8 @@ const s = StyleSheet.create({
   topBar:     { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 16 },
   pill:       { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' },
   topBarActions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  // bottom: sits high enough to clear the floating tab bar (height ~80) + its bottom offset (24)
-  bottom:     { position: 'absolute', bottom: 160, left: 0, right: 0, alignItems: 'center', gap: 14 },
+  // Moves down when the floating tab bar is hidden so the control can use that space.
+  bottom:     { position: 'absolute', left: 0, right: 0, alignItems: 'center', gap: 14 },
   zoomControl: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   zoomStepButton: {
     width: 38,
@@ -763,7 +777,6 @@ const s = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: '#0A84FF',
   },
-  hint:       { fontSize: 13, color: 'rgba(255,255,255,0.5)', textAlign: 'center' },
   rescanBtn:  { backgroundColor: '#0A84FF', paddingVertical: 12, paddingHorizontal: 28, borderRadius: 14 },
   rescanTxt:  { color: '#FFF', fontSize: 14, fontWeight: '600' },
 });

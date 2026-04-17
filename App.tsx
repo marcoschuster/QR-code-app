@@ -152,27 +152,43 @@ export default function App() {
   const tabs = ['scan', 'generate', 'history'];
   const currentTabIndex = tabs.indexOf(activeTab);
 
-  const panResponder = swipeNavigation ? PanResponder.create({
-    onMoveShouldSetPanResponder: (_, gestureState) => {
-      // Only capture horizontal swipes, not taps or vertical gestures
+  const canHandleVerticalTabBarSwipe = activeTab !== 'history' && !showResult && !showSettings;
+  const canHandleHorizontalTabSwipe = swipeNavigation && !showResult && !showSettings;
+
+  const panResponder = (canHandleVerticalTabBarSwipe || canHandleHorizontalTabSwipe) ? PanResponder.create({
+    onMoveShouldSetPanResponderCapture: (_, gestureState) => {
       const { dx, dy } = gestureState;
-      const isHorizontalSwipe = Math.abs(dx) > Math.abs(dy);
-      const hasMovedEnough = Math.abs(dx) > 10;
-      return isHorizontalSwipe && hasMovedEnough;
+      const absDx = Math.abs(dx);
+      const absDy = Math.abs(dy);
+      const isVerticalSwipe = canHandleVerticalTabBarSwipe && absDy > 10 && absDy > absDx;
+      const isHorizontalSwipe = canHandleHorizontalTabSwipe && absDx > 10 && absDx > absDy;
+
+      return isVerticalSwipe || isHorizontalSwipe;
     },
     onPanResponderRelease: (_, gestureState) => {
-      console.log('[App Swipe] onPanResponderRelease called, dx:', gestureState.dx);
-      const { dx } = gestureState;
+      const { dx, dy } = gestureState;
+      const absDx = Math.abs(dx);
+      const absDy = Math.abs(dy);
       const swipeThreshold = 50;
 
-      if (dx > swipeThreshold && currentTabIndex > 0) {
-        // Swipe right - go to previous tab
-        console.log('[App Swipe] Swipe right detected, going to:', tabs[currentTabIndex - 1]);
-        handleTabChange(tabs[currentTabIndex - 1]);
-      } else if (dx < -swipeThreshold && currentTabIndex < tabs.length - 1) {
-        // Swipe left - go to next tab
-        console.log('[App Swipe] Swipe left detected, going to:', tabs[currentTabIndex + 1]);
-        handleTabChange(tabs[currentTabIndex + 1]);
+      if (canHandleVerticalTabBarSwipe && absDy > absDx) {
+        if (dy > swipeThreshold) {
+          setIsTabBarHidden(true);
+          return;
+        }
+
+        if (dy < -swipeThreshold) {
+          setIsTabBarHidden(false);
+          return;
+        }
+      }
+
+      if (canHandleHorizontalTabSwipe && absDx > absDy) {
+        if (dx > swipeThreshold && currentTabIndex > 0) {
+          handleTabChange(tabs[currentTabIndex - 1]);
+        } else if (dx < -swipeThreshold && currentTabIndex < tabs.length - 1) {
+          handleTabChange(tabs[currentTabIndex + 1]);
+        }
       }
     },
   }) : null;
@@ -190,6 +206,7 @@ export default function App() {
             key={scannerKey}
             onResult={handleScanResult}
             onFineTuneActiveChange={() => {}}
+            tabBarHidden={isTabBarHidden}
             onSettingsPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               setShowSettings(true);
@@ -213,7 +230,7 @@ export default function App() {
       <TabBar
         activeTab={activeTab}
         onTabChange={handleTabChange}
-        hidden={activeTab === 'history' && isTabBarHidden}
+        hidden={isTabBarHidden}
       />
 
       {showResult && scanResult && (
