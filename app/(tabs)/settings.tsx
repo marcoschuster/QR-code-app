@@ -3,10 +3,10 @@ import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-nati
 import { useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useSettingsStore } from '../store/useSettingsStore';
-import { useHistoryStore } from '../store/useHistoryStore';
-import { lightTheme, darkTheme, spacing, borderRadius, typography } from '../constants/theme';
-import { ConfirmDialog } from '../components/ui/ConfirmDialog';
+import { useSettingsStore } from '../../store/useSettingsStore';
+import { useHistoryStore } from '../../store/useHistoryStore';
+import { lightTheme, darkTheme, spacing, borderRadius, typography } from '../../constants/theme';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 
 console.log('========== SETTINGS.TSX LOADED ==========');
 

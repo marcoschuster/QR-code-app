@@ -50,5 +50,8 @@
     "babel-preset-expo": "~55.0.8",
     "typescript": "~5.9.2"
   },
+  "overrides": {
+    "brace-expansion": "^1.1.13"
+  },
   "private": true
 }
