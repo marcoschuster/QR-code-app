@@ -22,6 +22,7 @@ import { useSettingsStore } from '../../store/useSettingsStore';
 import { HistoryItem, ThemeColors } from '../../constants/types';
 import { useAppTheme } from '../../hooks/useAppTheme';
 import { Button } from './Button';
+import { Card } from './Card';
 import { ConfirmDialog } from './ConfirmDialog';
 import { SuccessDialog } from './SuccessDialog';
 
@@ -301,6 +302,76 @@ const buildHistoryCalendarUrl = (item: HistoryItem) => {
   return calendarUrl;
 };
 
+const getHistoryTypeInsightLabel = (type?: HistoryItem['type']) => {
+  switch (type) {
+    case 'vcard':
+      return 'Contacts';
+    case 'calendar':
+      return 'Events';
+    case 'play-store':
+    case 'app-store':
+      return 'Apps';
+    case 'url':
+      return 'Links';
+    case 'wifi':
+      return 'Wi-Fi';
+    case 'sms':
+      return 'SMS';
+    case 'whatsapp':
+      return 'WhatsApp';
+    case 'phone':
+      return 'Phones';
+    case 'location':
+      return 'Locations';
+    case 'coupon':
+      return 'Coupons';
+    case 'barcode':
+      return 'Barcodes';
+    case 'email':
+      return 'Emails';
+    case 'text':
+      return 'Text';
+    default:
+      return 'Scans';
+  }
+};
+
+const buildHistoryInsights = (items: HistoryItem[]) => {
+  const totalScans = items.reduce((sum, item) => sum + Math.max(1, item.scanCount || 1), 0);
+  const uniqueCodes = items.length;
+  const favorites = items.filter((item) => item.isFavorite).length;
+  const repeatedCodes = items.filter((item) => (item.scanCount || 1) > 1).length;
+  const riskyLinks = items.filter(
+    (item) => item.type === 'url' && item.safety?.checked && item.safety.safe === false
+  ).length;
+  const safeLinks = items.filter(
+    (item) => item.type === 'url' && item.safety?.checked && item.safety.safe === true
+  ).length;
+  const thisWeekCutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const thisWeekScans = items
+    .filter((item) => item.timestamp >= thisWeekCutoff)
+    .reduce((sum, item) => sum + Math.max(1, item.scanCount || 1), 0);
+
+  const scanCountsByType = items.reduce((acc, item) => {
+    const type = item.type || 'text';
+    acc[type] = (acc[type] || 0) + Math.max(1, item.scanCount || 1);
+    return acc;
+  }, {} as Record<string, number>);
+
+  const topTypeEntry = Object.entries(scanCountsByType).sort((a, b) => b[1] - a[1])[0];
+
+  return {
+    totalScans,
+    uniqueCodes,
+    favorites,
+    repeatedCodes,
+    riskyLinks,
+    safeLinks,
+    thisWeekScans,
+    topTypeLabel: getHistoryTypeInsightLabel(topTypeEntry?.[0] as HistoryItem['type'] | undefined),
+  };
+};
+
 interface HistoryScreenProps {
   onTabBarVisibilityChange?: (hidden: boolean) => void;
 }
@@ -318,6 +389,8 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
   const [editingNameValue, setEditingNameValue] = useState('');
   const [renameValue, setRenameValue] = useState('');
   const [sortMode, setSortMode] = useState<HistorySortMode>('date');
+  const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
+  const [isSortReversed, setIsSortReversed] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
     visible: boolean;
     title: string;
@@ -345,21 +418,21 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
   const lastScrollY = useRef(0);
   const tabBarHidden = useRef(false);
   const groupedItems = getGroupedItems();
-  const sortedGroupedItems = [...groupedItems].sort((a, b) => {
-    if (!!a.isFavorite !== !!b.isFavorite) {
-      return a.isFavorite ? -1 : 1;
-    }
+  const visibleGroupedItems = showOnlyFavorites
+    ? groupedItems.filter((item) => item.isFavorite)
+    : groupedItems;
+  const sortedGroupedItems = [...visibleGroupedItems].sort((a, b) => {
+    const baseSortValue = sortMode === 'name'
+      ? getHistoryItemName(a).localeCompare(getHistoryItemName(b), undefined, {
+          sensitivity: 'base',
+          numeric: true,
+        })
+      : b.timestamp - a.timestamp;
 
-    if (sortMode === 'name') {
-      return getHistoryItemName(a).localeCompare(getHistoryItemName(b), undefined, {
-        sensitivity: 'base',
-        numeric: true,
-      });
-    }
-
-    return b.timestamp - a.timestamp;
+    return isSortReversed ? -baseSortValue : baseSortValue;
   });
   const primaryAction = selectedItem ? getHistoryPrimaryAction(selectedItem) : null;
+  const insights = buildHistoryInsights(groupedItems);
 
   useEffect(() => {
     if (selectedItem) {
@@ -801,82 +874,121 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
             <Text style={[s.clearBtn, { color: theme.danger }]}>Clear All</Text>
           </Pressable>
         </View>
-        <View style={[s.sortControl, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-          <Pressable
-            style={s.sortOption}
-            onPress={() => setSortMode('date')}
-          >
-            {sortMode === 'date' && theme.accentGradient && theme.accentGradient.length >= 2 ? (
-              <LinearGradient
-                colors={theme.accentGradient as any}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={[s.sortOptionGradient, { borderWidth: 1, borderColor: theme.accent }]}
-              >
-                <Ionicons
-                  name="time-outline"
-                  size={14}
-                  color="#FFFFFF"
-                />
-                <Text style={[s.sortOptionText, { color: '#FFFFFF' }]}>
-                  Date
-                </Text>
-              </LinearGradient>
-            ) : (
-              <>
-                <Ionicons
-                  name="time-outline"
-                  size={14}
-                  color={sortMode === 'date' ? '#FFFFFF' : theme.text.secondary}
-                />
-                <Text
-                  style={[
-                    s.sortOptionText,
-                    { color: sortMode === 'date' ? '#FFFFFF' : theme.text.secondary },
-                  ]}
+        <View style={s.headerControlsRow}>
+          <View style={[s.sortControl, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <Pressable
+              style={s.sortOption}
+              onPress={() => setSortMode('date')}
+            >
+              {sortMode === 'date' && theme.accentGradient && theme.accentGradient.length >= 2 ? (
+                <LinearGradient
+                  colors={theme.accentGradient as any}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={[s.sortOptionGradient, { borderWidth: 1, borderColor: theme.accent }]}
                 >
-                  Date
-                </Text>
-              </>
-            )}
+                  <Ionicons
+                    name="time-outline"
+                    size={13}
+                    color="#FFFFFF"
+                  />
+                  <Text style={[s.sortOptionText, { color: '#FFFFFF' }]}>
+                    Date
+                  </Text>
+                </LinearGradient>
+              ) : (
+                <>
+                  <Ionicons
+                    name="time-outline"
+                    size={13}
+                    color={sortMode === 'date' ? '#FFFFFF' : theme.text.secondary}
+                  />
+                  <Text
+                    style={[
+                      s.sortOptionText,
+                      { color: sortMode === 'date' ? '#FFFFFF' : theme.text.secondary },
+                    ]}
+                  >
+                    Date
+                  </Text>
+                </>
+              )}
+            </Pressable>
+            <Pressable
+              style={s.sortOption}
+              onPress={() => setSortMode('name')}
+            >
+              {sortMode === 'name' && theme.accentGradient && theme.accentGradient.length >= 2 ? (
+                <LinearGradient
+                  colors={theme.accentGradient as any}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={[s.sortOptionGradient, { borderWidth: 1, borderColor: theme.accent }]}
+                >
+                  <Ionicons
+                    name="text-outline"
+                    size={13}
+                    color="#FFFFFF"
+                  />
+                  <Text style={[s.sortOptionText, { color: '#FFFFFF' }]}>
+                    Name
+                  </Text>
+                </LinearGradient>
+              ) : (
+                <>
+                  <Ionicons
+                    name="text-outline"
+                    size={13}
+                    color={sortMode === 'name' ? '#FFFFFF' : theme.text.secondary}
+                  />
+                  <Text
+                    style={[
+                      s.sortOptionText,
+                      { color: sortMode === 'name' ? '#FFFFFF' : theme.text.secondary },
+                    ]}
+                  >
+                    Name
+                  </Text>
+                </>
+              )}
+            </Pressable>
+          </View>
+
+          <Pressable
+            style={[
+              s.headerActionButton,
+              {
+                backgroundColor: showOnlyFavorites ? theme.accent : theme.surface,
+                borderColor: showOnlyFavorites ? theme.accent : theme.border,
+              },
+            ]}
+            onPress={() => setShowOnlyFavorites((prev) => !prev)}
+          >
+            <Ionicons
+              name={showOnlyFavorites ? 'star' : 'star-outline'}
+              size={15}
+              color={showOnlyFavorites ? '#FFFFFF' : theme.text.secondary}
+            />
+            <Text style={[s.headerActionButtonText, { color: showOnlyFavorites ? '#FFFFFF' : theme.text.secondary }]}>
+              Favs
+            </Text>
           </Pressable>
+
           <Pressable
-            style={s.sortOption}
-            onPress={() => setSortMode('name')}
+            style={[
+              s.headerIconButton,
+              {
+                backgroundColor: isSortReversed ? theme.accent : theme.surface,
+                borderColor: isSortReversed ? theme.accent : theme.border,
+              },
+            ]}
+            onPress={() => setIsSortReversed((prev) => !prev)}
           >
-            {sortMode === 'name' && theme.accentGradient && theme.accentGradient.length >= 2 ? (
-              <LinearGradient
-                colors={theme.accentGradient as any}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={[s.sortOptionGradient, { borderWidth: 1, borderColor: theme.accent }]}
-              >
-                <Ionicons
-                  name="text-outline"
-                  size={14}
-                  color="#FFFFFF"
-                />
-                <Text style={[s.sortOptionText, { color: '#FFFFFF' }]}>
-                  Name
-                </Text>
-              </LinearGradient>
-            ) : (
-              <>
-                <Ionicons
-                  name="text-outline"
-                  size={14}
-                  color={sortMode === 'name' ? '#FFFFFF' : theme.text.secondary}
-                />
-                <Text
-                  style={[
-                    s.sortOptionText,
-                    { color: sortMode === 'name' ? '#FFFFFF' : theme.text.secondary },
-                  ]}
-                >
-                  Name
-                </Text>
-              </>
-            )}
+            <Ionicons
+              name="swap-vertical-outline"
+              size={16}
+              color={isSortReversed ? '#FFFFFF' : theme.text.secondary}
+            />
           </Pressable>
         </View>
       </View>
@@ -884,8 +996,78 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
       <FlatList
         data={sortedGroupedItems}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={s.listContent}
+        contentContainerStyle={[
+          s.listContent,
+          sortedGroupedItems.length === 0 && s.emptyListContent,
+        ]}
         onScroll={handleScroll}
+        ListEmptyComponent={
+          <View style={s.empty}>
+            <Text style={s.emptyIcon}>⭐</Text>
+            <Text style={[s.emptyTitle, { color: theme.text.primary }]}>No favorites yet</Text>
+            <Text style={[s.emptySubtitle, { color: theme.text.secondary }]}>
+              Favorite scans will appear here when the filter is enabled.
+            </Text>
+          </View>
+        }
+        ListHeaderComponent={
+          <Card style={s.insightsCard}>
+            <View style={s.insightsHeader}>
+              <View>
+                <Text style={[s.insightsTitle, { color: theme.text.primary }]}>Insights</Text>
+                <Text style={[s.insightsSubtitle, { color: theme.text.secondary }]}>
+                  Faster signal on how people actually use your scans.
+                </Text>
+              </View>
+            </View>
+
+            <View style={s.insightsGrid}>
+              <View style={[s.insightTile, { backgroundColor: theme.background, borderColor: theme.border }]}>
+                <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.totalScans}</Text>
+                <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Total scans</Text>
+              </View>
+              <View style={[s.insightTile, { backgroundColor: theme.background, borderColor: theme.border }]}>
+                <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.uniqueCodes}</Text>
+                <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Unique codes</Text>
+              </View>
+              <View style={[s.insightTile, { backgroundColor: theme.background, borderColor: theme.border }]}>
+                <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.thisWeekScans}</Text>
+                <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Last 7 days</Text>
+              </View>
+              <View style={[s.insightTile, { backgroundColor: theme.background, borderColor: theme.border }]}>
+                <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.favorites}</Text>
+                <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Favorites</Text>
+              </View>
+            </View>
+
+            <View style={s.insightHighlights}>
+              <View style={[s.insightChip, { backgroundColor: theme.background, borderColor: theme.border }]}>
+                <Ionicons name="layers-outline" size={15} color={theme.accent} />
+                <Text style={[s.insightChipText, { color: theme.text.primary }]}>
+                  Top type: {insights.topTypeLabel}
+                </Text>
+              </View>
+              <View style={[s.insightChip, { backgroundColor: theme.background, borderColor: theme.border }]}>
+                <Ionicons name="repeat-outline" size={15} color={theme.accent} />
+                <Text style={[s.insightChipText, { color: theme.text.primary }]}>
+                  Repeats: {insights.repeatedCodes}
+                </Text>
+              </View>
+              <View style={[s.insightChip, { backgroundColor: theme.background, borderColor: theme.border }]}>
+                <Ionicons name="shield-checkmark-outline" size={15} color={theme.success} />
+                <Text style={[s.insightChipText, { color: theme.text.primary }]}>
+                  Safe links: {insights.safeLinks}
+                </Text>
+              </View>
+              <View style={[s.insightChip, { backgroundColor: theme.background, borderColor: theme.border }]}>
+                <Ionicons name="warning-outline" size={15} color={theme.danger} />
+                <Text style={[s.insightChipText, { color: theme.text.primary }]}>
+                  Flagged: {insights.riskyLinks}
+                </Text>
+              </View>
+            </View>
+          </Card>
+        }
         renderItem={({ item }) => (
           <HistoryItemComponent
             item={item}
@@ -1495,22 +1677,28 @@ const s = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
+  headerControlsRow: {
+    flexDirection: 'row',
+    width: '100%',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 14,
+  },
   sortControl: {
     flexDirection: 'row',
-    alignSelf: 'flex-end',
-    borderRadius: 20,
+    flex: 1,
+    borderRadius: 16,
     borderWidth: 1,
     padding: 2,
-    marginTop: 14,
   },
   sortOption: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: 7,
+    paddingVertical: 5,
+    borderRadius: 12,
     flex: 1,
   },
   sortOptionGradient: {
@@ -1518,18 +1706,98 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderRadius: 16,
-    flex: 1,
+    paddingHorizontal: 7,
+    paddingVertical: 5,
+    borderRadius: 12,
+    width: '100%',
   },
   sortOptionText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
+  },
+  headerActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    minHeight: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+  },
+  headerActionButtonText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  headerIconButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   listContent: {
     paddingTop: 16,
     paddingBottom: 140,
+  },
+  emptyListContent: {
+    flexGrow: 1,
+  },
+  insightsCard: {
+    marginHorizontal: 20,
+    marginBottom: 12,
+  },
+  insightsHeader: {
+    marginBottom: 14,
+  },
+  insightsTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  insightsSubtitle: {
+    marginTop: 4,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  insightsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  insightTile: {
+    width: '48%',
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+  },
+  insightValue: {
+    fontSize: 22,
+    fontWeight: '700',
+  },
+  insightLabel: {
+    marginTop: 4,
+    fontSize: 12,
+  },
+  insightHighlights: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 12,
+  },
+  insightChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  insightChipText: {
+    fontSize: 12,
+    fontWeight: '500',
   },
   empty: {
     flex: 1,

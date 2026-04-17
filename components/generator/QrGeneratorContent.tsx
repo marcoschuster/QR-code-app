@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Image,
   KeyboardAvoidingView,
@@ -32,10 +32,14 @@ import {
   GENERATOR_TEMPLATES,
   buildGeneratorContent,
   createInitialGeneratorValues,
+  getGeneratorTemplateSummary,
   getGeneratorTemplate,
+  suggestGeneratorSetupFromRawContent,
   type GeneratorField,
+  type GeneratorQuickStartSuggestion,
   type GeneratorTemplateId,
 } from '../../services/generatorTemplates';
+import { useGeneratorStore } from '../../store/useGeneratorStore';
 
 type ScreenTheme = ReturnType<typeof useAppTheme>['theme'];
 
@@ -51,6 +55,7 @@ interface ActionButtonProps {
 
 export function QrGeneratorContent() {
   const { theme, isDark } = useAppTheme();
+  const { recentPresets, savePreset, removePreset } = useGeneratorStore();
 
   const [selectedTemplateId, setSelectedTemplateId] = useState<GeneratorTemplateId>('website');
   const [formValues, setFormValues] = useState<Record<string, string>>(() =>
@@ -78,6 +83,8 @@ export function QrGeneratorContent() {
     message: '',
   });
   const [typesCollapsed, setTypesCollapsed] = useState(true);
+  const [clipboardSuggestion, setClipboardSuggestion] = useState<GeneratorQuickStartSuggestion | null>(null);
+  const [isCheckingClipboard, setIsCheckingClipboard] = useState(false);
 
   // 6 most important/most used types
   const importantTypes: GeneratorTemplateId[] = ['website', 'plain-text', 'phone', 'sms', 'email', 'wifi'];
@@ -99,11 +106,35 @@ export function QrGeneratorContent() {
     [selectedTemplateId]
   );
 
-  const handleTemplateSelect = (templateId: GeneratorTemplateId) => {
+  useEffect(() => {
+    void refreshClipboardSuggestion();
+  }, []);
+
+  const applyTemplateSetup = (templateId: GeneratorTemplateId, values: Record<string, string>) => {
     setSelectedTemplateId(templateId);
-    setFormValues(createInitialGeneratorValues(templateId));
+    setFormValues({
+      ...createInitialGeneratorValues(templateId),
+      ...values,
+    });
     setErrorMessage('');
     setGeneratedCode(null);
+  };
+
+  const refreshClipboardSuggestion = async () => {
+    setIsCheckingClipboard(true);
+
+    try {
+      const clipboardValue = (await Clipboard.getStringAsync()).trim();
+      setClipboardSuggestion(suggestGeneratorSetupFromRawContent(clipboardValue));
+    } catch {
+      setClipboardSuggestion(null);
+    } finally {
+      setIsCheckingClipboard(false);
+    }
+  };
+
+  const handleTemplateSelect = (templateId: GeneratorTemplateId) => {
+    applyTemplateSetup(templateId, {});
   };
 
   const handleFieldChange = (fieldKey: string, value: string) => {
@@ -143,6 +174,13 @@ export function QrGeneratorContent() {
 
       setGeneratedCode(qrCode);
       setErrorMessage('');
+      savePreset({
+        templateId: selectedTemplateId,
+        templateTitle: selectedTemplate.title,
+        summary: getGeneratorTemplateSummary(selectedTemplateId, formValues),
+        values: { ...formValues },
+        content,
+      });
     } catch (error) {
       setGeneratedCode(null);
       setErrorMessage(
@@ -204,19 +242,122 @@ export function QrGeneratorContent() {
       <KeyboardAvoidingView
         style={[styles.container, { backgroundColor: theme.background }]}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <ScrollView
-          style={styles.container}
-          contentContainerStyle={styles.content}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
         >
-          <View style={styles.header}>
-            <Text style={[styles.title, { color: theme.text.primary }]}>Generate Codes</Text>
-            <Text style={[styles.subtitle, { color: theme.text.secondary }]}>
-              Pick a format, fill in the details, and export the generated code as a PNG image.
-            </Text>
-          </View>
+          <ScrollView
+            style={styles.container}
+            contentContainerStyle={styles.content}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.header}>
+              <Text style={[styles.title, { color: theme.text.primary }]}>Generate Codes</Text>
+              <Text style={[styles.subtitle, { color: theme.text.secondary }]}>
+                Pick a format, fill in the details, and export the generated code as a PNG image.
+              </Text>
+            </View>
+
+            <Card style={styles.sectionCard} padding={spacing.lg}>
+              <View style={styles.smartStartHeader}>
+                <View style={styles.smartStartCopy}>
+                  <Text style={[styles.sectionLabel, { color: theme.text.secondary }]}>Smart Start</Text>
+                  <Text style={[styles.smartStartText, { color: theme.text.secondary }]}>
+                    Detect clipboard content and jump back into recent generator presets.
+                  </Text>
+                </View>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.refreshButton,
+                    {
+                      borderColor: theme.border,
+                      backgroundColor: theme.background,
+                      opacity: pressed ? 0.78 : 1,
+                    },
+                  ]}
+                  onPress={refreshClipboardSuggestion}
+                >
+                  <Ionicons name="refresh-outline" size={16} color={theme.text.primary} />
+                </Pressable>
+              </View>
+
+              <View
+                style={[
+                  styles.quickStartCard,
+                  {
+                    backgroundColor: theme.background,
+                    borderColor: theme.border,
+                  },
+                ]}
+              >
+                {isCheckingClipboard ? (
+                  <Text style={[styles.quickStartHint, { color: theme.text.secondary }]}>
+                    Checking clipboard…
+                  </Text>
+                ) : clipboardSuggestion ? (
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.quickStartPressable,
+                      pressed && { opacity: 0.82 },
+                    ]}
+                    onPress={() => applyTemplateSetup(clipboardSuggestion.templateId, clipboardSuggestion.values)}
+                  >
+                    <View style={styles.quickStartContent}>
+                      <Text style={[styles.quickStartTitle, { color: theme.text.primary }]}>
+                        {clipboardSuggestion.title}
+                      </Text>
+                      <Text style={[styles.quickStartHint, { color: theme.text.secondary }]}>
+                        {clipboardSuggestion.subtitle}
+                      </Text>
+                    </View>
+                    <Ionicons name="arrow-forward-circle-outline" size={22} color={theme.accent} />
+                  </Pressable>
+                ) : (
+                  <Text style={[styles.quickStartHint, { color: theme.text.secondary }]}>
+                    Nothing reusable is currently on the clipboard.
+                  </Text>
+                )}
+              </View>
+
+              {recentPresets.length > 0 ? (
+                <View style={styles.recentPresetsBlock}>
+                  <Text style={[styles.recentPresetsLabel, { color: theme.text.secondary }]}>
+                    Recent Presets
+                  </Text>
+                  {recentPresets.map((preset) => (
+                    <View
+                      key={preset.id}
+                      style={[
+                        styles.presetRow,
+                        {
+                          backgroundColor: theme.background,
+                          borderColor: theme.border,
+                        },
+                      ]}
+                    >
+                      <Pressable
+                        style={({ pressed }) => [
+                          styles.presetRowContent,
+                          pressed && { opacity: 0.8 },
+                        ]}
+                        onPress={() => applyTemplateSetup(preset.templateId, preset.values)}
+                      >
+                        <Text style={[styles.presetTitle, { color: theme.text.primary }]}>
+                          {preset.templateTitle}
+                        </Text>
+                        <Text style={[styles.presetSummary, { color: theme.text.secondary }]}>
+                          {preset.summary}
+                        </Text>
+                      </Pressable>
+                      <Pressable
+                        style={styles.presetRemoveButton}
+                        onPress={() => removePreset(preset.id)}
+                      >
+                        <Ionicons name="close-outline" size={20} color={theme.text.tertiary} />
+                      </Pressable>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+            </Card>
 
           <Card style={styles.sectionCard} padding={spacing.lg}>
             <View style={styles.sectionHeader}>
@@ -520,6 +661,94 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: spacing.lg,
     gap: spacing.sm,
+  },
+  smartStartHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  smartStartCopy: {
+    flex: 1,
+  },
+  smartStartText: {
+    fontFamily: typography.fontFamily,
+    fontSize: typography.sizes.sm,
+    lineHeight: 20,
+  },
+  refreshButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quickStartCard: {
+    marginTop: spacing.md,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+  },
+  quickStartPressable: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  quickStartContent: {
+    flex: 1,
+    gap: spacing.xs,
+  },
+  quickStartTitle: {
+    fontFamily: typography.fontFamily,
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.semibold,
+  },
+  quickStartHint: {
+    fontFamily: typography.fontFamily,
+    fontSize: typography.sizes.sm,
+    lineHeight: 20,
+  },
+  recentPresetsBlock: {
+    marginTop: spacing.md,
+    gap: spacing.sm,
+  },
+  recentPresetsLabel: {
+    fontFamily: typography.fontFamily,
+    fontSize: typography.sizes.xs,
+    fontWeight: typography.weights.semibold,
+    textTransform: 'uppercase',
+    letterSpacing: typography.letterSpacing.wide,
+  },
+  presetRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: borderRadius.md,
+    overflow: 'hidden',
+  },
+  presetRowContent: {
+    flex: 1,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+  },
+  presetTitle: {
+    fontFamily: typography.fontFamily,
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.semibold,
+  },
+  presetSummary: {
+    marginTop: 2,
+    fontFamily: typography.fontFamily,
+    fontSize: typography.sizes.sm,
+    lineHeight: 18,
+  },
+  presetRemoveButton: {
+    paddingHorizontal: spacing.md,
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     fontFamily: typography.fontFamily,

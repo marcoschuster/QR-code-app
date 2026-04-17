@@ -1,5 +1,5 @@
 import type { TextInputProps } from 'react-native';
-import { generateQRCode } from './qrParser';
+import { generateQRCode, parseQRCode } from './qrParser';
 import { normalizeQrLinkInput } from './qrCodeImage';
 
 export type GeneratorTemplateId =
@@ -62,6 +62,13 @@ export interface GeneratorTemplate {
   title: string;
   description: string;
   fields: GeneratorField[];
+}
+
+export interface GeneratorQuickStartSuggestion {
+  templateId: GeneratorTemplateId;
+  values: Record<string, string>;
+  title: string;
+  subtitle: string;
 }
 
 const WIFI_SECURITY_OPTIONS: GeneratorFieldOption[] = [
@@ -622,6 +629,252 @@ export function createInitialGeneratorValues(templateId: GeneratorTemplateId) {
   }, {} as Record<string, string>);
 }
 
+export function getGeneratorTemplateSummary(
+  templateId: GeneratorTemplateId,
+  values: Record<string, string>
+) {
+  switch (templateId) {
+    case 'website':
+    case 'youtube':
+    case 'app-store':
+    case 'play-store':
+    case 'discord':
+      return truncateSummary(values.url || values.inviteUrl || '', 52);
+    case 'plain-text':
+    case 'custom-data':
+      return truncateSummary(values.text || values.content || '', 52);
+    case 'phone':
+    case 'sms':
+    case 'whatsapp':
+      return truncateSummary(values.phone || '', 52);
+    case 'email':
+      return truncateSummary(values.email || '', 52);
+    case 'wifi':
+      return truncateSummary(values.ssid || 'Wi-Fi network', 52);
+    case 'contact': {
+      const fullName = [values.firstName, values.lastName].filter(Boolean).join(' ').trim();
+      return truncateSummary(fullName || values.company || 'Business contact', 52);
+    }
+    case 'location':
+      return truncateSummary(
+        [values.latitude, values.longitude].filter(Boolean).join(', ') || 'Coordinates',
+        52
+      );
+    case 'maps-search':
+      return truncateSummary(values.query || '', 52);
+    case 'event':
+      return truncateSummary(values.title || 'Calendar event', 52);
+    case 'coupon':
+      return truncateSummary(values.title || values.code || 'Coupon', 52);
+    case 'bitcoin':
+      return truncateSummary(values.label || values.address || 'Bitcoin request', 52);
+    case 'paypal':
+      return truncateSummary(values.username || 'PayPal payment', 52);
+    case 'instagram':
+    case 'linkedin':
+    case 'tiktok':
+    case 'x-profile':
+      return truncateSummary(values.handle || '', 52);
+    case 'telegram':
+      return truncateSummary(values.username || '', 52);
+    case 'facetime':
+    case 'facetime-audio':
+      return truncateSummary(values.target || '', 52);
+    case 'product-code':
+    case 'ean-13':
+    case 'ean-8':
+    case 'upc-a':
+    case 'itf-14':
+    case 'pharmacode':
+    case 'msi-plesey':
+      return truncateSummary(values.barcode || '', 52);
+    case 'code-128':
+    case 'code-39':
+    case 'code-93':
+    case 'codabar':
+      return truncateSummary(values.data || '', 52);
+    default: {
+      const firstValue = Object.values(values).find((value) => value.trim().length > 0) || '';
+      return truncateSummary(firstValue, 52);
+    }
+  }
+}
+
+export function suggestGeneratorSetupFromRawContent(rawContent: string): GeneratorQuickStartSuggestion | null {
+  const trimmedContent = rawContent.trim();
+
+  if (!trimmedContent) {
+    return null;
+  }
+
+  const faceTimeSuggestion = suggestFaceTimeSetup(trimmedContent);
+  if (faceTimeSuggestion) {
+    return faceTimeSuggestion;
+  }
+
+  const bitcoinSuggestion = suggestBitcoinSetup(trimmedContent);
+  if (bitcoinSuggestion) {
+    return bitcoinSuggestion;
+  }
+
+  const parsed = parseQRCode(trimmedContent);
+
+  switch (parsed.type) {
+    case 'wifi':
+      return {
+        templateId: 'wifi',
+        values: {
+          ssid: parsed.data.ssid || '',
+          password: parsed.data.password || '',
+          security: parsed.data.security || 'WPA',
+        },
+        title: 'Clipboard detected a Wi-Fi network',
+        subtitle: truncateSummary(parsed.data.ssid || 'Tap to prefill network details', 60),
+      };
+    case 'email':
+      return {
+        templateId: 'email',
+        values: {
+          email: parsed.data.email || '',
+          subject: parsed.data.subject || '',
+          body: parsed.data.body || '',
+        },
+        title: 'Clipboard detected an email draft',
+        subtitle: truncateSummary(parsed.data.email || 'Tap to prefill the email form', 60),
+      };
+    case 'sms':
+      return {
+        templateId: 'sms',
+        values: {
+          phone: parsed.data.phone || '',
+          body: parsed.data.body || '',
+        },
+        title: 'Clipboard detected an SMS message',
+        subtitle: truncateSummary(parsed.data.phone || 'Tap to prefill the SMS form', 60),
+      };
+    case 'whatsapp':
+      return {
+        templateId: 'whatsapp',
+        values: {
+          phone: parsed.data.phone || '',
+          message: parsed.data.message || '',
+        },
+        title: 'Clipboard detected a WhatsApp chat',
+        subtitle: truncateSummary(parsed.data.phone || parsed.data.message || 'Tap to prefill the chat', 60),
+      };
+    case 'phone':
+      return {
+        templateId: 'phone',
+        values: {
+          phone: parsed.data.phone || '',
+        },
+        title: 'Clipboard detected a phone number',
+        subtitle: truncateSummary(parsed.data.phone || 'Tap to prefill the call code', 60),
+      };
+    case 'vcard':
+      return {
+        templateId: 'contact',
+        values: {
+          firstName: parsed.data.firstName || '',
+          lastName: parsed.data.lastName || '',
+          company: parsed.data.company || '',
+          jobTitle: parsed.data.jobTitle || '',
+          phone: parsed.data.phone || '',
+          email: parsed.data.email || '',
+          website: parsed.data.website || '',
+          address: parsed.data.address || '',
+        },
+        title: 'Clipboard detected a contact card',
+        subtitle: truncateSummary(
+          [parsed.data.firstName, parsed.data.lastName].filter(Boolean).join(' ').trim() ||
+            parsed.data.company ||
+            'Tap to prefill the contact form',
+          60
+        ),
+      };
+    case 'calendar':
+      return {
+        templateId: 'event',
+        values: {
+          title: parsed.data.title || '',
+          start: parsed.data.start || '',
+          end: parsed.data.end || '',
+          location: parsed.data.location || '',
+          description: parsed.data.description || '',
+        },
+        title: 'Clipboard detected a calendar event',
+        subtitle: truncateSummary(parsed.data.title || 'Tap to prefill the event', 60),
+      };
+    case 'coupon':
+      return {
+        templateId: 'coupon',
+        values: {
+          title: parsed.data.title || '',
+          code: parsed.data.code || '',
+          details: parsed.data.details || '',
+        },
+        title: 'Clipboard detected a coupon',
+        subtitle: truncateSummary(parsed.data.code || parsed.data.title || 'Tap to prefill the coupon', 60),
+      };
+    case 'location':
+      if (parsed.data.query || parsed.data.url) {
+        return {
+          templateId: 'maps-search',
+          values: {
+            query: parsed.data.url || parsed.data.query || '',
+          },
+          title: 'Clipboard detected a map destination',
+          subtitle: truncateSummary(parsed.data.query || parsed.data.url || 'Tap to prefill the map search', 60),
+        };
+      }
+
+      return {
+        templateId: 'location',
+        values: {
+          latitude: parsed.data.latitude !== undefined ? String(parsed.data.latitude) : '',
+          longitude: parsed.data.longitude !== undefined ? String(parsed.data.longitude) : '',
+        },
+        title: 'Clipboard detected coordinates',
+        subtitle: truncateSummary(
+          [parsed.data.latitude, parsed.data.longitude].filter((value) => value !== undefined).join(', '),
+          60
+        ),
+      };
+    case 'play-store':
+      return {
+        templateId: 'play-store',
+        values: { url: parsed.data.url || parsed.rawValue },
+        title: 'Clipboard detected a Play Store link',
+        subtitle: truncateSummary(parsed.data.url || parsed.rawValue, 60),
+      };
+    case 'app-store':
+      return {
+        templateId: 'app-store',
+        values: { url: parsed.data.url || parsed.rawValue },
+        title: 'Clipboard detected an App Store link',
+        subtitle: truncateSummary(parsed.data.url || parsed.rawValue, 60),
+      };
+    case 'barcode':
+      return {
+        templateId: 'product-code',
+        values: { barcode: parsed.data.barcode || parsed.rawValue },
+        title: 'Clipboard detected a product code',
+        subtitle: truncateSummary(parsed.data.barcode || parsed.rawValue, 60),
+      };
+    case 'text':
+      return {
+        templateId: 'plain-text',
+        values: { text: parsed.rawValue },
+        title: 'Clipboard detected plain text',
+        subtitle: truncateSummary(parsed.rawValue, 60),
+      };
+    case 'url':
+      return suggestUrlSetup(parsed.data.url || parsed.rawValue);
+    default:
+      return null;
+  }
+}
+
 export function buildGeneratorContent(
   templateId: GeneratorTemplateId,
   values: Record<string, string>
@@ -809,6 +1062,164 @@ function calculateEAN13Checksum(barcode: string): string {
   }
   const checksum = (10 - (sum % 10)) % 10;
   return barcode + checksum;
+}
+
+function truncateSummary(value: string, maxLength: number) {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
+    return 'Ready to reuse';
+  }
+
+  if (trimmedValue.length <= maxLength) {
+    return trimmedValue;
+  }
+
+  return `${trimmedValue.slice(0, maxLength - 1)}…`;
+}
+
+function suggestUrlSetup(urlValue: string): GeneratorQuickStartSuggestion {
+  try {
+    const parsedUrl = new URL(urlValue);
+    const hostname = parsedUrl.hostname.toLowerCase();
+    const pathSegments = parsedUrl.pathname.split('/').filter(Boolean);
+
+    if (hostname === 'paypal.me' || hostname === 'www.paypal.me') {
+      return {
+        templateId: 'paypal',
+        values: {
+          username: pathSegments[0] || '',
+          amount: pathSegments[1] || '',
+        },
+        title: 'Clipboard detected a PayPal payment link',
+        subtitle: truncateSummary(urlValue, 60),
+      };
+    }
+
+    if (hostname === 'youtu.be' || hostname.endsWith('youtube.com')) {
+      return {
+        templateId: 'youtube',
+        values: { url: urlValue },
+        title: 'Clipboard detected a YouTube link',
+        subtitle: truncateSummary(urlValue, 60),
+      };
+    }
+
+    if (hostname === 'discord.gg' || hostname.endsWith('discord.com')) {
+      return {
+        templateId: 'discord',
+        values: { inviteUrl: urlValue },
+        title: 'Clipboard detected a Discord invite',
+        subtitle: truncateSummary(urlValue, 60),
+      };
+    }
+
+    if (hostname.endsWith('instagram.com') && pathSegments[0]) {
+      return {
+        templateId: 'instagram',
+        values: { handle: pathSegments[0] },
+        title: 'Clipboard detected an Instagram profile',
+        subtitle: truncateSummary(`@${pathSegments[0].replace(/^@/, '')}`, 60),
+      };
+    }
+
+    if (hostname.endsWith('linkedin.com') && (pathSegments[0] === 'in' || pathSegments[0] === 'company') && pathSegments[1]) {
+      return {
+        templateId: 'linkedin',
+        values: { handle: pathSegments[1] },
+        title: 'Clipboard detected a LinkedIn profile',
+        subtitle: truncateSummary(pathSegments[1], 60),
+      };
+    }
+
+    if (hostname.endsWith('tiktok.com') && pathSegments[0]?.startsWith('@')) {
+      return {
+        templateId: 'tiktok',
+        values: { handle: pathSegments[0] },
+        title: 'Clipboard detected a TikTok profile',
+        subtitle: truncateSummary(pathSegments[0], 60),
+      };
+    }
+
+    if ((hostname === 't.me' || hostname.endsWith('telegram.me')) && pathSegments[0]) {
+      return {
+        templateId: 'telegram',
+        values: { username: pathSegments[0] },
+        title: 'Clipboard detected a Telegram profile',
+        subtitle: truncateSummary(pathSegments[0], 60),
+      };
+    }
+
+    if ((hostname === 'x.com' || hostname === 'twitter.com' || hostname === 'www.twitter.com') && pathSegments[0]) {
+      return {
+        templateId: 'x-profile',
+        values: { handle: pathSegments[0] },
+        title: 'Clipboard detected an X profile',
+        subtitle: truncateSummary(pathSegments[0], 60),
+      };
+    }
+
+    return {
+      templateId: 'website',
+      values: { url: urlValue },
+      title: 'Clipboard detected a website link',
+      subtitle: truncateSummary(urlValue, 60),
+    };
+  } catch {
+    return {
+      templateId: 'website',
+      values: { url: urlValue },
+      title: 'Clipboard detected a website link',
+      subtitle: truncateSummary(urlValue, 60),
+    };
+  }
+}
+
+function suggestFaceTimeSetup(rawContent: string): GeneratorQuickStartSuggestion | null {
+  if (/^facetime-audio:/i.test(rawContent)) {
+    return {
+      templateId: 'facetime-audio',
+      values: {
+        target: rawContent.replace(/^facetime-audio:/i, '').trim(),
+      },
+      title: 'Clipboard detected a FaceTime Audio link',
+      subtitle: truncateSummary(rawContent, 60),
+    };
+  }
+
+  if (/^facetime:/i.test(rawContent)) {
+    return {
+      templateId: 'facetime',
+      values: {
+        target: rawContent.replace(/^facetime:/i, '').trim(),
+      },
+      title: 'Clipboard detected a FaceTime link',
+      subtitle: truncateSummary(rawContent, 60),
+    };
+  }
+
+  return null;
+}
+
+function suggestBitcoinSetup(rawContent: string): GeneratorQuickStartSuggestion | null {
+  if (!/^bitcoin:/i.test(rawContent)) {
+    return null;
+  }
+
+  const payload = rawContent.replace(/^bitcoin:/i, '').trim();
+  const [address = '', queryString = ''] = payload.split('?');
+  const params = new URLSearchParams(queryString);
+
+  return {
+    templateId: 'bitcoin',
+    values: {
+      address,
+      amount: params.get('amount') || '',
+      label: params.get('label') || '',
+    },
+    title: 'Clipboard detected a Bitcoin payment request',
+    subtitle: truncateSummary(address || rawContent, 60),
+  };
 }
 
 function calculateEAN8Checksum(barcode: string): string {
