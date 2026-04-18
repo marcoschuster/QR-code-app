@@ -1,9 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppTheme } from '../../hooks/useAppTheme';
 import { spacing, typography } from '../../constants/theme';
+import { LiquidGlassSurface } from './LiquidGlassSurface';
 
 interface TabBarProps {
   activeTab: string;
@@ -50,64 +50,52 @@ export function TabBar({ activeTab, onTabChange, hidden = false, onToggleHidden 
       ]}
     >
       <View
-        style={[
-          styles.shell,
-          {
-            backgroundColor: theme.surfaceStrong,
-            borderColor: theme.border,
-            shadowColor: theme.shadow,
-          },
-        ]}
+        style={styles.shell}
       >
-        <LinearGradient
-          colors={(theme.surfaceGradient || [theme.surfaceStrong, theme.surface]) as any}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFillObject}
-        />
-        <View style={[styles.topHighlight, { backgroundColor: theme.glassHighlight }]} />
-        <View style={styles.tabBar}>
-          {tabs.map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
-              <Pressable
-                key={tab.id}
-                style={({ pressed }) => [
-                  styles.tab,
-                  pressed && { opacity: 0.7, transform: [{ scale: 0.96 }] },
-                ]}
-                onPress={() => onTabChange(tab.id)}
-              >
-                <View
-                  style={[
-                    styles.iconContainer,
-                    isActive && {
-                      backgroundColor: theme.glassHighlight,
-                      borderColor: theme.border,
-                    },
+        <LiquidGlassSurface borderRadius={32} style={styles.shellSurface} blurIntensity={46}>
+          <View style={styles.tabBar}>
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <Pressable
+                  key={tab.id}
+                  style={({ pressed }) => [
+                    styles.tab,
+                    pressed && { opacity: 0.7, transform: [{ scale: 0.96 }] },
                   ]}
+                  onPress={() => onTabChange(tab.id)}
                 >
-                  <Ionicons
-                    name={(isActive ? tab.activeIcon : tab.icon) as keyof typeof Ionicons.glyphMap}
-                    size={24}
-                    color={isActive ? theme.accent : theme.text.secondary}
-                  />
-                </View>
-                <Text
-                  style={[
-                    styles.label,
-                    {
-                      color: isActive ? theme.accent : theme.text.secondary,
-                      fontWeight: isActive ? '600' : '500',
-                    },
-                  ]}
-                >
-                  {tab.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+                  <View
+                    style={[
+                      styles.iconContainer,
+                      isActive && {
+                        backgroundColor: theme.glassHighlight,
+                        borderColor: theme.border,
+                      },
+                    ]}
+                  >
+                    <Ionicons
+                      name={(isActive ? tab.activeIcon : tab.icon) as keyof typeof Ionicons.glyphMap}
+                      size={24}
+                      color={isActive ? theme.accent : theme.text.secondary}
+                    />
+                  </View>
+                  <Text
+                    style={[
+                      styles.label,
+                      {
+                        color: isActive ? theme.accent : theme.text.secondary,
+                        fontWeight: isActive ? '600' : '500',
+                      },
+                    ]}
+                  >
+                    {tab.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </LiquidGlassSurface>
       </View>
     </Animated.View>
   );
@@ -122,21 +110,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   shell: {
-    overflow: 'hidden',
     borderRadius: 32,
-    borderWidth: 1,
-    shadowOffset: { width: 0, height: 18 },
-    shadowOpacity: 0.24,
-    shadowRadius: 30,
-    elevation: 14,
   },
-  topHighlight: {
-    position: 'absolute',
-    top: 0,
-    left: 20,
-    right: 20,
-    height: 1,
-    opacity: 0.95,
+  shellSurface: {
+    borderRadius: 32,
   },
   tabBar: {
     flexDirection: 'row',
