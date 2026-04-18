@@ -1,8 +1,8 @@
 import React, { useCallback, useRef, useState } from 'react';
 import {
   Animated,
-  Easing,
   GestureResponderEvent,
+  LayoutChangeEvent,
   Platform,
   StyleProp,
   StyleSheet,
@@ -13,14 +13,6 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAppTheme } from '../../hooks/useAppTheme';
 import { useLiquidGlassBlurTarget } from './LiquidGlassContext';
-
-type Ping = {
-  id: number;
-  x: number;
-  y: number;
-  scale: Animated.Value;
-  opacity: Animated.Value;
-};
 
 interface LiquidGlassSurfaceProps {
   children: React.ReactNode;
@@ -43,68 +35,75 @@ export function LiquidGlassSurface({
 }: LiquidGlassSurfaceProps) {
   const { theme, isDark } = useAppTheme();
   const blurTargetRef = useLiquidGlassBlurTarget();
-  const [pings, setPings] = useState<Ping[]>([]);
-  const pingsRef = useRef<Ping[]>([]);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const tiltX = useRef(new Animated.Value(0)).current;
+  const tiltY = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(1)).current;
   const borderOpacity = useRef(new Animated.Value(0.3)).current;
 
+  const handleLayout = useCallback((event: LayoutChangeEvent) => {
+    const { width, height } = event.nativeEvent.layout;
+    setDimensions({ width, height });
+  }, []);
+
   const handleTouchStart = useCallback(
     (event: GestureResponderEvent) => {
+      if (!enableRipple || dimensions.width === 0) return;
+
+      const { locationX, locationY } = event.nativeEvent;
+      const centerX = dimensions.width / 2;
+      const centerY = dimensions.height / 2;
+
+      // Calculate offset from center (-1 to 1)
+      const offsetX = (locationX - centerX) / centerX;
+      const offsetY = (locationY - centerY) / centerY;
+
+      // Map offset to rotation degrees (Max 8 degrees)
+      const targetRotateY = offsetX * 8;
+      const targetRotateX = offsetY * -8;
+
       Animated.parallel([
+        Animated.spring(tiltX, {
+          toValue: targetRotateX,
+          friction: 7,
+          tension: 80,
+          useNativeDriver: true,
+        }),
+        Animated.spring(tiltY, {
+          toValue: targetRotateY,
+          friction: 7,
+          tension: 80,
+          useNativeDriver: true,
+        }),
         Animated.timing(scale, {
-          toValue: 0.985,
-          duration: 180,
+          toValue: 0.98,
+          duration: 150,
           useNativeDriver: true,
         }),
         Animated.timing(borderOpacity, {
           toValue: 0.8,
-          duration: 180,
+          duration: 150,
           useNativeDriver: true,
         }),
       ]).start();
-
-      if (!enableRipple) {
-        return;
-      }
-
-      const { locationX, locationY } = event.nativeEvent;
-      const id = Date.now() + Math.floor(Math.random() * 1000);
-
-      const ping: Ping = {
-        id,
-        x: locationX,
-        y: locationY,
-        scale: new Animated.Value(0),
-        opacity: new Animated.Value(0.7),
-      };
-
-      pingsRef.current = [...pingsRef.current, ping];
-      setPings(pingsRef.current);
-
-      // Crystal ping animation
-      Animated.parallel([
-        Animated.timing(ping.scale, {
-          toValue: 1.8,
-          duration: 450,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }),
-        Animated.timing(ping.opacity, {
-          toValue: 0,
-          duration: 450,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        pingsRef.current = pingsRef.current.filter((entry) => entry.id !== id);
-        setPings([...pingsRef.current]);
-      });
     },
-    [borderOpacity, enableRipple, scale]
+    [tiltX, tiltY, scale, borderOpacity, dimensions, enableRipple]
   );
 
   const handleTouchEnd = useCallback(() => {
     Animated.parallel([
+      Animated.spring(tiltX, {
+        toValue: 0,
+        friction: 10,
+        tension: 100,
+        useNativeDriver: true,
+      }),
+      Animated.spring(tiltY, {
+        toValue: 0,
+        friction: 10,
+        tension: 100,
+        useNativeDriver: true,
+      }),
       Animated.spring(scale, {
         toValue: 1,
         friction: 6,
@@ -113,11 +112,22 @@ export function LiquidGlassSurface({
       }),
       Animated.timing(borderOpacity, {
         toValue: 0.3,
-        duration: 180,
+        duration: 300,
         useNativeDriver: true,
       }),
     ]).start();
-  }, [borderOpacity, scale]);
+  }, [tiltX, tiltY, scale, borderOpacity]);
+
+  // Specular highlight interpolations
+  const specularX = tiltY.interpolate({
+    inputRange: [-8, 8],
+    outputRange: [30, -30],
+  });
+
+  const specularY = tiltX.interpolate({
+    inputRange: [-8, 8],
+    outputRange: [-30, 30],
+  });
 
   return (
     <Animated.View
@@ -128,10 +138,16 @@ export function LiquidGlassSurface({
           backgroundColor: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.9)',
           borderColor: theme.border,
           shadowColor: theme.shadow,
-          transform: [{ scale }],
+          transform: [
+            { perspective: 800 },
+            { rotateX: tiltX },
+            { rotateY: tiltY },
+            { scale },
+          ],
         },
         style,
       ]}
+      onLayout={handleLayout}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchEnd}
@@ -163,7 +179,7 @@ export function LiquidGlassSurface({
 
       {/* Iridescent gloss overlay */}
       <LinearGradient
-        colors={['rgba(255,255,255,0.35)', 'rgba(180,200,255,0.1)', 'rgba(255,180,220,0.08)', 'rgba(255,255,255,0.25)'] as any}
+        colors={['rgba(255,255,255,0.45)', 'rgba(180,200,255,0.15)', 'rgba(255,180,220,0.12)', 'rgba(255,255,255,0.3)'] as any}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[StyleSheet.absoluteFillObject, styles.iridescentOverlay, { borderRadius }]}
@@ -213,27 +229,34 @@ export function LiquidGlassSurface({
         />
       ) : null}
 
-      {enableRipple ? (
-        <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-          {pings.map((ping) => (
-            <Animated.View
-              key={ping.id}
-              pointerEvents="none"
-              style={{
-                position: 'absolute',
-                left: ping.x - 50,
-                top: ping.y - 50,
-                width: 100,
-                height: 100,
-                borderRadius: 50,
-                backgroundColor: theme.accent,
-                opacity: ping.opacity,
-                transform: [{ scale: ping.scale }],
-              }}
-            />
-          ))}
-        </View>
-      ) : null}
+      {/* Specular highlight */}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          StyleSheet.absoluteFillObject,
+          {
+            borderRadius,
+            overflow: 'hidden',
+          },
+        ]}
+      >
+        <Animated.View
+          style={{
+            position: 'absolute',
+            top: '20%',
+            left: '20%',
+            width: '60%',
+            height: '60%',
+            borderRadius: 999,
+            backgroundColor: 'rgba(255, 255, 255, 0.12)',
+            transform: [
+              { translateX: specularX },
+              { translateY: specularY },
+              { scale: 1.5 },
+            ],
+          }}
+        />
+      </Animated.View>
 
       <View style={contentStyle}>{children}</View>
     </Animated.View>
@@ -256,7 +279,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   iridescentOverlay: {
-    opacity: 0.75,
+    opacity: 0.9,
   },
   innerGlow: {
     ...StyleSheet.absoluteFillObject,
@@ -268,7 +291,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 18,
     right: 18,
-    height: 1.5,
+    height: 2,
     opacity: 1.0,
   },
 });
