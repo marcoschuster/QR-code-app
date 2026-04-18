@@ -171,7 +171,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
             {/* Permissions Section */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: '#67E8F9' }]}>
+              <Text style={[styles.sectionTitle, { color: theme.text.secondary }]}>
                 PERMISSIONS
               </Text>
               <View style={[styles.sectionContent, { backgroundColor: theme.surface, borderColor: theme.border }]}>
@@ -199,7 +199,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
 
             {/* Scanning Section */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: '#67E8F9' }]}>
+              <Text style={[styles.sectionTitle, { color: theme.text.secondary }]}>
                 SCANNING
               </Text>
               <View style={[styles.sectionContent, { backgroundColor: theme.surface, borderColor: theme.border }]}>
@@ -380,7 +380,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
 
             {/* Navigation Section */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: '#67E8F9' }]}>
+              <Text style={[styles.sectionTitle, { color: theme.text.secondary }]}>
                 NAVIGATION
               </Text>
               <View style={[styles.sectionContent, { backgroundColor: theme.surface, borderColor: theme.border }]}>
@@ -421,7 +421,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
 
             {/* Privacy & Safety Section */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: '#67E8F9' }]}>
+              <Text style={[styles.sectionTitle, { color: theme.text.secondary }]}>
                 PRIVACY & SAFETY
               </Text>
               <View style={[styles.sectionContent, { backgroundColor: theme.surface, borderColor: theme.border }]}>
@@ -519,7 +519,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
 
             {/* Appearance Section */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: '#67E8F9' }]}>
+              <Text style={[styles.sectionTitle, { color: theme.text.secondary }]}>
                 APPEARANCE
               </Text>
               <View style={[styles.sectionContent, { backgroundColor: theme.surface, borderColor: theme.border }]}>
@@ -617,7 +617,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
 
             {/* Debug Section */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: '#67E8F9' }]}>
+              <Text style={[styles.sectionTitle, { color: theme.text.secondary }]}>
                 DEBUG
               </Text>
               <View style={[styles.sectionContent, { backgroundColor: theme.surface, borderColor: theme.border }]}>
@@ -667,7 +667,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
 
             {/* About Section */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: '#67E8F9' }]}>
+              <Text style={[styles.sectionTitle, { color: theme.text.secondary }]}>
                 ABOUT
               </Text>
               <View style={[styles.sectionContent, { backgroundColor: theme.surface, borderColor: theme.border }]}>
