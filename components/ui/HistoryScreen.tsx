@@ -24,6 +24,7 @@ import { useAppTheme } from '../../hooks/useAppTheme';
 import { Button } from './Button';
 import { Card } from './Card';
 import { ConfirmDialog } from './ConfirmDialog';
+import { LiquidGlassSurface } from './LiquidGlassSurface';
 import { SuccessDialog } from './SuccessDialog';
 
 const getDomainFromUrl = (url: string) => {
@@ -875,82 +876,42 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
           </Pressable>
         </View>
         <View style={s.headerControlsRow}>
-          <View style={[s.sortControl, { backgroundColor: theme.surfaceStrong, borderColor: theme.border }]}>
+          <View style={[s.sortControl, { backgroundColor: theme.accent, borderColor: theme.border }]}>
             <Pressable
               style={s.sortOption}
               onPress={() => setSortMode('date')}
             >
-              {sortMode === 'date' && theme.accentGradient && theme.accentGradient.length >= 2 ? (
-                <LinearGradient
-                  colors={theme.accentGradient as any}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={[s.sortOptionGradient, { borderWidth: 1, borderColor: theme.accent }]}
-                >
-                  <Ionicons
-                    name="time-outline"
-                    size={13}
-                    color="#FFFFFF"
-                  />
-                  <Text style={[s.sortOptionText, { color: '#FFFFFF' }]}>
-                    Date
-                  </Text>
-                </LinearGradient>
-              ) : (
-                <>
-                  <Ionicons
-                    name="time-outline"
-                    size={13}
-                    color={sortMode === 'date' ? '#FFFFFF' : theme.text.secondary}
-                  />
-                  <Text
-                    style={[
-                      s.sortOptionText,
-                      { color: sortMode === 'date' ? '#FFFFFF' : theme.text.secondary },
-                    ]}
-                  >
-                    Date
-                  </Text>
-                </>
-              )}
+              <Ionicons
+                name="time-outline"
+                size={13}
+                color={sortMode === 'date' ? '#FFFFFF' : 'rgba(255,255,255,0.7)'}
+              />
+              <Text
+                style={[
+                  s.sortOptionText,
+                  { color: sortMode === 'date' ? '#FFFFFF' : 'rgba(255,255,255,0.7)' },
+                ]}
+              >
+                Date
+              </Text>
             </Pressable>
             <Pressable
               style={s.sortOption}
               onPress={() => setSortMode('name')}
             >
-              {sortMode === 'name' && theme.accentGradient && theme.accentGradient.length >= 2 ? (
-                <LinearGradient
-                  colors={theme.accentGradient as any}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={[s.sortOptionGradient, { borderWidth: 1, borderColor: theme.accent }]}
-                >
-                  <Ionicons
-                    name="text-outline"
-                    size={13}
-                    color="#FFFFFF"
-                  />
-                  <Text style={[s.sortOptionText, { color: '#FFFFFF' }]}>
-                    Name
-                  </Text>
-                </LinearGradient>
-              ) : (
-                <>
-                  <Ionicons
-                    name="text-outline"
-                    size={13}
-                    color={sortMode === 'name' ? '#FFFFFF' : theme.text.secondary}
-                  />
-                  <Text
-                    style={[
-                      s.sortOptionText,
-                      { color: sortMode === 'name' ? '#FFFFFF' : theme.text.secondary },
-                    ]}
-                  >
-                    Name
-                  </Text>
-                </>
-              )}
+              <Ionicons
+                name="text-outline"
+                size={13}
+                color={sortMode === 'name' ? '#FFFFFF' : 'rgba(255,255,255,0.7)'}
+              />
+              <Text
+                style={[
+                  s.sortOptionText,
+                  { color: sortMode === 'name' ? '#FFFFFF' : 'rgba(255,255,255,0.7)' },
+                ]}
+              >
+                Name
+              </Text>
             </Pressable>
           </View>
 
@@ -1450,15 +1411,15 @@ function HistoryItemComponent({
     item.type === 'url' ? getHistoryPreviewUrl(item.parsedData?.url || item.rawValue) : null;
 
   return (
-    <View
+    <LiquidGlassSurface
       style={[
         s.historyCard,
         {
-          backgroundColor: theme.surfaceStrong,
           borderColor: theme.border,
           shadowColor: theme.shadow,
         },
       ]}
+      borderRadius={28}
     >
       {item.isFavorite ? (
         <View style={s.favoriteBadge}>
@@ -1466,7 +1427,7 @@ function HistoryItemComponent({
         </View>
       ) : null}
       <Pressable style={s.cardContent} onPress={onPress}>
-        <View style={[s.iconContainer, { backgroundColor: theme.background }]}>
+        <View style={[s.iconContainer, { backgroundColor: theme.surface }]}>
           {domain && !imgError ? (
             <Image
               source={{ uri: `https://www.google.com/s2/favicons?domain=${domain}&sz=128` }}
@@ -1554,7 +1515,7 @@ function HistoryItemComponent({
           ))}
         </View>
       ) : null}
-    </View>
+    </LiquidGlassSurface>
   );
 }
 
@@ -1823,14 +1784,14 @@ const s = StyleSheet.create({
   },
   historyCard: {
     marginHorizontal: 20,
-    marginVertical: 4,
-    borderRadius: 14,
+    marginVertical: 6,
+    borderRadius: 28,
     borderWidth: 1,
     position: 'relative',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.2,
+    shadowRadius: 24,
+    elevation: 10,
   },
   cardContent: {
     flexDirection: 'row',
@@ -1894,8 +1855,9 @@ const s = StyleSheet.create({
   expandedContent: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderBottomLeftRadius: 14,
-    borderBottomRightRadius: 14,
+    borderTopWidth: 1,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
   },
   expandedTitle: {
     fontSize: 13,
