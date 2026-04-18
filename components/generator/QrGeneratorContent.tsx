@@ -17,6 +17,7 @@ import { Card } from '../ui/Card';
 import { Chip } from '../ui/Chip';
 import { NoticeDialog } from '../ui/NoticeDialog';
 import { SuccessDialog } from '../ui/SuccessDialog';
+import { LiquidProgress } from '../ui/LiquidProgress';
 import {
   borderRadius,
   spacing,
@@ -85,6 +86,7 @@ export function QrGeneratorContent() {
   const [typesCollapsed, setTypesCollapsed] = useState(true);
   const [clipboardSuggestion, setClipboardSuggestion] = useState<GeneratorQuickStartSuggestion | null>(null);
   const [isCheckingClipboard, setIsCheckingClipboard] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState(0);
 
   // 6 most important/most used types
   const importantTypes: GeneratorTemplateId[] = ['website', 'plain-text', 'phone', 'sms', 'email', 'wifi'];
@@ -169,11 +171,13 @@ export function QrGeneratorContent() {
 
   const handleGenerate = () => {
     try {
+      setGenerationProgress(8);
       const content = buildGeneratorContent(selectedTemplateId, formValues);
       const qrCode = createQrCodeImage(content);
 
       setGeneratedCode(qrCode);
       setErrorMessage('');
+      setGenerationProgress(100);
       savePreset({
         templateId: selectedTemplateId,
         templateTitle: selectedTemplate.title,
@@ -186,6 +190,7 @@ export function QrGeneratorContent() {
       setErrorMessage(
         error instanceof Error ? error.message : 'The QR code could not be generated.'
       );
+      setGenerationProgress(0);
     }
   };
 
@@ -283,7 +288,7 @@ export function QrGeneratorContent() {
                 style={[
                   styles.quickStartCard,
                   {
-                    backgroundColor: theme.background,
+                    backgroundColor: theme.surface,
                     borderColor: theme.border,
                   },
                 ]}
@@ -328,7 +333,7 @@ export function QrGeneratorContent() {
                       style={[
                         styles.presetRow,
                         {
-                          backgroundColor: theme.background,
+                          backgroundColor: theme.surface,
                           borderColor: theme.border,
                         },
                       ]}
@@ -420,6 +425,11 @@ export function QrGeneratorContent() {
               {errorMessage || 'All code types are encoded into QR images in this version.'}
             </Text>
 
+            <View style={styles.progressBlock}>
+              <Text style={[styles.progressLabel, { color: theme.text.secondary }]}>Generation Progress</Text>
+              <LiquidProgress value={generatedCode ? generationProgress : 0} />
+            </View>
+
             <View style={styles.actionsRow}>
               <ActionButton
                 title="Paste"
@@ -450,7 +460,7 @@ export function QrGeneratorContent() {
                 style={[
                   styles.previewSurface,
                   {
-                    backgroundColor: theme.background,
+                    backgroundColor: theme.surface,
                     borderColor: theme.border,
                   },
                 ]}
@@ -571,7 +581,7 @@ function renderField({
             styles.input,
             field.multiline ? styles.multilineInput : styles.singleLineInput,
             {
-              backgroundColor: theme.background,
+              backgroundColor: theme.surfaceStrong,
               borderColor: errorMessage ? theme.danger : theme.border,
               color: theme.text.primary,
             },
@@ -852,6 +862,17 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily,
     fontSize: typography.sizes.sm,
     lineHeight: 20,
+  },
+  progressBlock: {
+    marginTop: spacing.md,
+    gap: spacing.sm,
+  },
+  progressLabel: {
+    fontFamily: typography.fontFamily,
+    fontSize: typography.sizes.xs,
+    fontWeight: typography.weights.semibold,
+    textTransform: 'uppercase',
+    letterSpacing: typography.letterSpacing.wide,
   },
   actionsRow: {
     flexDirection: 'row',
