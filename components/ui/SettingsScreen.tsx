@@ -9,6 +9,7 @@ import { spacing, typography } from '../../constants/theme';
 import { useAppTheme } from '../../hooks/useAppTheme';
 import { ConfirmDialog } from './ConfirmDialog';
 import { ColorOrbitPicker } from './ColorOrbitPicker';
+import { LiquidGlassSurface } from './LiquidGlassSurface';
 
 interface SettingsScreenProps {
   visible: boolean;
@@ -145,15 +146,18 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
           onPress={handleClose}
         />
         
-        <View
+        <LiquidGlassSurface
           style={[
             styles.modal,
             {
-              backgroundColor: theme.surfaceStrong,
               shadowColor: theme.shadow,
               borderColor: theme.border,
             },
           ]}
+          contentStyle={styles.modalContentShell}
+          borderRadius={28}
+          blurIntensity={44}
+          enableRipple={false}
         >
           {/* Header */}
           <View style={[styles.header, { borderBottomColor: theme.border }]}>
@@ -167,7 +171,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
             {/* Permissions Section */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: theme.text.secondary }]}>
+              <Text style={[styles.sectionTitle, { color: '#67E8F9' }]}>
                 PERMISSIONS
               </Text>
               <View style={[styles.sectionContent, { backgroundColor: theme.surface, borderColor: theme.border }]}>
@@ -195,7 +199,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
 
             {/* Scanning Section */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: theme.text.secondary }]}>
+              <Text style={[styles.sectionTitle, { color: '#67E8F9' }]}>
                 SCANNING
               </Text>
               <View style={[styles.sectionContent, { backgroundColor: theme.surface, borderColor: theme.border }]}>
@@ -376,7 +380,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
 
             {/* Navigation Section */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: theme.text.secondary }]}>
+              <Text style={[styles.sectionTitle, { color: '#67E8F9' }]}>
                 NAVIGATION
               </Text>
               <View style={[styles.sectionContent, { backgroundColor: theme.surface, borderColor: theme.border }]}>
@@ -417,7 +421,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
 
             {/* Privacy & Safety Section */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: theme.text.secondary }]}>
+              <Text style={[styles.sectionTitle, { color: '#67E8F9' }]}>
                 PRIVACY & SAFETY
               </Text>
               <View style={[styles.sectionContent, { backgroundColor: theme.surface, borderColor: theme.border }]}>
@@ -515,7 +519,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
 
             {/* Appearance Section */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: theme.text.secondary }]}>
+              <Text style={[styles.sectionTitle, { color: '#67E8F9' }]}>
                 APPEARANCE
               </Text>
               <View style={[styles.sectionContent, { backgroundColor: theme.surface, borderColor: theme.border }]}>
@@ -613,7 +617,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
 
             {/* Debug Section */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: theme.text.secondary }]}>
+              <Text style={[styles.sectionTitle, { color: '#67E8F9' }]}>
                 DEBUG
               </Text>
               <View style={[styles.sectionContent, { backgroundColor: theme.surface, borderColor: theme.border }]}>
@@ -663,7 +667,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
 
             {/* About Section */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: theme.text.secondary }]}>
+              <Text style={[styles.sectionTitle, { color: '#67E8F9' }]}>
                 ABOUT
               </Text>
               <View style={[styles.sectionContent, { backgroundColor: theme.surface, borderColor: theme.border }]}>
@@ -694,7 +698,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
 
             <View style={styles.spacer} />
           </ScrollView>
-        </View>
+        </LiquidGlassSurface>
 
         <ConfirmDialog
           visible={confirmDialog.visible}
@@ -723,12 +727,9 @@ const styles = StyleSheet.create({
     width: '88%',
     height: '80%', // Change from maxHeight to height
     borderRadius: 28,
-    overflow: 'hidden',
-    borderWidth: 1,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
-    elevation: 10,
+  },
+  modalContentShell: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
