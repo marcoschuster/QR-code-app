@@ -356,7 +356,7 @@ export function ScannerScreen({
             style={[
               s.zoomShell,
               {
-                backgroundColor: 'rgba(0,0,0,0.35)',
+                backgroundColor: 'transparent',
                 borderColor: theme.border,
                 shadowColor: theme.shadow,
               },

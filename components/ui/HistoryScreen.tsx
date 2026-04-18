@@ -876,42 +876,82 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
           </Pressable>
         </View>
         <View style={s.headerControlsRow}>
-          <View style={[s.sortControl, { backgroundColor: theme.accent, borderColor: theme.border }]}>
+          <View style={[s.sortControl, { backgroundColor: theme.surfaceStrong, borderColor: theme.border }]}>
             <Pressable
               style={s.sortOption}
               onPress={() => setSortMode('date')}
             >
-              <Ionicons
-                name="time-outline"
-                size={13}
-                color={sortMode === 'date' ? '#FFFFFF' : 'rgba(255,255,255,0.7)'}
-              />
-              <Text
-                style={[
-                  s.sortOptionText,
-                  { color: sortMode === 'date' ? '#FFFFFF' : 'rgba(255,255,255,0.7)' },
-                ]}
-              >
-                Date
-              </Text>
+              {sortMode === 'date' && theme.accentGradient && theme.accentGradient.length >= 2 ? (
+                <LinearGradient
+                  colors={theme.accentGradient as any}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={[s.sortOptionGradient, { borderWidth: 1, borderColor: theme.accent }]}
+                >
+                  <Ionicons
+                    name="time-outline"
+                    size={13}
+                    color="#FFFFFF"
+                  />
+                  <Text style={[s.sortOptionText, { color: '#FFFFFF' }]}>
+                    Date
+                  </Text>
+                </LinearGradient>
+              ) : (
+                <>
+                  <Ionicons
+                    name="time-outline"
+                    size={13}
+                    color={sortMode === 'date' ? '#FFFFFF' : theme.text.secondary}
+                  />
+                  <Text
+                    style={[
+                      s.sortOptionText,
+                      { color: sortMode === 'date' ? '#FFFFFF' : theme.text.secondary },
+                    ]}
+                  >
+                    Date
+                  </Text>
+                </>
+              )}
             </Pressable>
             <Pressable
               style={s.sortOption}
               onPress={() => setSortMode('name')}
             >
-              <Ionicons
-                name="text-outline"
-                size={13}
-                color={sortMode === 'name' ? '#FFFFFF' : 'rgba(255,255,255,0.7)'}
-              />
-              <Text
-                style={[
-                  s.sortOptionText,
-                  { color: sortMode === 'name' ? '#FFFFFF' : 'rgba(255,255,255,0.7)' },
-                ]}
-              >
-                Name
-              </Text>
+              {sortMode === 'name' && theme.accentGradient && theme.accentGradient.length >= 2 ? (
+                <LinearGradient
+                  colors={theme.accentGradient as any}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={[s.sortOptionGradient, { borderWidth: 1, borderColor: theme.accent }]}
+                >
+                  <Ionicons
+                    name="text-outline"
+                    size={13}
+                    color="#FFFFFF"
+                  />
+                  <Text style={[s.sortOptionText, { color: '#FFFFFF' }]}>
+                    Name
+                  </Text>
+                </LinearGradient>
+              ) : (
+                <>
+                  <Ionicons
+                    name="text-outline"
+                    size={13}
+                    color={sortMode === 'name' ? '#FFFFFF' : theme.text.secondary}
+                  />
+                  <Text
+                    style={[
+                      s.sortOptionText,
+                      { color: sortMode === 'name' ? '#FFFFFF' : theme.text.secondary },
+                    ]}
+                  >
+                    Name
+                  </Text>
+                </>
+              )}
             </Pressable>
           </View>
 

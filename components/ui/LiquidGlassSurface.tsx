@@ -226,9 +226,9 @@ export function LiquidGlassSurface({
                 width: 100,
                 height: 100,
                 borderRadius: 50,
-                backgroundColor: 'rgba(255, 255, 255, 0.4)',
+                backgroundColor: theme.accent,
                 borderWidth: 1,
-                borderColor: 'rgba(255, 255, 255, 0.6)',
+                borderColor: theme.accent,
                 opacity: ping.opacity,
                 transform: [{ scale: ping.scale }],
               }}
