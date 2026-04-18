@@ -10,18 +10,18 @@ import {
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 import { useAppTheme } from '../../hooks/useAppTheme';
 import { useLiquidGlassBlurTarget } from './LiquidGlassContext';
 
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
-
-type Ripple = {
+type Shard = {
   id: number;
   x: number;
   y: number;
-  radius: Animated.Value;
+  rotation: Animated.Value;
+  scale: Animated.Value;
   opacity: Animated.Value;
+  translateX: Animated.Value;
+  translateY: Animated.Value;
 };
 
 interface LiquidGlassSurfaceProps {
@@ -45,9 +45,8 @@ export function LiquidGlassSurface({
 }: LiquidGlassSurfaceProps) {
   const { theme, isDark } = useAppTheme();
   const blurTargetRef = useLiquidGlassBlurTarget();
-  const [ripples, setRipples] = useState<Ripple[]>([]);
-  const ripplesRef = useRef<Ripple[]>([]);
-  const gradientId = useRef(`liquid-ripple-${Math.random().toString(36).slice(2)}`).current;
+  const [shards, setShards] = useState<Shard[]>([]);
+  const shardsRef = useRef<Shard[]>([]);
   const scale = useRef(new Animated.Value(1)).current;
   const borderOpacity = useRef(new Animated.Value(0)).current;
 
@@ -72,32 +71,58 @@ export function LiquidGlassSurface({
 
       const { locationX, locationY } = event.nativeEvent;
       const id = Date.now() + Math.floor(Math.random() * 1000);
-      const ripple: Ripple = {
-        id,
-        x: locationX,
-        y: locationY,
-        radius: new Animated.Value(18),
-        opacity: new Animated.Value(0.38),
-      };
 
-      ripplesRef.current = [...ripplesRef.current, ripple];
-      setRipples(ripplesRef.current);
+      // Create multiple shards for glass breaking effect
+      const newShards: Shard[] = [];
+      for (let i = 0; i < 5; i++) {
+        const angle = (Math.random() * 360) * (Math.PI / 180);
+        const distance = 30 + Math.random() * 50;
+        const shard: Shard = {
+          id: id + i,
+          x: locationX,
+          y: locationY,
+          rotation: new Animated.Value(0),
+          scale: new Animated.Value(0),
+          opacity: new Animated.Value(0.8),
+          translateX: new Animated.Value(0),
+          translateY: new Animated.Value(0),
+        };
+        newShards.push(shard);
 
-      Animated.parallel([
-        Animated.timing(ripple.radius, {
-          toValue: 124,
-          duration: 650,
-          useNativeDriver: false,
-        }),
-        Animated.timing(ripple.opacity, {
-          toValue: 0,
-          duration: 650,
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        ripplesRef.current = ripplesRef.current.filter((entry) => entry.id !== id);
-        setRipples([...ripplesRef.current]);
-      });
+        Animated.parallel([
+          Animated.timing(shard.rotation, {
+            toValue: angle * 180 / Math.PI,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+          Animated.timing(shard.scale, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+          Animated.timing(shard.translateX, {
+            toValue: Math.cos(angle) * distance,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+          Animated.timing(shard.translateY, {
+            toValue: Math.sin(angle) * distance,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+          Animated.timing(shard.opacity, {
+            toValue: 0,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+        ]).start(() => {
+          shardsRef.current = shardsRef.current.filter((entry) => entry.id !== shard.id);
+          setShards([...shardsRef.current]);
+        });
+      }
+
+      shardsRef.current = [...shardsRef.current, ...newShards];
+      setShards(shardsRef.current);
     },
     [borderOpacity, enableRipple, scale]
   );
@@ -124,7 +149,7 @@ export function LiquidGlassSurface({
         styles.shell,
         {
           borderRadius,
-          backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+          backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.85)',
           borderColor: theme.border,
           shadowColor: theme.shadow,
           transform: [{ scale }],
@@ -135,7 +160,7 @@ export function LiquidGlassSurface({
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchEnd}
     >
-      {/* Blurred blobs for color */}
+      {/* Blurred background */}
       <View
         pointerEvents="none"
         style={[StyleSheet.absoluteFillObject, styles.blurClip, { borderRadius }]}
@@ -152,7 +177,7 @@ export function LiquidGlassSurface({
             style={[
               StyleSheet.absoluteFillObject,
               {
-                backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+                backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.85)',
                 borderRadius,
               },
             ]}
@@ -162,7 +187,7 @@ export function LiquidGlassSurface({
 
       {/* Iridescent gloss overlay */}
       <LinearGradient
-        colors={['rgba(255,255,255,0.15)', 'rgba(255,255,255,0.02)', 'rgba(255,255,255,0.05)', 'rgba(255,255,255,0.15)'] as any}
+        colors={['rgba(255,255,255,0.4)', 'rgba(255,255,255,0.1)', 'rgba(255,255,255,0.2)', 'rgba(255,255,255,0.4)'] as any}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[StyleSheet.absoluteFillObject, styles.iridescentOverlay, { borderRadius }]}
@@ -214,25 +239,28 @@ export function LiquidGlassSurface({
 
       {enableRipple ? (
         <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-          <Svg width="100%" height="100%">
-            <Defs>
-              <RadialGradient id={gradientId} cx="50%" cy="50%" r="50%">
-                <Stop offset="0%" stopColor={isDark ? "#FFFFFF" : "#000000"} stopOpacity="0.55" />
-                <Stop offset="55%" stopColor={isDark ? "#FFFFFF" : "#000000"} stopOpacity="0.14" />
-                <Stop offset="100%" stopColor={isDark ? "#FFFFFF" : "#000000"} stopOpacity="0" />
-              </RadialGradient>
-            </Defs>
-            {ripples.map((ripple) => (
-              <AnimatedCircle
-                key={ripple.id}
-                cx={ripple.x}
-                cy={ripple.y}
-                r={ripple.radius as any}
-                fill={`url(#${gradientId})`}
-                opacity={ripple.opacity as any}
-              />
-            ))}
-          </Svg>
+          {shards.map((shard) => (
+            <Animated.View
+              key={shard.id}
+              style={[
+                styles.shard,
+                {
+                  left: shard.x,
+                  top: shard.y,
+                  width: 20,
+                  height: 8,
+                  backgroundColor: theme.accent,
+                  opacity: shard.opacity,
+                  transform: [
+                    { rotate: shard.rotation as any },
+                    { scale: shard.scale as any },
+                    { translateX: shard.translateX as any },
+                    { translateY: shard.translateY as any },
+                  ],
+                },
+              ]}
+            />
+          ))}
         </View>
       ) : null}
 
@@ -258,6 +286,15 @@ const styles = StyleSheet.create({
   },
   iridescentOverlay: {
     opacity: 0.6,
+  },
+  shard: {
+    position: 'absolute',
+    borderRadius: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   innerGlow: {
     ...StyleSheet.absoluteFillObject,
