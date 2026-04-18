@@ -157,33 +157,33 @@ export function LiquidGlassBackground() {
 
 const styles = StyleSheet.create({
   accentWash: {
-    opacity: 0.68,
+    opacity: 0.8,
   },
   blob: {
     position: 'absolute',
     borderRadius: 999,
-    opacity: 0.78,
+    opacity: 0.4,
     shadowOffset: { width: 0, height: 32 },
     shadowOpacity: 0.42,
     shadowRadius: 140,
     elevation: 22,
   },
   blobOne: {
-    width: 320,
-    height: 320,
-    top: -120,
-    left: -110,
+    width: 350,
+    height: 350,
+    top: -100,
+    left: -100,
   },
   blobTwo: {
-    width: 360,
-    height: 360,
-    right: -140,
-    bottom: -160,
+    width: 400,
+    height: 400,
+    right: -150,
+    bottom: -150,
   },
   blobThree: {
-    width: 280,
-    height: 280,
-    top: '42%',
-    left: '38%',
+    width: 300,
+    height: 300,
+    top: '50%',
+    left: '50%',
   },
 });
