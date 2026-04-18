@@ -9,6 +9,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 import { useAppTheme } from '../../hooks/useAppTheme';
 import { useLiquidGlassBlurTarget } from './LiquidGlassContext';
@@ -137,7 +138,7 @@ export function LiquidGlassSurface({
       {/* Blurred blobs for color */}
       <View
         pointerEvents="none"
-        style={[StyleSheet.absoluteFillObject, styles.blobClip, { borderRadius }]}
+        style={[StyleSheet.absoluteFillObject, styles.blurClip, { borderRadius }]}
       >
         <BlurView
           intensity={blurIntensity ?? (isDark ? 42 : 34)}
@@ -159,12 +160,13 @@ export function LiquidGlassSurface({
         </BlurView>
       </View>
 
-      {/* Color blobs - larger, blurrier, more transparent */}
-      <View pointerEvents="none" style={[StyleSheet.absoluteFillObject, styles.blobClip, { borderRadius }]}>
-        <View style={[styles.blob1, { backgroundColor: isDark ? 'rgba(79,70,229,0.04)' : 'rgba(79,70,229,0.03)' }]} />
-        <View style={[styles.blob2, { backgroundColor: isDark ? 'rgba(6,182,212,0.05)' : 'rgba(6,182,212,0.04)' }]} />
-        <View style={[styles.blob3, { backgroundColor: isDark ? 'rgba(124,58,237,0.03)' : 'rgba(124,58,237,0.02)' }]} />
-      </View>
+      {/* Iridescent gloss overlay */}
+      <LinearGradient
+        colors={['rgba(255,255,255,0.15)', 'rgba(255,255,255,0.02)', 'rgba(255,255,255,0.05)', 'rgba(255,255,255,0.15)'] as any}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[StyleSheet.absoluteFillObject, styles.iridescentOverlay, { borderRadius }]}
+      />
 
       <Animated.View
         pointerEvents="none"
@@ -254,32 +256,8 @@ const styles = StyleSheet.create({
   blurClip: {
     overflow: 'hidden',
   },
-  blobClip: {
-    overflow: 'hidden',
-  },
-  blob1: {
-    position: 'absolute',
-    top: -40,
-    right: -40,
-    width: 176,
-    height: 176,
-    borderRadius: 88,
-  },
-  blob2: {
-    position: 'absolute',
-    bottom: -32,
-    left: -32,
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-  },
-  blob3: {
-    position: 'absolute',
-    top: '30%',
-    left: '40%',
-    width: 208,
-    height: 208,
-    borderRadius: 104,
+  iridescentOverlay: {
+    opacity: 0.6,
   },
   innerGlow: {
     ...StyleSheet.absoluteFillObject,
