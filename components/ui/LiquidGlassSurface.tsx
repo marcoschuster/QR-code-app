@@ -159,10 +159,11 @@ export function LiquidGlassSurface({
         </BlurView>
       </View>
 
-      {/* Color blobs */}
+      {/* Color blobs - larger, blurrier, more transparent */}
       <View pointerEvents="none" style={[StyleSheet.absoluteFillObject, styles.blobClip, { borderRadius }]}>
-        <View style={[styles.blob1, { backgroundColor: isDark ? 'rgba(79,70,229,0.2)' : 'rgba(79,70,229,0.15)' }]} />
-        <View style={[styles.blob2, { backgroundColor: isDark ? 'rgba(124,58,237,0.15)' : 'rgba(124,58,237,0.1)' }]} />
+        <View style={[styles.blob1, { backgroundColor: isDark ? 'rgba(79,70,229,0.07)' : 'rgba(79,70,229,0.05)' }]} />
+        <View style={[styles.blob2, { backgroundColor: isDark ? 'rgba(6,182,212,0.09)' : 'rgba(6,182,212,0.07)' }]} />
+        <View style={[styles.blob3, { backgroundColor: isDark ? 'rgba(124,58,237,0.05)' : 'rgba(124,58,237,0.03)' }]} />
       </View>
 
       <Animated.View
@@ -258,19 +259,27 @@ const styles = StyleSheet.create({
   },
   blob1: {
     position: 'absolute',
-    top: -32,
-    right: -32,
-    width: 128,
-    height: 128,
-    borderRadius: 64,
+    top: -40,
+    right: -40,
+    width: 176,
+    height: 176,
+    borderRadius: 88,
   },
   blob2: {
     position: 'absolute',
-    bottom: -24,
-    left: -24,
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    bottom: -32,
+    left: -32,
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+  },
+  blob3: {
+    position: 'absolute',
+    top: '30%',
+    left: '40%',
+    width: 208,
+    height: 208,
+    borderRadius: 104,
   },
   innerGlow: {
     ...StyleSheet.absoluteFillObject,
