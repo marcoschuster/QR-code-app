@@ -48,49 +48,135 @@ export const getStrongAccentGradient = (accentColor: AccentColor): string[] | un
   return strongGradients[accentColor];
 };
 
+function clampChannel(value: number) {
+  return Math.max(0, Math.min(255, Math.round(value)));
+}
+
+function hexToRgb(hex: string) {
+  const normalized = hex.replace('#', '');
+  const fullHex =
+    normalized.length === 3
+      ? normalized
+          .split('')
+          .map((char) => char + char)
+          .join('')
+      : normalized;
+
+  return {
+    r: parseInt(fullHex.slice(0, 2), 16),
+    g: parseInt(fullHex.slice(2, 4), 16),
+    b: parseInt(fullHex.slice(4, 6), 16),
+  };
+}
+
+function mixHex(baseHex: string, mixHexColor: string, weight: number) {
+  const base = hexToRgb(baseHex);
+  const mix = hexToRgb(mixHexColor);
+
+  return `#${[base.r, base.g, base.b]
+    .map((channel, index) => {
+      const mixChannel = [mix.r, mix.g, mix.b][index];
+      const blended = channel + (mixChannel - channel) * weight;
+      return clampChannel(blended).toString(16).padStart(2, '0');
+    })
+    .join('')}`;
+}
+
+function rgbaFromHex(hex: string, alpha: number) {
+  const { r, g, b } = hexToRgb(hex);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function getAmbientStops(accentColor: AccentColor) {
+  const primary = getAccentColor(accentColor);
+  const gradient = getAccentGradient(accentColor);
+
+  if (gradient && gradient.length >= 3) {
+    return gradient.slice(0, 3);
+  }
+
+  return [
+    mixHex(primary, '#ffffff', 0.2),
+    primary,
+    mixHex(primary, '#7dd3fc', 0.28),
+  ];
+}
+
+export const getAmbientAccentGradient = (accentColor: AccentColor, isDark: boolean): string[] => {
+  const [first, second, third] = getAmbientStops(accentColor);
+
+  return isDark
+    ? [
+        rgbaFromHex(first, 0.22),
+        rgbaFromHex(second, 0.18),
+        rgbaFromHex(third, 0.14),
+      ]
+    : [
+        rgbaFromHex(first, 0.18),
+        rgbaFromHex(second, 0.14),
+        rgbaFromHex(third, 0.1),
+      ];
+};
+
+export const getAmbientBlobColors = (accentColor: AccentColor, isDark: boolean): string[] => {
+  const [first, second, third] = getAmbientStops(accentColor);
+
+  return isDark
+    ? [
+        rgbaFromHex(first, 0.4),
+        rgbaFromHex(second, 0.34),
+        rgbaFromHex(third, 0.26),
+      ]
+    : [
+        rgbaFromHex(first, 0.34),
+        rgbaFromHex(second, 0.28),
+        rgbaFromHex(third, 0.22),
+      ];
+};
+
 export const lightTheme: ThemeColors = {
-  background: 'rgba(237, 244, 255, 0.84)',
-  surface: 'rgba(255,255,255,0.46)',
-  surfaceStrong: 'rgba(255,255,255,0.72)',
+  background: '#E8E8F0',
+  surface: 'rgba(255,255,255,0.85)',
+  surfaceStrong: 'rgba(255,255,255,0.95)',
   accent: '#FF0000',
-  surfaceGradient: ['rgba(255,255,255,0.78)', 'rgba(255,255,255,0.32)'],
-  backgroundGradient: ['#EEF4FF', '#D9E7FF', '#F9FBFF'],
-  backgroundAccentGradient: ['rgba(124,58,237,0.18)', 'rgba(79,70,229,0.12)', 'rgba(6,182,212,0.08)'],
-  backgroundBlobs: ['rgba(99,102,241,0.48)', 'rgba(168,85,247,0.38)', 'rgba(34,211,238,0.32)'],
-  glassHighlight: 'rgba(255,255,255,0.24)',
-  backdrop: 'rgba(17, 24, 39, 0.28)',
+  surfaceGradient: ['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.85)'],
+  backgroundGradient: ['#E8E8F0', '#F0F0F8', '#E0E8F0'],
+  backgroundAccentGradient: ['rgba(79,70,229,0.12)', 'rgba(124,58,237,0.08)', 'rgba(6,182,212,0.06)'],
+  backgroundBlobs: ['rgba(79,70,229,0.15)', 'rgba(124,58,237,0.15)', 'rgba(6,182,212,0.15)'],
+  glassHighlight: 'rgba(255,255,255,0.9)',
+  backdrop: 'rgba(232, 232, 240, 0.5)',
   danger: '#FF453A',
   success: '#30D158',
   warning: '#FFD60A',
   text: {
-    primary: '#0F172A',
-    secondary: '#475569',
-    tertiary: '#64748B',
+    primary: '#1A1A2E',
+    secondary: 'rgba(26,26,46,0.6)',
+    tertiary: 'rgba(26,26,46,0.4)',
   },
-  border: 'rgba(255,255,255,0.58)',
-  shadow: '#1E1B4B',
+  border: 'rgba(26,26,46,0.12)',
+  shadow: 'rgba(0,0,0,0.1)',
 };
 
 export const darkTheme: ThemeColors = {
-  background: 'rgba(8, 10, 24, 0.84)',
-  surface: 'rgba(255,255,255,0.10)',
-  surfaceStrong: 'rgba(255,255,255,0.18)',
+  background: 'rgba(10, 10, 18, 0.82)',
+  surface: 'rgba(17,18,20,0.72)',
+  surfaceStrong: 'rgba(23,24,28,0.82)',
   accent: '#FF0000',
-  surfaceGradient: ['rgba(255,255,255,0.22)', 'rgba(255,255,255,0.08)'],
-  backgroundGradient: ['#070912', '#141A39', '#0A2740'],
-  backgroundAccentGradient: ['rgba(79,70,229,0.34)', 'rgba(124,58,237,0.24)', 'rgba(6,182,212,0.16)'],
-  backgroundBlobs: ['rgba(79,70,229,0.46)', 'rgba(124,58,237,0.34)', 'rgba(6,182,212,0.28)'],
+  surfaceGradient: ['rgba(255,255,255,0.12)', 'rgba(255,255,255,0.04)'],
+  backgroundGradient: ['#0f0c29', '#302b63', '#24243e'],
+  backgroundAccentGradient: ['rgba(79,70,229,0.18)', 'rgba(124,58,237,0.14)', 'rgba(6,182,212,0.1)'],
+  backgroundBlobs: ['rgba(79,70,229,0.4)', 'rgba(124,58,237,0.4)', 'rgba(6,182,212,0.4)'],
   glassHighlight: 'rgba(255,255,255,0.16)',
-  backdrop: 'rgba(3, 6, 18, 0.52)',
+  backdrop: 'rgba(3, 6, 18, 0.56)',
   danger: '#FF453A',
   success: '#30D158',
   warning: '#FFD60A',
   text: {
     primary: '#FFFFFF',
-    secondary: '#B6B6BC',
-    tertiary: '#8B8B93',
+    secondary: 'rgba(255,255,255,0.6)',
+    tertiary: 'rgba(255,255,255,0.4)',
   },
-  border: 'rgba(255,255,255,0.16)',
+  border: 'rgba(255,255,255,0.14)',
   shadow: '#020617',
 };
 
