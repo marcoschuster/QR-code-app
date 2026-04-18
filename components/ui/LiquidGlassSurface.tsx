@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Polygon, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
 import { useAppTheme } from '../../hooks/useAppTheme';
 import { useLiquidGlassBlurTarget } from './LiquidGlassContext';
 
@@ -17,11 +18,12 @@ type Shard = {
   id: number;
   x: number;
   y: number;
-  rotation: Animated.Value;
+  width: number;
+  height: number;
+  points: string;
+  tilt: number;
   scale: Animated.Value;
   opacity: Animated.Value;
-  translateX: Animated.Value;
-  translateY: Animated.Value;
 };
 
 interface LiquidGlassSurfaceProps {
@@ -72,57 +74,71 @@ export function LiquidGlassSurface({
       const { locationX, locationY } = event.nativeEvent;
       const id = Date.now() + Math.floor(Math.random() * 1000);
 
-      // Create multiple shards for glass breaking effect
-      const newShards: Shard[] = [];
-      for (let i = 0; i < 5; i++) {
-        const angle = Math.random() * 360;
-        const distance = 30 + Math.random() * 50;
-        const shard: Shard = {
-          id: id + i,
-          x: locationX,
-          y: locationY,
-          rotation: new Animated.Value(0),
-          scale: new Animated.Value(0),
-          opacity: new Animated.Value(0.8),
-          translateX: new Animated.Value(0),
-          translateY: new Animated.Value(0),
-        };
-        newShards.push(shard);
+      // Generate random size
+      const size = 60 + Math.random() * 80; // 60-140px
+      const width = size;
+      const height = size;
 
-        Animated.parallel([
-          Animated.timing(shard.rotation, {
-            toValue: angle,
-            duration: 400,
-            useNativeDriver: true,
-          }),
-          Animated.timing(shard.scale, {
-            toValue: 1,
-            duration: 300,
-            useNativeDriver: true,
-          }),
-          Animated.timing(shard.translateX, {
-            toValue: Math.cos(angle * Math.PI / 180) * distance,
-            duration: 400,
-            useNativeDriver: true,
-          }),
-          Animated.timing(shard.translateY, {
-            toValue: Math.sin(angle * Math.PI / 180) * distance,
-            duration: 400,
-            useNativeDriver: true,
-          }),
-          Animated.timing(shard.opacity, {
-            toValue: 0,
-            duration: 500,
-            useNativeDriver: true,
-          }),
-        ]).start(() => {
-          shardsRef.current = shardsRef.current.filter((entry) => entry.id !== shard.id);
-          setShards([...shardsRef.current]);
-        });
+      // Generate random 3-to-5 sided polygon points
+      const numPoints = 3 + Math.floor(Math.random() * 3);
+      const pointsArray = [];
+      for (let i = 0; i < numPoints; i++) {
+        const angle = (Math.PI * 2 / numPoints) * i + (Math.random() - 0.5) * 1.2;
+        const r = 30 + Math.random() * 20;
+        const px = 50 + Math.cos(angle) * r;
+        const py = 50 + Math.sin(angle) * r;
+        pointsArray.push(`${px.toFixed(1)},${py.toFixed(1)}`);
       }
+      const pointsString = pointsArray.join(' ');
 
-      shardsRef.current = [...shardsRef.current, ...newShards];
+      // Generate random tilt (-5deg to +5deg)
+      const tilt = (Math.random() - 0.5) * 10;
+
+      const shard: Shard = {
+        id,
+        x: locationX,
+        y: locationY,
+        width,
+        height,
+        points: pointsString,
+        tilt,
+        scale: new Animated.Value(0),
+        opacity: new Animated.Value(0),
+      };
+
+      shardsRef.current = [...shardsRef.current, shard];
       setShards(shardsRef.current);
+
+      // Crack pop animation: scale 0 -> 1.1 -> 1.0
+      Animated.sequence([
+        Animated.timing(shard.scale, {
+          toValue: 1.1,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shard.scale, {
+          toValue: 1.0,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+      ]).start();
+
+      // Fade in then out
+      Animated.sequence([
+        Animated.timing(shard.opacity, {
+          toValue: 1,
+          duration: 50,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shard.opacity, {
+          toValue: 0,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        shardsRef.current = shardsRef.current.filter((entry) => entry.id !== id);
+        setShards([...shardsRef.current]);
+      });
     },
     [borderOpacity, enableRipple, scale]
   );
@@ -243,26 +259,36 @@ export function LiquidGlassSurface({
             <Animated.View
               key={shard.id}
               style={[
-                styles.shard,
+                styles.shardContainer,
                 {
-                  left: shard.x,
-                  top: shard.y,
-                  width: 20,
-                  height: 8,
-                  backgroundColor: theme.accent,
+                  left: shard.x - shard.width / 2,
+                  top: shard.y - shard.height / 2,
+                  width: shard.width,
+                  height: shard.height,
                   opacity: shard.opacity,
                   transform: [
-                    { rotate: shard.rotation.interpolate({
-                      inputRange: [0, 360],
-                      outputRange: ['0deg', '360deg'],
-                    }) as any },
                     { scale: shard.scale as any },
-                    { translateX: shard.translateX as any },
-                    { translateY: shard.translateY as any },
+                    { rotate: `${shard.tilt}deg` },
                   ],
                 },
               ]}
-            />
+            >
+              <Svg width="100%" height="100%" viewBox="0 0 100 100">
+                <Defs>
+                  <SvgLinearGradient id={`shard-grad-${shard.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                    <Stop offset="0%" stopColor={theme.accent} stopOpacity="0.8" />
+                    <Stop offset="50%" stopColor="#FFFFFF" stopOpacity="0.4" />
+                    <Stop offset="100%" stopColor={theme.accent} stopOpacity="0.6" />
+                  </SvgLinearGradient>
+                </Defs>
+                <Polygon
+                  points={shard.points}
+                  fill={`url(#shard-grad-${shard.id})`}
+                  stroke="rgba(255,255,255,0.3)"
+                  strokeWidth="1"
+                />
+              </Svg>
+            </Animated.View>
           ))}
         </View>
       ) : null}
@@ -290,14 +316,8 @@ const styles = StyleSheet.create({
   iridescentOverlay: {
     opacity: 0.6,
   },
-  shard: {
+  shardContainer: {
     position: 'absolute',
-    borderRadius: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
   },
   innerGlow: {
     ...StyleSheet.absoluteFillObject,
