@@ -140,8 +140,14 @@ export function LiquidGlassSurface({
           shadowColor: theme.shadow,
           transform: [
             { perspective: 800 },
-            { rotateX: tiltX },
-            { rotateY: tiltY },
+            { rotateX: tiltX.interpolate({
+              inputRange: [-8, 8],
+              outputRange: ['-8deg', '8deg'],
+            }) as any },
+            { rotateY: tiltY.interpolate({
+              inputRange: [-8, 8],
+              outputRange: ['-8deg', '8deg'],
+            }) as any },
             { scale },
           ],
         },
