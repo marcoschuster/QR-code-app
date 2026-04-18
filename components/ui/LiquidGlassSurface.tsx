@@ -75,7 +75,7 @@ export function LiquidGlassSurface({
       // Create multiple shards for glass breaking effect
       const newShards: Shard[] = [];
       for (let i = 0; i < 5; i++) {
-        const angle = (Math.random() * 360) * (Math.PI / 180);
+        const angle = Math.random() * 360;
         const distance = 30 + Math.random() * 50;
         const shard: Shard = {
           id: id + i,
@@ -91,7 +91,7 @@ export function LiquidGlassSurface({
 
         Animated.parallel([
           Animated.timing(shard.rotation, {
-            toValue: angle * 180 / Math.PI,
+            toValue: angle,
             duration: 400,
             useNativeDriver: true,
           }),
@@ -101,12 +101,12 @@ export function LiquidGlassSurface({
             useNativeDriver: true,
           }),
           Animated.timing(shard.translateX, {
-            toValue: Math.cos(angle) * distance,
+            toValue: Math.cos(angle * Math.PI / 180) * distance,
             duration: 400,
             useNativeDriver: true,
           }),
           Animated.timing(shard.translateY, {
-            toValue: Math.sin(angle) * distance,
+            toValue: Math.sin(angle * Math.PI / 180) * distance,
             duration: 400,
             useNativeDriver: true,
           }),
@@ -252,7 +252,10 @@ export function LiquidGlassSurface({
                   backgroundColor: theme.accent,
                   opacity: shard.opacity,
                   transform: [
-                    { rotate: shard.rotation as any },
+                    { rotate: shard.rotation.interpolate({
+                      inputRange: [0, 360],
+                      outputRange: ['0deg', '360deg'],
+                    }) as any },
                     { scale: shard.scale as any },
                     { translateX: shard.translateX as any },
                     { translateY: shard.translateY as any },
