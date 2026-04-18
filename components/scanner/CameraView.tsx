@@ -95,6 +95,7 @@ export function ScannerScreen({
   const [zoom, setZoom] = useState(0);
   const photoScanSucceededRef = useRef(false);
   const bottomOffset = useRef(new Animated.Value(tabBarHidden ? 84 : 160)).current;
+  const { theme } = useAppTheme();
   const { addItem } = useHistoryStore();
   const { saveToHistory, beepOnScan, vibrateOnScan, urlThreatScanning, autoCopyScanned } = useSettingsStore();
   const { playScanSound } = useScanAudio();
@@ -302,7 +303,10 @@ export function ScannerScreen({
 
       {/* Top bar */}
       <View style={[s.topBar, { paddingTop: Platform.OS === 'ios' ? 56 : 36 }]}>
-        <Pressable style={s.pill} onPress={() => setTorchOn(v => !v)}>
+        <Pressable
+          style={[s.pill, { backgroundColor: theme.surfaceStrong, borderColor: theme.border }]}
+          onPress={() => setTorchOn(v => !v)}
+        >
           <Ionicons
             name={torchOn ? 'flash' : 'flash-off'}
             size={22}
@@ -311,11 +315,14 @@ export function ScannerScreen({
         </Pressable>
 
         <View style={s.topBarActions}>
-          <Pressable style={s.pill} onPress={handleScanFromPhotos}>
+          <Pressable
+            style={[s.pill, { backgroundColor: theme.surfaceStrong, borderColor: theme.border }]}
+            onPress={handleScanFromPhotos}
+          >
             <Ionicons name="images-outline" size={22} color="#FFF" />
           </Pressable>
           <Pressable
-            style={s.pill}
+            style={[s.pill, { backgroundColor: theme.surfaceStrong, borderColor: theme.border }]}
             onPress={() => {
               setTorchOn(false);
               setCameraFacing((current) => current === 'back' ? 'front' : 'back');
@@ -327,13 +334,16 @@ export function ScannerScreen({
               color="#FFF"
             />
           </Pressable>
-          <Pressable style={s.pill} onPress={() => {
-            if (onSettingsPress) {
-              onSettingsPress();
-            } else {
-              router.push('/settings');
-            }
-          }}>
+          <Pressable
+            style={[s.pill, { backgroundColor: theme.surfaceStrong, borderColor: theme.border }]}
+            onPress={() => {
+              if (onSettingsPress) {
+                onSettingsPress();
+              } else {
+                router.push('/settings');
+              }
+            }}
+          >
             <Ionicons name="settings-outline" size={22} color="#FFF" />
           </Pressable>
         </View>
@@ -342,17 +352,28 @@ export function ScannerScreen({
       {/* Bottom — button sits above the tab bar */}
       <Animated.View style={[s.bottom, { bottom: bottomOffset }]}>
         {!scanned && !showPhotoScanner ? (
-          <ZoomControl
-            points={ZOOM_CONTROL_POINTS}
-            value={zoom}
-            onValueChange={setZoom}
-            onFineTuneActiveChange={onFineTuneActiveChange}
-          />
+          <View
+            style={[
+              s.zoomShell,
+              {
+                backgroundColor: 'rgba(0,0,0,0.35)',
+                borderColor: theme.border,
+                shadowColor: theme.shadow,
+              },
+            ]}
+          >
+            <ZoomControl
+              points={ZOOM_CONTROL_POINTS}
+              value={zoom}
+              onValueChange={setZoom}
+              onFineTuneActiveChange={onFineTuneActiveChange}
+            />
+          </View>
         ) : null}
 
         {scanned && (
           <Pressable
-            style={s.rescanBtn}
+            style={[s.rescanBtn, { backgroundColor: 'rgba(0,0,0,0.45)', borderColor: theme.border }]}
             onPress={() => {
               setScanned(false);
               setTargetBounds(null);
@@ -681,10 +702,20 @@ const s = StyleSheet.create({
   btn:        { backgroundColor: '#0A84FF', paddingHorizontal: 28, paddingVertical: 14, borderRadius: 14, marginTop: 8 },
   btnTxt:     { fontSize: 16, fontWeight: '600', color: '#FFF' },
   topBar:     { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 16 },
-  pill:       { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' },
+  pill:       { width: 40, height: 40, borderRadius: 20, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   topBarActions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   // Moves down when the floating tab bar is hidden so the control can use that space.
   bottom:     { position: 'absolute', left: 0, right: 0, alignItems: 'center', gap: 14 },
+  zoomShell: {
+    borderWidth: 1,
+    borderRadius: 24,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
+    elevation: 10,
+  },
   zoomControl: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   zoomStepButton: {
     width: 38,
@@ -777,6 +808,6 @@ const s = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: '#0A84FF',
   },
-  rescanBtn:  { backgroundColor: '#0A84FF', paddingVertical: 12, paddingHorizontal: 28, borderRadius: 14 },
+  rescanBtn:  { paddingVertical: 12, paddingHorizontal: 28, borderRadius: 18, borderWidth: 1 },
   rescanTxt:  { color: '#FFF', fontSize: 14, fontWeight: '600' },
 });
