@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Modal, Pressable } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useAppTheme } from '../../hooks/useAppTheme';
 import { Button } from './Button';
+import { LiquidGlassSurface } from './LiquidGlassSurface';
 import { borderRadius, spacing, typography } from '../../constants/theme';
 
 interface ConfirmDialogProps {
@@ -43,15 +44,13 @@ export function ConfirmDialog({
         />
         <Pressable style={[s.backdrop, { backgroundColor: theme.backdrop }]} onPress={onCancel} />
         
-        <View style={[
-          s.dialog, 
-          { 
-            backgroundColor: theme.surfaceStrong, 
-            shadowColor: theme.shadow,
-            borderColor: theme.border,
-            borderWidth: 1,
-          }
-        ]}>
+        <LiquidGlassSurface
+          style={s.dialog}
+          contentStyle={s.dialogContent}
+          borderRadius={borderRadius.lg}
+          blurIntensity={isDark ? 44 : 34}
+          enableRipple={false}
+        >
           <Text style={[s.title, { color: theme.text.primary }]}>{title}</Text>
           <Text style={[s.message, { color: theme.text.secondary }]}>{message}</Text>
           
@@ -73,7 +72,7 @@ export function ConfirmDialog({
               />
             </View>
           </View>
-        </View>
+        </LiquidGlassSurface>
       </View>
     </Modal>
   );
@@ -94,11 +93,9 @@ const s = StyleSheet.create({
     width: '100%',
     maxWidth: 400,
     borderRadius: borderRadius.lg,
+  },
+  dialogContent: {
     padding: spacing.lg,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    elevation: 10,
   },
   title: {
     fontSize: typography.sizes.xl,

@@ -4,6 +4,7 @@ import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppTheme } from '../../hooks/useAppTheme';
 import { Button } from './Button';
+import { LiquidGlassSurface } from './LiquidGlassSurface';
 import { borderRadius, spacing, typography } from '../../constants/theme';
 
 interface NoticeDialogProps {
@@ -42,15 +43,12 @@ export function NoticeDialog({
         />
         <Pressable style={[s.backdrop, { backgroundColor: theme.backdrop }]} onPress={onClose} />
 
-        <View
-          style={[
-            s.dialog,
-            {
-              backgroundColor: theme.surfaceStrong,
-              shadowColor: theme.shadow,
-              borderColor: theme.border,
-            },
-          ]}
+        <LiquidGlassSurface
+          style={s.dialog}
+          contentStyle={s.dialogContent}
+          borderRadius={borderRadius.lg}
+          blurIntensity={isDark ? 44 : 34}
+          enableRipple={false}
         >
           <View style={s.iconContainer}>
             <View style={[s.iconCircle, { backgroundColor: `${toneColor}20` }]}>
@@ -62,7 +60,7 @@ export function NoticeDialog({
           <Text style={[s.message, { color: theme.text.secondary }]}>{message}</Text>
 
           <Button title="OK" onPress={onClose} size="medium" />
-        </View>
+        </LiquidGlassSurface>
       </View>
     </Modal>
   );
@@ -83,12 +81,9 @@ const s = StyleSheet.create({
     width: '100%',
     maxWidth: 400,
     borderRadius: borderRadius.lg,
+  },
+  dialogContent: {
     padding: spacing.lg,
-    borderWidth: 1,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    elevation: 10,
   },
   iconContainer: {
     alignItems: 'center',

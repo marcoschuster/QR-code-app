@@ -4,6 +4,7 @@ import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppTheme } from '../../hooks/useAppTheme';
 import { Button } from './Button';
+import { LiquidGlassSurface } from './LiquidGlassSurface';
 import { borderRadius, spacing, typography } from '../../constants/theme';
 
 interface SuccessDialogProps {
@@ -36,15 +37,13 @@ export function SuccessDialog({
         />
         <Pressable style={[s.backdrop, { backgroundColor: theme.backdrop }]} onPress={onClose} />
         
-        <View style={[
-          s.dialog, 
-          { 
-            backgroundColor: theme.surfaceStrong, 
-            shadowColor: theme.shadow,
-            borderColor: theme.border,
-            borderWidth: 1,
-          }
-        ]}>
+        <LiquidGlassSurface
+          style={s.dialog}
+          contentStyle={s.dialogContent}
+          borderRadius={borderRadius.lg}
+          blurIntensity={isDark ? 44 : 34}
+          enableRipple={false}
+        >
           <View style={s.iconContainer}>
             <View style={[s.iconCircle, { backgroundColor: theme.success + '20' }]}>
               <Ionicons name="checkmark-circle" size={32} color={theme.success} />
@@ -64,7 +63,7 @@ export function SuccessDialog({
               />
             </View>
           </View>
-        </View>
+        </LiquidGlassSurface>
       </View>
     </Modal>
   );
@@ -85,11 +84,9 @@ const s = StyleSheet.create({
     width: '100%',
     maxWidth: 400,
     borderRadius: borderRadius.lg,
+  },
+  dialogContent: {
     padding: spacing.lg,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    elevation: 10,
   },
   iconContainer: {
     alignItems: 'center',
