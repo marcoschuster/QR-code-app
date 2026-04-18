@@ -221,16 +221,14 @@ export function LiquidGlassSurface({
               pointerEvents="none"
               style={{
                 position: 'absolute',
-                left: ping.x - 50,
-                top: ping.y - 50,
-                width: 100,
-                height: 100,
-                borderRadius: 50,
+                left: 0,
+                top: 0,
+                right: 0,
+                bottom: 0,
                 backgroundColor: theme.accent,
-                borderWidth: 1,
-                borderColor: theme.accent,
                 opacity: ping.opacity,
                 transform: [{ scale: ping.scale }],
+                transformOrigin: `${ping.x}px ${ping.y}px`,
               }}
             />
           ))}
