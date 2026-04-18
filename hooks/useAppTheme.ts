@@ -1,5 +1,11 @@
 import { useColorScheme } from 'react-native';
-import { darkTheme, lightTheme, getAccentColor, getAccentGradient, getStrongAccentGradient } from '../constants/theme';
+import {
+  darkTheme,
+  lightTheme,
+  getAccentColor,
+  getAccentGradient,
+  getStrongAccentGradient,
+} from '../constants/theme';
 import { useSettingsStore } from '../store/useSettingsStore';
 
 export function useAppTheme() {
@@ -18,6 +24,7 @@ export function useAppTheme() {
   const dynamicAccent = getAccentColor(accentColor);
   const dynamicGradient = getAccentGradient(accentColor);
   const dynamicStrongGradient = getStrongAccentGradient(accentColor);
+  const isDark = resolvedAppearance === 'dark';
 
   return {
     theme: {
@@ -26,7 +33,7 @@ export function useAppTheme() {
       accentGradient: dynamicGradient,
       accentStrongGradient: dynamicStrongGradient,
     },
-    isDark: resolvedAppearance === 'dark',
+    isDark,
     colorScheme: resolvedAppearance,
   };
 }
