@@ -1,6 +1,7 @@
 import React, { useCallback, useRef, useState } from 'react';
 import {
   Animated,
+  Easing,
   GestureResponderEvent,
   Platform,
   StyleProp,
@@ -10,18 +11,13 @@ import {
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Polygon, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
 import { useAppTheme } from '../../hooks/useAppTheme';
 import { useLiquidGlassBlurTarget } from './LiquidGlassContext';
 
-type Shard = {
+type Ping = {
   id: number;
   x: number;
   y: number;
-  width: number;
-  height: number;
-  points: string;
-  tilt: number;
   scale: Animated.Value;
   opacity: Animated.Value;
 };
@@ -47,10 +43,10 @@ export function LiquidGlassSurface({
 }: LiquidGlassSurfaceProps) {
   const { theme, isDark } = useAppTheme();
   const blurTargetRef = useLiquidGlassBlurTarget();
-  const [shards, setShards] = useState<Shard[]>([]);
-  const shardsRef = useRef<Shard[]>([]);
+  const [pings, setPings] = useState<Ping[]>([]);
+  const pingsRef = useRef<Ping[]>([]);
   const scale = useRef(new Animated.Value(1)).current;
-  const borderOpacity = useRef(new Animated.Value(0)).current;
+  const borderOpacity = useRef(new Animated.Value(0.3)).current;
 
   const handleTouchStart = useCallback(
     (event: GestureResponderEvent) => {
@@ -61,7 +57,7 @@ export function LiquidGlassSurface({
           useNativeDriver: true,
         }),
         Animated.timing(borderOpacity, {
-          toValue: 0.6,
+          toValue: 0.8,
           duration: 180,
           useNativeDriver: true,
         }),
@@ -74,70 +70,34 @@ export function LiquidGlassSurface({
       const { locationX, locationY } = event.nativeEvent;
       const id = Date.now() + Math.floor(Math.random() * 1000);
 
-      // Generate random size
-      const size = 60 + Math.random() * 80; // 60-140px
-      const width = size;
-      const height = size;
-
-      // Generate random 3-to-5 sided polygon points
-      const numPoints = 3 + Math.floor(Math.random() * 3);
-      const pointsArray = [];
-      for (let i = 0; i < numPoints; i++) {
-        const angle = (Math.PI * 2 / numPoints) * i + (Math.random() - 0.5) * 1.2;
-        const r = 30 + Math.random() * 20;
-        const px = 50 + Math.cos(angle) * r;
-        const py = 50 + Math.sin(angle) * r;
-        pointsArray.push(`${px.toFixed(1)},${py.toFixed(1)}`);
-      }
-      const pointsString = pointsArray.join(' ');
-
-      // Generate random tilt (-5deg to +5deg)
-      const tilt = (Math.random() - 0.5) * 10;
-
-      const shard: Shard = {
+      const ping: Ping = {
         id,
         x: locationX,
         y: locationY,
-        width,
-        height,
-        points: pointsString,
-        tilt,
         scale: new Animated.Value(0),
-        opacity: new Animated.Value(0),
+        opacity: new Animated.Value(0.7),
       };
 
-      shardsRef.current = [...shardsRef.current, shard];
-      setShards(shardsRef.current);
+      pingsRef.current = [...pingsRef.current, ping];
+      setPings(pingsRef.current);
 
-      // Crack pop animation: scale 0 -> 1.1 -> 1.0
-      Animated.sequence([
-        Animated.timing(shard.scale, {
-          toValue: 1.1,
-          duration: 100,
+      // Crystal ping animation
+      Animated.parallel([
+        Animated.timing(ping.scale, {
+          toValue: 1.8,
+          duration: 450,
+          easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
-        Animated.timing(shard.scale, {
-          toValue: 1.0,
-          duration: 100,
-          useNativeDriver: true,
-        }),
-      ]).start();
-
-      // Fade in then out
-      Animated.sequence([
-        Animated.timing(shard.opacity, {
-          toValue: 1,
-          duration: 50,
-          useNativeDriver: true,
-        }),
-        Animated.timing(shard.opacity, {
+        Animated.timing(ping.opacity, {
           toValue: 0,
-          duration: 600,
+          duration: 450,
+          easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
       ]).start(() => {
-        shardsRef.current = shardsRef.current.filter((entry) => entry.id !== id);
-        setShards([...shardsRef.current]);
+        pingsRef.current = pingsRef.current.filter((entry) => entry.id !== id);
+        setPings([...pingsRef.current]);
       });
     },
     [borderOpacity, enableRipple, scale]
@@ -152,8 +112,8 @@ export function LiquidGlassSurface({
         useNativeDriver: true,
       }),
       Animated.timing(borderOpacity, {
-        toValue: 0,
-        duration: 260,
+        toValue: 0.3,
+        duration: 180,
         useNativeDriver: true,
       }),
     ]).start();
@@ -165,7 +125,7 @@ export function LiquidGlassSurface({
         styles.shell,
         {
           borderRadius,
-          backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.85)',
+          backgroundColor: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.9)',
           borderColor: theme.border,
           shadowColor: theme.shadow,
           transform: [{ scale }],
@@ -193,7 +153,7 @@ export function LiquidGlassSurface({
             style={[
               StyleSheet.absoluteFillObject,
               {
-                backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.85)',
+                backgroundColor: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.9)',
                 borderRadius,
               },
             ]}
@@ -203,7 +163,7 @@ export function LiquidGlassSurface({
 
       {/* Iridescent gloss overlay */}
       <LinearGradient
-        colors={['rgba(255,255,255,0.4)', 'rgba(255,255,255,0.1)', 'rgba(255,255,255,0.2)', 'rgba(255,255,255,0.4)'] as any}
+        colors={['rgba(255,255,255,0.35)', 'rgba(180,200,255,0.1)', 'rgba(255,180,220,0.08)', 'rgba(255,255,255,0.25)'] as any}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[StyleSheet.absoluteFillObject, styles.iridescentOverlay, { borderRadius }]}
@@ -224,7 +184,7 @@ export function LiquidGlassSurface({
           style={[
             StyleSheet.absoluteFillObject,
             {
-              backgroundColor: isDark ? 'rgba(79,70,229,0.6)' : 'rgba(79,70,229,0.5)',
+              backgroundColor: 'rgba(255, 255, 255, 0.4)',
             },
           ]}
         />
@@ -255,40 +215,24 @@ export function LiquidGlassSurface({
 
       {enableRipple ? (
         <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-          {shards.map((shard) => (
+          {pings.map((ping) => (
             <Animated.View
-              key={shard.id}
-              style={[
-                styles.shardContainer,
-                {
-                  left: shard.x - shard.width / 2,
-                  top: shard.y - shard.height / 2,
-                  width: shard.width,
-                  height: shard.height,
-                  opacity: shard.opacity,
-                  transform: [
-                    { scale: shard.scale as any },
-                    { rotate: `${shard.tilt}deg` },
-                  ],
-                },
-              ]}
-            >
-              <Svg width="100%" height="100%" viewBox="0 0 100 100">
-                <Defs>
-                  <SvgLinearGradient id={`shard-grad-${shard.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                    <Stop offset="0%" stopColor={theme.accent} stopOpacity="0.8" />
-                    <Stop offset="50%" stopColor="#FFFFFF" stopOpacity="0.4" />
-                    <Stop offset="100%" stopColor={theme.accent} stopOpacity="0.6" />
-                  </SvgLinearGradient>
-                </Defs>
-                <Polygon
-                  points={shard.points}
-                  fill={`url(#shard-grad-${shard.id})`}
-                  stroke="rgba(255,255,255,0.3)"
-                  strokeWidth="1"
-                />
-              </Svg>
-            </Animated.View>
+              key={ping.id}
+              pointerEvents="none"
+              style={{
+                position: 'absolute',
+                left: ping.x - 50,
+                top: ping.y - 50,
+                width: 100,
+                height: 100,
+                borderRadius: 50,
+                backgroundColor: 'rgba(255, 255, 255, 0.4)',
+                borderWidth: 1,
+                borderColor: 'rgba(255, 255, 255, 0.6)',
+                opacity: ping.opacity,
+                transform: [{ scale: ping.scale }],
+              }}
+            />
           ))}
         </View>
       ) : null}
@@ -314,10 +258,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   iridescentOverlay: {
-    opacity: 0.6,
-  },
-  shardContainer: {
-    position: 'absolute',
+    opacity: 0.75,
   },
   innerGlow: {
     ...StyleSheet.absoluteFillObject,
@@ -329,7 +270,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 18,
     right: 18,
-    height: 1,
-    opacity: 0.9,
+    height: 1.5,
+    opacity: 1.0,
   },
 });
