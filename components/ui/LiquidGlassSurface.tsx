@@ -228,7 +228,6 @@ export function LiquidGlassSurface({
                 backgroundColor: theme.accent,
                 opacity: ping.opacity,
                 transform: [{ scale: ping.scale }],
-                transformOrigin: `${ping.x}px ${ping.y}px`,
               }}
             />
           ))}
