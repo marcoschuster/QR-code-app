@@ -304,7 +304,7 @@ export function ScannerScreen({
       {/* Top bar */}
       <View style={[s.topBar, { paddingTop: Platform.OS === 'ios' ? 56 : 36 }]}>
         <Pressable
-          style={[s.pill, { backgroundColor: theme.surfaceStrong, borderColor: theme.border }]}
+          style={[s.pill, { backgroundColor: 'rgba(0,0,0,0.45)', borderColor: theme.border }]}
           onPress={() => setTorchOn(v => !v)}
         >
           <Ionicons
@@ -316,13 +316,13 @@ export function ScannerScreen({
 
         <View style={s.topBarActions}>
           <Pressable
-            style={[s.pill, { backgroundColor: theme.surfaceStrong, borderColor: theme.border }]}
+            style={[s.pill, { backgroundColor: 'rgba(0,0,0,0.45)', borderColor: theme.border }]}
             onPress={handleScanFromPhotos}
           >
             <Ionicons name="images-outline" size={22} color="#FFF" />
           </Pressable>
           <Pressable
-            style={[s.pill, { backgroundColor: theme.surfaceStrong, borderColor: theme.border }]}
+            style={[s.pill, { backgroundColor: 'rgba(0,0,0,0.45)', borderColor: theme.border }]}
             onPress={() => {
               setTorchOn(false);
               setCameraFacing((current) => current === 'back' ? 'front' : 'back');
@@ -335,7 +335,7 @@ export function ScannerScreen({
             />
           </Pressable>
           <Pressable
-            style={[s.pill, { backgroundColor: theme.surfaceStrong, borderColor: theme.border }]}
+            style={[s.pill, { backgroundColor: 'rgba(0,0,0,0.45)', borderColor: theme.border }]}
             onPress={() => {
               if (onSettingsPress) {
                 onSettingsPress();

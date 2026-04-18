@@ -161,9 +161,9 @@ export function LiquidGlassSurface({
 
       {/* Color blobs - larger, blurrier, more transparent */}
       <View pointerEvents="none" style={[StyleSheet.absoluteFillObject, styles.blobClip, { borderRadius }]}>
-        <View style={[styles.blob1, { backgroundColor: isDark ? 'rgba(79,70,229,0.07)' : 'rgba(79,70,229,0.05)' }]} />
-        <View style={[styles.blob2, { backgroundColor: isDark ? 'rgba(6,182,212,0.09)' : 'rgba(6,182,212,0.07)' }]} />
-        <View style={[styles.blob3, { backgroundColor: isDark ? 'rgba(124,58,237,0.05)' : 'rgba(124,58,237,0.03)' }]} />
+        <View style={[styles.blob1, { backgroundColor: isDark ? 'rgba(79,70,229,0.04)' : 'rgba(79,70,229,0.03)' }]} />
+        <View style={[styles.blob2, { backgroundColor: isDark ? 'rgba(6,182,212,0.05)' : 'rgba(6,182,212,0.04)' }]} />
+        <View style={[styles.blob3, { backgroundColor: isDark ? 'rgba(124,58,237,0.03)' : 'rgba(124,58,237,0.02)' }]} />
       </View>
 
       <Animated.View
