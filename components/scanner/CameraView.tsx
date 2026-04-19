@@ -317,6 +317,15 @@ export function ScannerScreen({
         <View style={s.topBarActions}>
           <Pressable
             style={[s.pill, { backgroundColor: 'rgba(0,0,0,0.45)', borderColor: theme.border }]}
+            onPress={() => {
+              setTorchOn(false);
+              setCameraFacing((current) => current === 'back' ? 'front' : 'back');
+            }}
+          >
+            <Ionicons name="camera-reverse-outline" size={22} color="#FFF" />
+          </Pressable>
+          <Pressable
+            style={[s.pill, { backgroundColor: 'rgba(0,0,0,0.45)', borderColor: theme.border }]}
             onPress={handleScanFromPhotos}
           >
             <Ionicons name="images-outline" size={22} color="#FFF" />
@@ -325,23 +334,7 @@ export function ScannerScreen({
             style={[s.pill, { backgroundColor: 'rgba(0,0,0,0.45)', borderColor: theme.border }]}
             onPress={() => {
               setTorchOn(false);
-              setCameraFacing((current) => current === 'back' ? 'front' : 'back');
-            }}
-          >
-            <Ionicons
-              name={cameraFacing === 'front' ? 'camera-reverse' : 'camera-reverse-outline'}
-              size={22}
-              color="#FFF"
-            />
-          </Pressable>
-          <Pressable
-            style={[s.pill, { backgroundColor: 'rgba(0,0,0,0.45)', borderColor: theme.border }]}
-            onPress={() => {
-              if (onSettingsPress) {
-                onSettingsPress();
-              } else {
-                router.push('/settings');
-              }
+              router.push('/(tabs)/settings');
             }}
           >
             <Ionicons name="settings-outline" size={22} color="#FFF" />
