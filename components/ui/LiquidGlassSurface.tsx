@@ -90,7 +90,7 @@ export function LiquidGlassSurface({
           useNativeDriver: true,
         }),
         Animated.timing(pulseOpacity, {
-          toValue: 0.35,
+          toValue: 1,
           duration: 200,
           useNativeDriver: true,
         }),
@@ -159,12 +159,12 @@ export function LiquidGlassSurface({
 
   const whitePulseOpacity = pulseOpacity.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 0.48],
+    outputRange: [0, 0.7],
   });
 
   const accentPulseOpacity = pulseOpacity.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 0.42],
+    outputRange: [0, 0.65],
   });
 
   return (
@@ -380,12 +380,12 @@ const styles = StyleSheet.create({
     right: -3,
     bottom: -10,
     left: -3,
-    backgroundColor: 'rgba(255,255,255,0.02)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
     shadowColor: '#FFFFFF',
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 1,
-    shadowRadius: 34,
-    elevation: 26,
+    shadowRadius: 50,
+    elevation: 30,
   },
   pulseAccent: {
     position: 'absolute',
@@ -393,12 +393,12 @@ const styles = StyleSheet.create({
     right: -7,
     bottom: -15,
     left: -7,
-    backgroundColor: 'rgba(255,255,255,0.014)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
     shadowColor: '#ffffff',
     shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.96,
-    shadowRadius: 40,
-    elevation: 30,
+    shadowOpacity: 1,
+    shadowRadius: 60,
+    elevation: 35,
   },
   pulseLift: {
     position: 'absolute',
@@ -406,10 +406,10 @@ const styles = StyleSheet.create({
     right: -2,
     bottom: -14,
     left: -2,
-    backgroundColor: 'rgba(255,255,255,0.012)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
     shadowOffset: { width: 0, height: 14 },
     shadowOpacity: 1,
-    shadowRadius: 30,
-    elevation: 28,
+    shadowRadius: 45,
+    elevation: 32,
   },
 });
