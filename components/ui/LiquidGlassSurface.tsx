@@ -42,6 +42,7 @@ export function LiquidGlassSurface({
   const borderOpacity = useRef(new Animated.Value(0.3)).current;
   const pulseScale = useRef(new Animated.Value(1)).current;
   const pulseOpacity = useRef(new Animated.Value(0)).current;
+  const pulseStretch = useRef(new Animated.Value(1)).current;
 
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
     const { width, height } = event.nativeEvent.layout;
@@ -83,24 +84,40 @@ export function LiquidGlassSurface({
           useNativeDriver: true,
         }),
         Animated.timing(borderOpacity, {
-          toValue: 0.8,
+          toValue: 0.68,
           duration: 150,
           useNativeDriver: true,
         }),
         Animated.timing(pulseOpacity, {
-          toValue: 0.35,
+          toValue: 1,
           duration: 200,
           useNativeDriver: true,
         }),
         Animated.spring(pulseScale, {
-          toValue: 1.08,
+          toValue: 1.04,
           friction: 4,
           tension: 40,
           useNativeDriver: true,
         }),
+        Animated.spring(pulseStretch, {
+          toValue: 1.12,
+          friction: 5,
+          tension: 46,
+          useNativeDriver: true,
+        }),
       ]).start();
     },
-    [tiltX, tiltY, scale, borderOpacity, pulseOpacity, pulseScale, dimensions, enableRipple]
+    [
+      tiltX,
+      tiltY,
+      scale,
+      borderOpacity,
+      pulseOpacity,
+      pulseScale,
+      pulseStretch,
+      dimensions,
+      enableRipple,
+    ]
   );
 
   const handleTouchEnd = useCallback(() => {
@@ -123,26 +140,33 @@ export function LiquidGlassSurface({
         tension: 90,
         useNativeDriver: true,
       }),
-      Animated.timing(borderOpacity, {
-        toValue: 0.3,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-      Animated.timing(pulseOpacity, {
-        toValue: 0,
-        duration: 400,
-        useNativeDriver: true,
-      }),
-      Animated.spring(pulseScale, {
-        toValue: 1.3,
-        friction: 5,
-        tension: 30,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
+        Animated.timing(borderOpacity, {
+          toValue: 0.3,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseOpacity, {
+          toValue: 0,
+          duration: 520,
+          useNativeDriver: true,
+        }),
+        Animated.spring(pulseScale, {
+          toValue: 1.14,
+          friction: 5,
+          tension: 30,
+          useNativeDriver: true,
+        }),
+        Animated.spring(pulseStretch, {
+          toValue: 1.22,
+          friction: 6,
+          tension: 28,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
       pulseScale.setValue(1);
+      pulseStretch.setValue(1);
     });
-  }, [tiltX, tiltY, scale, borderOpacity, pulseOpacity, pulseScale]);
+  }, [tiltX, tiltY, scale, borderOpacity, pulseOpacity, pulseScale, pulseStretch]);
 
   // Specular highlight interpolations
   const specularX = tiltY.interpolate({
@@ -155,6 +179,16 @@ export function LiquidGlassSurface({
     outputRange: [-30, 30],
   });
 
+  const whitePulseOpacity = pulseOpacity.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 0.16],
+  });
+
+  const accentPulseOpacity = pulseOpacity.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 0.08],
+  });
+
   return (
     <View
       style={style}
@@ -163,25 +197,36 @@ export function LiquidGlassSurface({
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchEnd}
     >
-      {/* Accent Depth Pulse */}
+      {/* Depth pulse glow */}
       <Animated.View
         pointerEvents="none"
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          borderRadius,
-          backgroundColor: theme.accent,
-          opacity: pulseOpacity,
-          transform: [{ scale: pulseScale }],
-          shadowColor: theme.accent,
-          shadowOffset: { width: 0, height: 0 },
-          shadowOpacity: 0.6,
-          shadowRadius: 20,
-          elevation: 15,
-        }}
+        style={[
+          styles.pulseBase,
+          {
+            left: 20,
+            right: 20,
+            bottom: -10,
+            borderRadius: borderRadius + 20,
+            opacity: whitePulseOpacity,
+            transform: [{ scaleX: pulseStretch }, { scaleY: pulseScale }],
+          },
+        ]}
+      />
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.pulseAccent,
+          {
+            left: 28,
+            right: 28,
+            bottom: -16,
+            borderRadius: borderRadius + 28,
+            backgroundColor: '#FFFFFF',
+            shadowColor: theme.accent,
+            opacity: accentPulseOpacity,
+            transform: [{ scaleX: pulseStretch }, { scaleY: pulseScale }],
+          },
+        ]}
       />
 
       <Animated.View
@@ -189,7 +234,7 @@ export function LiquidGlassSurface({
           styles.shell,
           {
             borderRadius,
-            backgroundColor: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.9)',
+            backgroundColor: theme.surface,
             borderColor: theme.border,
             shadowColor: theme.shadow,
             transform: [
@@ -218,13 +263,13 @@ export function LiquidGlassSurface({
           blurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : undefined}
           blurTarget={Platform.OS === 'android' ? blurTargetRef ?? undefined : undefined}
           blurReductionFactor={Platform.OS === 'android' ? 3 : undefined}
-          style={[StyleSheet.absoluteFillObject, { borderRadius }]}
+            style={[StyleSheet.absoluteFillObject, { borderRadius }]}
         >
           <View
             style={[
               StyleSheet.absoluteFillObject,
               {
-                backgroundColor: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.9)',
+                backgroundColor: theme.surface,
                 borderRadius,
               },
             ]}
@@ -243,23 +288,14 @@ export function LiquidGlassSurface({
       <Animated.View
         pointerEvents="none"
         style={[
-          StyleSheet.absoluteFillObject,
           styles.borderOverlay,
           {
             borderRadius,
+            borderColor: theme.glassHighlight,
             opacity: borderOpacity,
           },
         ]}
-      >
-        <View
-          style={[
-            StyleSheet.absoluteFillObject,
-            {
-              backgroundColor: theme.accent + '80',
-            },
-          ]}
-        />
-      </Animated.View>
+      />
 
       <View
         pointerEvents="none"
@@ -329,18 +365,19 @@ const styles = StyleSheet.create({
     elevation: 14,
   },
   borderOverlay: {
-    padding: 1,
+    ...StyleSheet.absoluteFillObject,
+    borderWidth: 1,
   },
   blurClip: {
     overflow: 'hidden',
   },
   iridescentOverlay: {
-    opacity: 0.9,
+    opacity: 0.45,
   },
   innerGlow: {
     ...StyleSheet.absoluteFillObject,
     borderWidth: 1,
-    opacity: 0.3,
+    opacity: 0.18,
   },
   topHighlight: {
     position: 'absolute',
@@ -348,6 +385,24 @@ const styles = StyleSheet.create({
     left: 18,
     right: 18,
     height: 2,
-    opacity: 1.0,
+    opacity: 0.72,
+  },
+  pulseBase: {
+    position: 'absolute',
+    height: '56%',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#FFFFFF',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.28,
+    shadowRadius: 28,
+    elevation: 18,
+  },
+  pulseAccent: {
+    position: 'absolute',
+    height: '50%',
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.36,
+    shadowRadius: 36,
+    elevation: 24,
   },
 });
