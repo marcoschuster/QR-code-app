@@ -303,18 +303,17 @@ export function ScannerScreen({
 
       {/* Top bar */}
       <View style={[s.topBar, { paddingTop: Platform.OS === 'ios' ? 56 : 36 }]}>
-        <Pressable
-          style={[s.pill, { backgroundColor: 'rgba(0,0,0,0.45)', borderColor: theme.border }]}
-          onPress={() => setTorchOn(v => !v)}
-        >
-          <Ionicons
-            name={torchOn ? 'flash' : 'flash-off'}
-            size={22}
-            color={torchOn ? '#FFD60A' : '#FFF'}
-          />
-        </Pressable>
-
-        <View style={s.topBarActions}>
+        <View style={s.topBarLeft}>
+          <Pressable
+            style={[s.pill, { backgroundColor: 'rgba(0,0,0,0.45)', borderColor: theme.border }]}
+            onPress={() => setTorchOn(v => !v)}
+          >
+            <Ionicons
+              name={torchOn ? 'flash' : 'flash-off'}
+              size={22}
+              color={torchOn ? '#FFD60A' : '#FFF'}
+            />
+          </Pressable>
           <Pressable
             style={[s.pill, { backgroundColor: 'rgba(0,0,0,0.45)', borderColor: theme.border }]}
             onPress={() => {
@@ -324,6 +323,9 @@ export function ScannerScreen({
           >
             <Ionicons name="camera-reverse-outline" size={22} color="#FFF" />
           </Pressable>
+        </View>
+
+        <View style={s.topBarActions}>
           <Pressable
             style={[s.pill, { backgroundColor: 'rgba(0,0,0,0.45)', borderColor: theme.border }]}
             onPress={handleScanFromPhotos}
@@ -696,6 +698,7 @@ const s = StyleSheet.create({
   btnTxt:     { fontSize: 16, fontWeight: '600', color: '#FFF' },
   topBar:     { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 16 },
   pill:       { width: 40, height: 40, borderRadius: 20, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  topBarLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   topBarActions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   // Moves down when the floating tab bar is hidden so the control can use that space.
   bottom:     { position: 'absolute', left: 0, right: 0, alignItems: 'center', gap: 14 },
