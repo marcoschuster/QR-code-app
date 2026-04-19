@@ -44,6 +44,8 @@ export function LiquidGlassSurface({
   const borderOpacity = useRef(new Animated.Value(0.3)).current;
   const pulseScale = useRef(new Animated.Value(1)).current;
   const pulseOpacity = useRef(new Animated.Value(0)).current;
+  const pulseTranslateX = useRef(new Animated.Value(0)).current;
+  const pulseTranslateY = useRef(new Animated.Value(0)).current;
 
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
     const { width, height } = event.nativeEvent.layout;
@@ -66,6 +68,11 @@ export function LiquidGlassSurface({
       const targetRotateY = offsetX * 8;
       const targetRotateX = offsetY * -8;
 
+      // Calculate pulse translation opposite to touch point
+      // When touching bottom-right (positive offsets), glow moves to top-left (negative translation)
+      const targetTranslateX = offsetX * -30;
+      const targetTranslateY = offsetY * -30;
+
       Animated.parallel([
         Animated.spring(tiltX, {
           toValue: targetRotateX,
@@ -77,6 +84,18 @@ export function LiquidGlassSurface({
           toValue: targetRotateY,
           friction: 7,
           tension: 80,
+          useNativeDriver: true,
+        }),
+        Animated.spring(pulseTranslateX, {
+          toValue: targetTranslateX,
+          friction: 5,
+          tension: 50,
+          useNativeDriver: true,
+        }),
+        Animated.spring(pulseTranslateY, {
+          toValue: targetTranslateY,
+          friction: 5,
+          tension: 50,
           useNativeDriver: true,
         }),
         Animated.timing(scale, {
@@ -102,7 +121,7 @@ export function LiquidGlassSurface({
         }),
       ]).start();
     },
-    [tiltX, tiltY, scale, borderOpacity, pulseOpacity, pulseScale, dimensions, enableRipple]
+    [tiltX, tiltY, scale, borderOpacity, pulseOpacity, pulseScale, pulseTranslateX, pulseTranslateY, dimensions, enableRipple]
   );
 
   const handleTouchEnd = useCallback(() => {
@@ -117,6 +136,18 @@ export function LiquidGlassSurface({
         toValue: 0,
         friction: 10,
         tension: 100,
+        useNativeDriver: true,
+      }),
+      Animated.spring(pulseTranslateX, {
+        toValue: 0,
+        friction: 8,
+        tension: 40,
+        useNativeDriver: true,
+      }),
+      Animated.spring(pulseTranslateY, {
+        toValue: 0,
+        friction: 8,
+        tension: 40,
         useNativeDriver: true,
       }),
       Animated.spring(scale, {
@@ -144,7 +175,7 @@ export function LiquidGlassSurface({
     ]).start(() => {
       pulseScale.setValue(1);
     });
-  }, [tiltX, tiltY, scale, borderOpacity, pulseOpacity, pulseScale]);
+  }, [tiltX, tiltY, scale, borderOpacity, pulseOpacity, pulseScale, pulseTranslateX, pulseTranslateY]);
 
   // Specular highlight interpolations
   const specularX = tiltY.interpolate({
@@ -183,7 +214,11 @@ export function LiquidGlassSurface({
           {
             borderRadius: borderRadius + 24,
             opacity: whitePulseOpacity,
-            transform: [{ scale: pulseScale }],
+            transform: [
+              { translateX: pulseTranslateX },
+              { translateY: pulseTranslateY },
+              { scale: pulseScale },
+            ],
           },
         ]}
       />
@@ -194,7 +229,11 @@ export function LiquidGlassSurface({
           {
             borderRadius: borderRadius + 32,
             opacity: accentPulseOpacity,
-            transform: [{ scale: pulseScale }],
+            transform: [
+              { translateX: pulseTranslateX },
+              { translateY: pulseTranslateY },
+              { scale: pulseScale },
+            ],
           },
         ]}
       />
@@ -206,7 +245,11 @@ export function LiquidGlassSurface({
             borderRadius: borderRadius + 18,
             shadowColor: theme.accent,
             opacity: accentPulseOpacity,
-            transform: [{ scale: pulseScale }],
+            transform: [
+              { translateX: pulseTranslateX },
+              { translateY: pulseTranslateY },
+              { scale: pulseScale },
+            ],
           },
         ]}
       />
