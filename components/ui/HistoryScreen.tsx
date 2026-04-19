@@ -878,7 +878,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
         <View style={s.headerControlsRow}>
           <View style={[s.sortControl, { backgroundColor: theme.surfaceStrong, borderColor: theme.border }]}>
             <Pressable
-              style={s.sortOption}
+              style={[s.sortOption, sortMode === 'date' && !theme.accentGradient && { backgroundColor: theme.accent }]}
               onPress={() => setSortMode('date')}
             >
               {sortMode === 'date' && theme.accentGradient && theme.accentGradient.length >= 2 ? (
@@ -916,7 +916,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
               )}
             </Pressable>
             <Pressable
-              style={s.sortOption}
+              style={[s.sortOption, sortMode === 'name' && !theme.accentGradient && { backgroundColor: theme.accent }]}
               onPress={() => setSortMode('name')}
             >
               {sortMode === 'name' && theme.accentGradient && theme.accentGradient.length >= 2 ? (
