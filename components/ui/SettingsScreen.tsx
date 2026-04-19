@@ -9,7 +9,6 @@ import { spacing, typography } from '../../constants/theme';
 import { useAppTheme } from '../../hooks/useAppTheme';
 import { ConfirmDialog } from './ConfirmDialog';
 import { ColorOrbitPicker } from './ColorOrbitPicker';
-import { LiquidGlassSurface } from './LiquidGlassSurface';
 
 interface SettingsScreenProps {
   visible: boolean;
@@ -146,18 +145,15 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
           onPress={handleClose}
         />
         
-        <LiquidGlassSurface
+        <View
           style={[
             styles.modal,
             {
+              backgroundColor: theme.surfaceStrong,
               shadowColor: theme.shadow,
               borderColor: theme.border,
             },
           ]}
-          contentStyle={styles.modalContentShell}
-          borderRadius={28}
-          blurIntensity={44}
-          enableRipple={false}
         >
           {/* Header */}
           <View style={[styles.header, { borderBottomColor: theme.border }]}>
@@ -698,7 +694,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
 
             <View style={styles.spacer} />
           </ScrollView>
-        </LiquidGlassSurface>
+        </View>
 
         <ConfirmDialog
           visible={confirmDialog.visible}
@@ -725,11 +721,14 @@ const styles = StyleSheet.create({
   },
   modal: {
     width: '88%',
-    height: '80%', // Change from maxHeight to height
+    height: '80%',
     borderRadius: 28,
-  },
-  modalContentShell: {
-    flex: 1,
+    borderWidth: 1,
+    overflow: 'hidden',
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.22,
+    shadowRadius: 28,
+    elevation: 18,
   },
   header: {
     flexDirection: 'row',
