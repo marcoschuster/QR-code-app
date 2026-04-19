@@ -22,6 +22,7 @@ interface LiquidGlassSurfaceProps {
   blurIntensity?: number;
   enableRipple?: boolean;
   showHighlight?: boolean;
+  showOutline?: boolean;
 }
 
 export function LiquidGlassSurface({
@@ -32,6 +33,7 @@ export function LiquidGlassSurface({
   blurIntensity,
   enableRipple = true,
   showHighlight = true,
+  showOutline = true,
 }: LiquidGlassSurfaceProps) {
   const { theme, isDark } = useAppTheme();
   const blurTargetRef = useLiquidGlassBlurTarget();
@@ -226,7 +228,7 @@ export function LiquidGlassSurface({
 
   const accentPulseOpacity = pulseOpacity.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 0.08],
+    outputRange: [0, 0.16],
   });
 
   return (
@@ -243,10 +245,10 @@ export function LiquidGlassSurface({
         style={[
           styles.pulseBase,
           {
-            left: 20,
-            right: 20,
-            bottom: -10,
-            borderRadius: borderRadius + 20,
+            left: 12,
+            right: 12,
+            bottom: -18,
+            borderRadius: borderRadius + 28,
             opacity: whitePulseOpacity,
             transform: [
               { translateX: pulseTranslateX },
@@ -256,18 +258,23 @@ export function LiquidGlassSurface({
             ],
           },
         ]}
-      />
+      >
+        <LinearGradient
+          colors={['rgba(255,255,255,0)', 'rgba(255,255,255,0.92)', 'rgba(255,255,255,0)'] as any}
+          start={{ x: 0.08, y: 0.5 }}
+          end={{ x: 0.92, y: 0.5 }}
+          style={styles.pulseFill}
+        />
+      </Animated.View>
       <Animated.View
         pointerEvents="none"
         style={[
           styles.pulseAccent,
           {
-            left: 28,
-            right: 28,
-            bottom: -16,
-            borderRadius: borderRadius + 28,
-            backgroundColor: '#FFFFFF',
-            shadowColor: theme.accent,
+            left: 18,
+            right: 18,
+            bottom: -24,
+            borderRadius: borderRadius + 34,
             opacity: accentPulseOpacity,
             transform: [
               { translateX: pulseTranslateX },
@@ -277,7 +284,14 @@ export function LiquidGlassSurface({
             ],
           },
         ]}
-      />
+      >
+        <LinearGradient
+          colors={[`${theme.accent}00`, `${theme.accent}AA`, `${theme.accent}00`] as any}
+          start={{ x: 0.12, y: 0.5 }}
+          end={{ x: 0.88, y: 0.5 }}
+          style={styles.pulseFill}
+        />
+      </Animated.View>
 
       <Animated.View
         style={[
@@ -287,6 +301,7 @@ export function LiquidGlassSurface({
             backgroundColor: theme.surface,
             borderColor: theme.border,
             shadowColor: theme.shadow,
+            borderWidth: showOutline ? 1 : 0,
             transform: [
               { perspective: 800 },
               { rotateX: tiltX.interpolate({
@@ -335,30 +350,34 @@ export function LiquidGlassSurface({
         style={[StyleSheet.absoluteFillObject, styles.iridescentOverlay, { borderRadius }]}
       />
 
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          styles.borderOverlay,
-          {
-            borderRadius,
-            borderColor: theme.glassHighlight,
-            opacity: borderOpacity,
-          },
-        ]}
-      />
+      {showOutline ? (
+        <>
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.borderOverlay,
+              {
+                borderRadius,
+                borderColor: theme.glassHighlight,
+                opacity: borderOpacity,
+              },
+            ]}
+          />
 
-      <View
-        pointerEvents="none"
-        style={[
-          styles.innerGlow,
-          {
-            borderRadius,
-            borderColor: theme.glassHighlight,
-          },
-        ]}
-      />
+          <View
+            pointerEvents="none"
+            style={[
+              styles.innerGlow,
+              {
+                borderRadius,
+                borderColor: theme.glassHighlight,
+              },
+            ]}
+          />
+        </>
+      ) : null}
 
-      {showHighlight ? (
+      {showHighlight && showOutline ? (
         <View
           pointerEvents="none"
           style={[
@@ -440,19 +459,24 @@ const styles = StyleSheet.create({
   pulseBase: {
     position: 'absolute',
     height: '56%',
-    backgroundColor: '#FFFFFF',
     shadowColor: '#FFFFFF',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.28,
-    shadowRadius: 28,
-    elevation: 18,
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.52,
+    shadowRadius: 42,
+    elevation: 28,
+    overflow: 'hidden',
   },
   pulseAccent: {
     position: 'absolute',
     height: '50%',
-    shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.36,
-    shadowRadius: 36,
-    elevation: 24,
+    shadowColor: '#ffffff',
+    shadowOffset: { width: 0, height: 18 },
+    shadowOpacity: 0.5,
+    shadowRadius: 46,
+    elevation: 32,
+    overflow: 'hidden',
+  },
+  pulseFill: {
+    ...StyleSheet.absoluteFillObject,
   },
 });
