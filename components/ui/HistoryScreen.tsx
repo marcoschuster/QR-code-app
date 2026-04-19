@@ -392,6 +392,8 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
   const [sortMode, setSortMode] = useState<HistorySortMode>('date');
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
   const [isSortReversed, setIsSortReversed] = useState(false);
+  const [insightsCollapsed, setInsightsCollapsed] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [confirmDialog, setConfirmDialog] = useState<{
     visible: boolean;
     title: string;
@@ -422,7 +424,13 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
   const visibleGroupedItems = showOnlyFavorites
     ? groupedItems.filter((item) => item.isFavorite)
     : groupedItems;
-  const sortedGroupedItems = [...visibleGroupedItems].sort((a, b) => {
+  const filteredGroupedItems = searchQuery
+    ? visibleGroupedItems.filter((item) => {
+        const itemName = getHistoryItemName(item).toLowerCase();
+        return itemName.includes(searchQuery.toLowerCase());
+      })
+    : visibleGroupedItems;
+  const sortedGroupedItems = [...filteredGroupedItems].sort((a, b) => {
     const baseSortValue = sortMode === 'name'
       ? getHistoryItemName(a).localeCompare(getHistoryItemName(b), undefined, {
           sensitivity: 'base',
@@ -875,6 +883,21 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
             <Text style={[s.clearBtn, { color: theme.danger }]}>Clear All</Text>
           </Pressable>
         </View>
+        <View style={[s.searchPill, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <Ionicons name="search-outline" size={18} color={theme.text.tertiary} />
+          <TextInput
+            style={[s.searchInput, { color: theme.text.primary }]}
+            placeholder="Search scans..."
+            placeholderTextColor={theme.text.tertiary}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {searchQuery.length > 0 && (
+            <Pressable onPress={() => setSearchQuery('')}>
+              <Ionicons name="close-circle" size={18} color={theme.text.tertiary} />
+            </Pressable>
+          )}
+        </View>
         <View style={s.headerControlsRow}>
           <View style={[s.sortControl, { backgroundColor: theme.surfaceStrong, borderColor: theme.border }]}>
             <Pressable
@@ -1021,53 +1044,64 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
                     Faster signal on how people actually use your scans.
                   </Text>
                 </View>
+                <Pressable onPress={() => setInsightsCollapsed(!insightsCollapsed)}>
+                  <Ionicons
+                    name={insightsCollapsed ? 'chevron-down' : 'chevron-up'}
+                    size={20}
+                    color={theme.text.secondary}
+                  />
+                </Pressable>
               </View>
 
-              <View style={s.insightsGrid}>
-                <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                  <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.totalScans}</Text>
-                  <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Total scans</Text>
-                </View>
-                <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                  <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.uniqueCodes}</Text>
-                  <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Unique codes</Text>
-                </View>
-                <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                  <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.thisWeekScans}</Text>
-                  <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Last 7 days</Text>
-                </View>
-                <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                  <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.favorites}</Text>
-                  <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Favorites</Text>
-                </View>
-              </View>
+              {!insightsCollapsed && (
+                <>
+                  <View style={s.insightsGrid}>
+                    <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                      <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.totalScans}</Text>
+                      <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Total scans</Text>
+                    </View>
+                    <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                      <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.uniqueCodes}</Text>
+                      <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Unique codes</Text>
+                    </View>
+                    <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                      <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.thisWeekScans}</Text>
+                      <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Last 7 days</Text>
+                    </View>
+                    <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                      <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.favorites}</Text>
+                      <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Favorites</Text>
+                    </View>
+                  </View>
 
-              <View style={s.insightHighlights}>
-                <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                  <Ionicons name="layers-outline" size={15} color={theme.accent} />
-                  <Text style={[s.insightChipText, { color: theme.text.primary }]}>
-                    Top type: {insights.topTypeLabel}
-                  </Text>
-                </View>
-                <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                  <Ionicons name="repeat-outline" size={15} color={theme.accent} />
-                  <Text style={[s.insightChipText, { color: theme.text.primary }]}>
-                    Repeats: {insights.repeatedCodes}
-                  </Text>
-                </View>
-                <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                  <Ionicons name="shield-checkmark-outline" size={15} color={theme.success} />
-                  <Text style={[s.insightChipText, { color: theme.text.primary }]}>
-                    Safe links: {insights.safeLinks}
-                  </Text>
-                </View>
-                <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                  <Ionicons name="warning-outline" size={15} color={theme.danger} />
-                  <Text style={[s.insightChipText, { color: theme.text.primary }]}>
-                    Flagged: {insights.riskyLinks}
-                  </Text>
-                </View>
-              </View>
+                  <View style={s.insightHighlights}>
+                    <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                      <Ionicons name="layers-outline" size={15} color={theme.accent} />
+                      <Text style={[s.insightChipText, { color: theme.text.primary }]}>
+                        Top type: {insights.topTypeLabel}
+                      </Text>
+                    </View>
+                    <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                      <Ionicons name="repeat-outline" size={15} color={theme.accent} />
+                      <Text style={[s.insightChipText, { color: theme.text.primary }]}>
+                        Repeats: {insights.repeatedCodes}
+                      </Text>
+                    </View>
+                    <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                      <Ionicons name="shield-checkmark-outline" size={15} color={theme.success} />
+                      <Text style={[s.insightChipText, { color: theme.text.primary }]}>
+                        Safe links: {insights.safeLinks}
+                      </Text>
+                    </View>
+                    <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                      <Ionicons name="warning-outline" size={15} color={theme.danger} />
+                      <Text style={[s.insightChipText, { color: theme.text.primary }]}>
+                        Flagged: {insights.riskyLinks}
+                      </Text>
+                    </View>
+                  </View>
+                </>
+              )}
             </Card>
           ) : null
         }
@@ -1685,6 +1719,21 @@ const s = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
+  searchPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginTop: 12,
+    borderRadius: 24,
+    borderWidth: 1,
+    gap: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    padding: 0,
+  },
   headerControlsRow: {
     flexDirection: 'row',
     width: '100%',
@@ -1757,6 +1806,9 @@ const s = StyleSheet.create({
     marginBottom: 12,
   },
   insightsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 14,
   },
   insightsTitle: {
