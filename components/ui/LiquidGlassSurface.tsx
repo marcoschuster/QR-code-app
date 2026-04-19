@@ -43,6 +43,8 @@ export function LiquidGlassSurface({
   const pulseScale = useRef(new Animated.Value(1)).current;
   const pulseOpacity = useRef(new Animated.Value(0)).current;
   const pulseStretch = useRef(new Animated.Value(1)).current;
+  const pulseTranslateX = useRef(new Animated.Value(0)).current;
+  const pulseTranslateY = useRef(new Animated.Value(12)).current;
 
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
     const { width, height } = event.nativeEvent.layout;
@@ -64,6 +66,8 @@ export function LiquidGlassSurface({
       // Map offset to rotation degrees (Max 8 degrees)
       const targetRotateY = offsetX * 8;
       const targetRotateX = offsetY * -8;
+      const targetPulseX = offsetX * Math.min(18, dimensions.width * 0.08);
+      const targetPulseY = 12 + offsetY * Math.min(10, dimensions.height * 0.05);
 
       Animated.parallel([
         Animated.spring(tiltX, {
@@ -105,6 +109,18 @@ export function LiquidGlassSurface({
           tension: 46,
           useNativeDriver: true,
         }),
+        Animated.spring(pulseTranslateX, {
+          toValue: targetPulseX,
+          friction: 6,
+          tension: 56,
+          useNativeDriver: true,
+        }),
+        Animated.spring(pulseTranslateY, {
+          toValue: targetPulseY,
+          friction: 6,
+          tension: 56,
+          useNativeDriver: true,
+        }),
       ]).start();
     },
     [
@@ -115,6 +131,8 @@ export function LiquidGlassSurface({
       pulseOpacity,
       pulseScale,
       pulseStretch,
+      pulseTranslateX,
+      pulseTranslateY,
       dimensions,
       enableRipple,
     ]
@@ -162,11 +180,33 @@ export function LiquidGlassSurface({
           tension: 28,
           useNativeDriver: true,
         }),
+        Animated.spring(pulseTranslateX, {
+          toValue: 0,
+          friction: 8,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+        Animated.spring(pulseTranslateY, {
+          toValue: 14,
+          friction: 8,
+          tension: 40,
+          useNativeDriver: true,
+        }),
       ]).start(() => {
-      pulseScale.setValue(1);
-      pulseStretch.setValue(1);
-    });
-  }, [tiltX, tiltY, scale, borderOpacity, pulseOpacity, pulseScale, pulseStretch]);
+        pulseScale.setValue(1);
+        pulseStretch.setValue(1);
+      });
+  }, [
+    tiltX,
+    tiltY,
+    scale,
+    borderOpacity,
+    pulseOpacity,
+    pulseScale,
+    pulseStretch,
+    pulseTranslateX,
+    pulseTranslateY,
+  ]);
 
   // Specular highlight interpolations
   const specularX = tiltY.interpolate({
@@ -208,7 +248,12 @@ export function LiquidGlassSurface({
             bottom: -10,
             borderRadius: borderRadius + 20,
             opacity: whitePulseOpacity,
-            transform: [{ scaleX: pulseStretch }, { scaleY: pulseScale }],
+            transform: [
+              { translateX: pulseTranslateX },
+              { translateY: pulseTranslateY },
+              { scaleX: pulseStretch },
+              { scaleY: pulseScale },
+            ],
           },
         ]}
       />
@@ -224,7 +269,12 @@ export function LiquidGlassSurface({
             backgroundColor: '#FFFFFF',
             shadowColor: theme.accent,
             opacity: accentPulseOpacity,
-            transform: [{ scaleX: pulseStretch }, { scaleY: pulseScale }],
+            transform: [
+              { translateX: pulseTranslateX },
+              { translateY: pulseTranslateY },
+              { scaleX: pulseStretch },
+              { scaleY: pulseScale },
+            ],
           },
         ]}
       />
