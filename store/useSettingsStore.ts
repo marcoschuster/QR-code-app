@@ -16,6 +16,8 @@ const defaultSettings: SettingsState = {
   swipeNavigation: true,
   defaultErrorCorrection: 'M',
   defaultOutputFormat: 'QR',
+  showInsights: true,
+  showSmartStart: true,
 };
 
 interface SettingsStore extends SettingsState {

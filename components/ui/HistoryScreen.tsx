@@ -381,7 +381,7 @@ type HistorySortMode = 'date' | 'name';
 
 export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) {
   const { clearAll, removeItem, removeScanId, getGroupedItems, updateItem } = useHistoryStore();
-  const { confirmDeleteHistory } = useSettingsStore();
+  const { confirmDeleteHistory, showInsights } = useSettingsStore();
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [selectedItem, setSelectedItem] = useState<HistoryItem | null>(null);
   const [menuItem, setMenuItem] = useState<HistoryItem | null>(null);
@@ -1012,62 +1012,64 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
           </View>
         }
         ListHeaderComponent={
-          <Card style={s.insightsCard}>
-            <View style={s.insightsHeader}>
-              <View>
-                <Text style={[s.insightsTitle, { color: theme.text.primary }]}>Insights</Text>
-                <Text style={[s.insightsSubtitle, { color: theme.text.secondary }]}>
-                  Faster signal on how people actually use your scans.
-                </Text>
+          showInsights ? (
+            <Card style={s.insightsCard}>
+              <View style={s.insightsHeader}>
+                <View>
+                  <Text style={[s.insightsTitle, { color: theme.text.primary }]}>Insights</Text>
+                  <Text style={[s.insightsSubtitle, { color: theme.text.secondary }]}>
+                    Faster signal on how people actually use your scans.
+                  </Text>
+                </View>
               </View>
-            </View>
 
-            <View style={s.insightsGrid}>
-              <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.totalScans}</Text>
-                <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Total scans</Text>
+              <View style={s.insightsGrid}>
+                <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                  <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.totalScans}</Text>
+                  <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Total scans</Text>
+                </View>
+                <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                  <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.uniqueCodes}</Text>
+                  <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Unique codes</Text>
+                </View>
+                <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                  <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.thisWeekScans}</Text>
+                  <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Last 7 days</Text>
+                </View>
+                <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                  <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.favorites}</Text>
+                  <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Favorites</Text>
+                </View>
               </View>
-              <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.uniqueCodes}</Text>
-                <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Unique codes</Text>
-              </View>
-              <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.thisWeekScans}</Text>
-                <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Last 7 days</Text>
-              </View>
-              <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.favorites}</Text>
-                <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Favorites</Text>
-              </View>
-            </View>
 
-            <View style={s.insightHighlights}>
-              <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                <Ionicons name="layers-outline" size={15} color={theme.accent} />
-                <Text style={[s.insightChipText, { color: theme.text.primary }]}>
-                  Top type: {insights.topTypeLabel}
-                </Text>
+              <View style={s.insightHighlights}>
+                <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                  <Ionicons name="layers-outline" size={15} color={theme.accent} />
+                  <Text style={[s.insightChipText, { color: theme.text.primary }]}>
+                    Top type: {insights.topTypeLabel}
+                  </Text>
+                </View>
+                <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                  <Ionicons name="repeat-outline" size={15} color={theme.accent} />
+                  <Text style={[s.insightChipText, { color: theme.text.primary }]}>
+                    Repeats: {insights.repeatedCodes}
+                  </Text>
+                </View>
+                <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                  <Ionicons name="shield-checkmark-outline" size={15} color={theme.success} />
+                  <Text style={[s.insightChipText, { color: theme.text.primary }]}>
+                    Safe links: {insights.safeLinks}
+                  </Text>
+                </View>
+                <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                  <Ionicons name="warning-outline" size={15} color={theme.danger} />
+                  <Text style={[s.insightChipText, { color: theme.text.primary }]}>
+                    Flagged: {insights.riskyLinks}
+                  </Text>
+                </View>
               </View>
-              <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                <Ionicons name="repeat-outline" size={15} color={theme.accent} />
-                <Text style={[s.insightChipText, { color: theme.text.primary }]}>
-                  Repeats: {insights.repeatedCodes}
-                </Text>
-              </View>
-              <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                <Ionicons name="shield-checkmark-outline" size={15} color={theme.success} />
-                <Text style={[s.insightChipText, { color: theme.text.primary }]}>
-                  Safe links: {insights.safeLinks}
-                </Text>
-              </View>
-              <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                <Ionicons name="warning-outline" size={15} color={theme.danger} />
-                <Text style={[s.insightChipText, { color: theme.text.primary }]}>
-                  Flagged: {insights.riskyLinks}
-                </Text>
-              </View>
-            </View>
-          </Card>
+            </Card>
+          ) : null
         }
         renderItem={({ item }) => (
           <HistoryItemComponent

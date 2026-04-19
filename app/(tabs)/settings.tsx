@@ -40,6 +40,8 @@ export default function SettingsScreen() {
     urlThreatScanning,
     autoCopyScanned,
     swipeNavigation,
+    showInsights,
+    showSmartStart,
     updateSettings,
     resetSettings,
   } = useSettingsStore();
@@ -245,6 +247,43 @@ export default function SettingsScreen() {
               </View>
               <View style={[styles.switch, swipeNavigation && { backgroundColor: theme.accent }]}>
                 <View style={[styles.switchThumb, swipeNavigation && styles.switchThumbOn]} />
+              </View>
+            </Pressable>
+          </View>
+        </View>
+
+        {/* Features */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.text.primary }]}>
+            Features
+          </Text>
+          <View style={[styles.sectionContent, { backgroundColor: theme.surface }]}>
+            <Pressable
+              style={styles.settingItem}
+              onPress={() => handleToggle('showInsights', !showInsights)}
+            >
+              <View style={styles.settingLeft}>
+                <Ionicons name="analytics-outline" size={20} color={theme.text.primary} />
+                <Text style={[styles.settingText, { color: theme.text.primary }]}>
+                  Show Insights
+                </Text>
+              </View>
+              <View style={[styles.switch, showInsights && { backgroundColor: theme.accent }]}>
+                <View style={[styles.switchThumb, showInsights && styles.switchThumbOn]} />
+              </View>
+            </Pressable>
+            <Pressable
+              style={styles.settingItem}
+              onPress={() => handleToggle('showSmartStart', !showSmartStart)}
+            >
+              <View style={styles.settingLeft}>
+                <Ionicons name="rocket-outline" size={20} color={theme.text.primary} />
+                <Text style={[styles.settingText, { color: theme.text.primary }]}>
+                  Smart Start
+                </Text>
+              </View>
+              <View style={[styles.switch, showSmartStart && { backgroundColor: theme.accent }]}>
+                <View style={[styles.switchThumb, showSmartStart && styles.switchThumbOn]} />
               </View>
             </Pressable>
           </View>

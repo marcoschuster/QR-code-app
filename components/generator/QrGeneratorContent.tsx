@@ -24,6 +24,7 @@ import {
   typography,
 } from '../../constants/theme';
 import { useAppTheme } from '../../hooks/useAppTheme';
+import { useSettingsStore } from '../../store/useSettingsStore';
 import {
   createQrCodeImage,
   saveQrCodeImage,
@@ -57,6 +58,7 @@ interface ActionButtonProps {
 export function QrGeneratorContent() {
   const { theme, isDark } = useAppTheme();
   const { recentPresets, savePreset, removePreset } = useGeneratorStore();
+  const { showSmartStart } = useSettingsStore();
 
   const [selectedTemplateId, setSelectedTemplateId] = useState<GeneratorTemplateId>('website');
   const [formValues, setFormValues] = useState<Record<string, string>>(() =>
@@ -261,47 +263,42 @@ export function QrGeneratorContent() {
               </Text>
             </View>
 
-            <Card style={styles.sectionCard} padding={spacing.lg}>
-              <View style={styles.smartStartHeader}>
-                <View style={styles.smartStartCopy}>
-                  <Text style={[styles.sectionLabel, { color: theme.text.secondary }]}>Smart Start</Text>
-                  <Text style={[styles.smartStartText, { color: theme.text.secondary }]}>
-                    Detect clipboard content and jump back into recent generator presets.
-                  </Text>
+            {showSmartStart ? (
+              <Card style={styles.sectionCard} padding={spacing.lg}>
+                <View style={styles.smartStartHeader}>
+                  <View style={styles.smartStartCopy}>
+                    <Text style={[styles.sectionLabel, { color: theme.text.secondary }]}>Smart Start</Text>
+                    <Text style={[styles.smartStartText, { color: theme.text.secondary }]}>
+                      Detect clipboard content and jump back into recent generator presets.
+                    </Text>
+                  </View>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.refreshButton,
+                      {
+                        borderColor: theme.border,
+                        backgroundColor: theme.background,
+                        opacity: pressed ? 0.78 : 1,
+                      },
+                    ]}
+                    onPress={refreshClipboardSuggestion}
+                    disabled={isCheckingClipboard}
+                  >
+                    <Ionicons
+                      name="refresh-outline"
+                      size={16}
+                      color={theme.text.secondary}
+                    />
+                  </Pressable>
                 </View>
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.refreshButton,
-                    {
-                      borderColor: theme.border,
-                      backgroundColor: theme.background,
-                      opacity: pressed ? 0.78 : 1,
-                    },
-                  ]}
-                  onPress={refreshClipboardSuggestion}
-                >
-                  <Ionicons name="refresh-outline" size={16} color={theme.text.primary} />
-                </Pressable>
-              </View>
 
-              <View
-                style={[
-                  styles.quickStartCard,
-                  {
-                    backgroundColor: theme.surface,
-                    borderColor: theme.border,
-                  },
-                ]}
-              >
-                {isCheckingClipboard ? (
-                  <Text style={[styles.quickStartHint, { color: theme.text.secondary }]}>
-                    Checking clipboard…
-                  </Text>
-                ) : clipboardSuggestion ? (
+                {clipboardSuggestion ? (
                   <Pressable
                     style={({ pressed }) => [
                       styles.quickStartPressable,
-                      pressed && { opacity: 0.82 },
+                      {
+                        opacity: pressed ? 0.78 : 1,
+                      },
                     ]}
                     onPress={() => applyTemplateSetup(clipboardSuggestion.templateId, clipboardSuggestion.values)}
                   >
@@ -320,49 +317,49 @@ export function QrGeneratorContent() {
                     Nothing reusable is currently on the clipboard.
                   </Text>
                 )}
-              </View>
+              </Card>
+            ) : null}
 
-              {recentPresets.length > 0 ? (
-                <View style={styles.recentPresetsBlock}>
-                  <Text style={[styles.recentPresetsLabel, { color: theme.text.secondary }]}>
-                    Recent Presets
-                  </Text>
-                  {recentPresets.map((preset) => (
-                    <View
-                      key={preset.id}
-                      style={[
-                        styles.presetRow,
-                        {
-                          backgroundColor: theme.surface,
-                          borderColor: theme.border,
-                        },
+            {recentPresets.length > 0 ? (
+              <View style={styles.recentPresetsBlock}>
+                <Text style={[styles.recentPresetsLabel, { color: theme.text.secondary }]}>
+                  Recent Presets
+                </Text>
+                {recentPresets.map((preset) => (
+                  <View
+                    key={preset.id}
+                    style={[
+                      styles.presetRow,
+                      {
+                        backgroundColor: theme.surface,
+                        borderColor: theme.border,
+                      },
+                    ]}
+                  >
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.presetRowContent,
+                        pressed && { opacity: 0.8 },
                       ]}
+                      onPress={() => applyTemplateSetup(preset.templateId, preset.values)}
                     >
-                      <Pressable
-                        style={({ pressed }) => [
-                          styles.presetRowContent,
-                          pressed && { opacity: 0.8 },
-                        ]}
-                        onPress={() => applyTemplateSetup(preset.templateId, preset.values)}
-                      >
-                        <Text style={[styles.presetTitle, { color: theme.text.primary }]}>
-                          {preset.templateTitle}
-                        </Text>
-                        <Text style={[styles.presetSummary, { color: theme.text.secondary }]}>
-                          {preset.summary}
-                        </Text>
-                      </Pressable>
-                      <Pressable
-                        style={styles.presetRemoveButton}
-                        onPress={() => removePreset(preset.id)}
-                      >
-                        <Ionicons name="close-outline" size={20} color={theme.text.tertiary} />
-                      </Pressable>
-                    </View>
-                  ))}
-                </View>
-              ) : null}
-            </Card>
+                      <Text style={[styles.presetTitle, { color: theme.text.primary }]}>
+                        {preset.templateTitle}
+                      </Text>
+                      <Text style={[styles.presetSummary, { color: theme.text.secondary }]}>
+                        {preset.summary}
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      style={styles.presetRemoveButton}
+                      onPress={() => removePreset(preset.id)}
+                    >
+                      <Ionicons name="close-outline" size={20} color={theme.text.tertiary} />
+                    </Pressable>
+                  </View>
+                ))}
+              </View>
+            ) : null}
 
           <Card style={styles.sectionCard} padding={spacing.lg}>
             <View style={styles.sectionHeader}>
