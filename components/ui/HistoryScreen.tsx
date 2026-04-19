@@ -1460,6 +1460,8 @@ function HistoryItemComponent({
         },
       ]}
       borderRadius={28}
+      showOutline={false}
+      showHighlight={false}
     >
       {item.isFavorite ? (
         <View style={s.favoriteBadge}>
@@ -1826,7 +1828,6 @@ const s = StyleSheet.create({
     marginHorizontal: 20,
     marginVertical: 6,
     borderRadius: 28,
-    borderWidth: 1,
     position: 'relative',
     shadowOffset: { width: 0, height: 16 },
     shadowOpacity: 0.2,
