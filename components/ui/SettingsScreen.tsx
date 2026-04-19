@@ -45,6 +45,8 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
     autoCopyScanned,
     swipeNavigation,
     confirmDeleteHistory,
+    showInsights,
+    showSmartStart,
     updateSettings,
     resetSettings,
   } = useSettingsStore();
@@ -409,6 +411,79 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
                   ) : (
                     <View style={[styles.switchTrack, swipeNavigation && { backgroundColor: theme.accent }]}>
                     <View style={[styles.switchThumb, swipeNavigation && styles.switchThumbOn]} />
+                    </View>
+                  )}
+                </Pressable>
+              </View>
+            </View>
+
+            {/* Features Section */}
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: theme.text.secondary }]}>
+                FEATURES
+              </Text>
+              <View style={[styles.sectionContent, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                <Pressable
+                  style={styles.settingItem}
+                  onPress={() => handleToggle('showInsights', !showInsights)}
+                >
+                  <View style={styles.settingLeft}>
+                    <View style={[styles.iconWrapper, { backgroundColor: '#FF950020' }]}>
+                      <Ionicons name="analytics-outline" size={20} color="#FF9500" />
+                    </View>
+                    <View style={styles.settingTextContainer}>
+                      <Text style={[styles.settingText, { color: theme.text.primary }]}>
+                        Show Insights
+                      </Text>
+                      <Text style={[styles.settingHint, { color: theme.text.secondary }]}>
+                        Display scan statistics in history
+                      </Text>
+                    </View>
+                  </View>
+                  {showInsights && theme.accentGradient && theme.accentGradient.length >= 2 ? (
+                    <LinearGradient
+                      colors={theme.accentGradient as any}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={[styles.switchTrack, { borderWidth: 1, borderColor: theme.accent }]}
+                    >
+                      <View style={[styles.switchThumb, styles.switchThumbOn]} />
+                    </LinearGradient>
+                  ) : (
+                    <View style={[styles.switchTrack, showInsights && { backgroundColor: theme.accent }]}>
+                    <View style={[styles.switchThumb, showInsights && styles.switchThumbOn]} />
+                    </View>
+                  )}
+                </Pressable>
+                <Pressable
+                  style={styles.settingItem}
+                  onPress={() => handleToggle('showSmartStart', !showSmartStart)}
+                >
+                  <View style={styles.settingLeft}>
+                    <View style={[styles.iconWrapper, { backgroundColor: '#34C75920' }]}>
+                      <Ionicons name="rocket-outline" size={20} color="#34C759" />
+                    </View>
+                    <View style={styles.settingTextContainer}>
+                      <Text style={[styles.settingText, { color: theme.text.primary }]}>
+                        Smart Start
+                      </Text>
+                      <Text style={[styles.settingHint, { color: theme.text.secondary }]}>
+                        Detect clipboard content for quick QR generation
+                      </Text>
+                    </View>
+                  </View>
+                  {showSmartStart && theme.accentGradient && theme.accentGradient.length >= 2 ? (
+                    <LinearGradient
+                      colors={theme.accentGradient as any}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={[styles.switchTrack, { borderWidth: 1, borderColor: theme.accent }]}
+                    >
+                      <View style={[styles.switchThumb, styles.switchThumbOn]} />
+                    </LinearGradient>
+                  ) : (
+                    <View style={[styles.switchTrack, showSmartStart && { backgroundColor: theme.accent }]}>
+                    <View style={[styles.switchThumb, showSmartStart && styles.switchThumbOn]} />
                     </View>
                   )}
                 </Pressable>
