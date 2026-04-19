@@ -700,10 +700,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
+    minHeight: 84,
+    justifyContent: 'center',
   },
   quickStartPressable: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: spacing.md,
   },
   quickStartContent: {
