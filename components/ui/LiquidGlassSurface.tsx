@@ -22,6 +22,7 @@ interface LiquidGlassSurfaceProps {
   blurIntensity?: number;
   enableRipple?: boolean;
   showHighlight?: boolean;
+  enableGradient?: boolean;
   showOutline?: boolean;
 }
 
@@ -33,11 +34,15 @@ export function LiquidGlassSurface({
   blurIntensity,
   enableRipple = true,
   showHighlight = true,
-  showOutline = true,
+  enableGradient = false,
+  showOutline = false,
 }: LiquidGlassSurfaceProps) {
   const { theme, isDark } = useAppTheme();
   const blurTargetRef = useLiquidGlassBlurTarget();
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+
+  // Get gradient colors if gradient is enabled
+  const pulseGradientColors = enableGradient ? theme.accentGradient : null;
   const tiltX = useRef(new Animated.Value(0)).current;
   const tiltY = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(1)).current;
@@ -221,7 +226,16 @@ export function LiquidGlassSurface({
             ],
           },
         ]}
-      />
+      >
+        {enableGradient && pulseGradientColors ? (
+          <LinearGradient
+            colors={pulseGradientColors as any}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFillObject}
+          />
+        ) : null}
+      </Animated.View>
       <Animated.View
         pointerEvents="none"
         style={[
@@ -236,7 +250,16 @@ export function LiquidGlassSurface({
             ],
           },
         ]}
-      />
+      >
+        {enableGradient && pulseGradientColors ? (
+          <LinearGradient
+            colors={pulseGradientColors as any}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFillObject}
+          />
+        ) : null}
+      </Animated.View>
       <Animated.View
         pointerEvents="none"
         style={[
@@ -252,7 +275,16 @@ export function LiquidGlassSurface({
             ],
           },
         ]}
-      />
+      >
+        {enableGradient && pulseGradientColors ? (
+          <LinearGradient
+            colors={pulseGradientColors as any}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFillObject}
+          />
+        ) : null}
+      </Animated.View>
 
       <Animated.View
         style={[
