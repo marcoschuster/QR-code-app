@@ -913,7 +913,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
         </View>
       </View>
 
-      <Animated.View style={[s.headerControlsRow, { transform: [{ translateY: controlsOffset }], zIndex: 10 }]}>
+      <Animated.View style={[s.headerControlsRow, { transform: [{ translateY: controlsOffset }] }]}>
         <View style={[s.sortControl, { backgroundColor: theme.surfaceStrong, borderColor: theme.border }]}>
           <Pressable
             style={[s.sortOption, sortMode === 'date' && !theme.accentGradient && { backgroundColor: theme.accent }]}
