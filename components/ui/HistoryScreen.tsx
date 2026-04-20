@@ -913,7 +913,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
         </View>
       </View>
 
-      <Animated.View style={[s.headerControlsRow, { backgroundColor: theme.background, borderBottomColor: theme.border, transform: [{ translateY: controlsOffset }] }]}>
+      <Animated.View style={[s.headerControlsRow, { transform: [{ translateY: controlsOffset }], zIndex: 10 }]}>
         <View style={[s.sortControl, { backgroundColor: theme.surfaceStrong, borderColor: theme.border }]}>
           <Pressable
             style={[s.sortOption, sortMode === 'date' && !theme.accentGradient && { backgroundColor: theme.accent }]}
@@ -1755,7 +1755,6 @@ const s = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 20,
     paddingVertical: 12,
-    borderBottomWidth: 1,
   },
   sortControl: {
     flexDirection: 'row',
