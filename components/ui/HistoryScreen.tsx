@@ -8,8 +8,9 @@ import {
   Image,
   Linking,
   Modal,
-  ScrollView,
+  Animated,
   TextInput,
+  ScrollView,
   Platform,
   Alert,
 } from 'react-native';
@@ -420,6 +421,8 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
   const { theme } = useAppTheme();
   const lastScrollY = useRef(0);
   const tabBarHidden = useRef(false);
+  const controlsCollapsed = useRef(false);
+  const controlsOffset = useRef(new Animated.Value(0)).current;
   const groupedItems = getGroupedItems();
   const visibleGroupedItems = showOnlyFavorites
     ? groupedItems.filter((item) => item.isFavorite)
@@ -606,10 +609,20 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
 
     if (currentY <= 16) {
       setTabBarHidden(false);
+      controlsCollapsed.current = false;
+      Animated.timing(controlsOffset, { toValue: 0, duration: 200, useNativeDriver: true }).start();
     } else if (deltaY > 10) {
       setTabBarHidden(true);
+      if (!controlsCollapsed.current) {
+        controlsCollapsed.current = true;
+        Animated.timing(controlsOffset, { toValue: -60, duration: 200, useNativeDriver: true }).start();
+      }
     } else if (deltaY < -10) {
       setTabBarHidden(false);
+      if (controlsCollapsed.current) {
+        controlsCollapsed.current = false;
+        Animated.timing(controlsOffset, { toValue: 0, duration: 200, useNativeDriver: true }).start();
+      }
     }
 
     lastScrollY.current = currentY;
@@ -898,124 +911,125 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
             </Pressable>
           )}
         </View>
-        <View style={s.headerControlsRow}>
-          <View style={[s.sortControl, { backgroundColor: theme.surfaceStrong, borderColor: theme.border }]}>
-            <Pressable
-              style={[s.sortOption, sortMode === 'date' && !theme.accentGradient && { backgroundColor: theme.accent }]}
-              onPress={() => setSortMode('date')}
-            >
-              {sortMode === 'date' && theme.accentGradient && theme.accentGradient.length >= 2 ? (
-                <LinearGradient
-                  colors={theme.accentGradient as any}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={[s.sortOptionGradient, { borderWidth: 1, borderColor: theme.accent }]}
-                >
-                  <Ionicons
-                    name="time-outline"
-                    size={13}
-                    color="#FFFFFF"
-                  />
-                  <Text style={[s.sortOptionText, { color: '#FFFFFF' }]}>
-                    Date
-                  </Text>
-                </LinearGradient>
-              ) : (
-                <>
-                  <Ionicons
-                    name="time-outline"
-                    size={13}
-                    color={sortMode === 'date' ? '#FFFFFF' : theme.text.secondary}
-                  />
-                  <Text
-                    style={[
-                      s.sortOptionText,
-                      { color: sortMode === 'date' ? '#FFFFFF' : theme.text.secondary },
-                    ]}
-                  >
-                    Date
-                  </Text>
-                </>
-              )}
-            </Pressable>
-            <Pressable
-              style={[s.sortOption, sortMode === 'name' && !theme.accentGradient && { backgroundColor: theme.accent }]}
-              onPress={() => setSortMode('name')}
-            >
-              {sortMode === 'name' && theme.accentGradient && theme.accentGradient.length >= 2 ? (
-                <LinearGradient
-                  colors={theme.accentGradient as any}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={[s.sortOptionGradient, { borderWidth: 1, borderColor: theme.accent }]}
-                >
-                  <Ionicons
-                    name="text-outline"
-                    size={13}
-                    color="#FFFFFF"
-                  />
-                  <Text style={[s.sortOptionText, { color: '#FFFFFF' }]}>
-                    Name
-                  </Text>
-                </LinearGradient>
-              ) : (
-                <>
-                  <Ionicons
-                    name="text-outline"
-                    size={13}
-                    color={sortMode === 'name' ? '#FFFFFF' : theme.text.secondary}
-                  />
-                  <Text
-                    style={[
-                      s.sortOptionText,
-                      { color: sortMode === 'name' ? '#FFFFFF' : theme.text.secondary },
-                    ]}
-                  >
-                    Name
-                  </Text>
-                </>
-              )}
-            </Pressable>
-          </View>
+      </View>
 
+      <Animated.View style={[s.headerControlsRow, { backgroundColor: theme.background, borderBottomColor: theme.border, transform: [{ translateY: controlsOffset }] }]}>
+        <View style={[s.sortControl, { backgroundColor: theme.surfaceStrong, borderColor: theme.border }]}>
           <Pressable
-            style={[
-              s.headerActionButton,
-              {
-                backgroundColor: showOnlyFavorites ? theme.accent : theme.surface,
-                borderColor: showOnlyFavorites ? theme.accent : theme.border,
-              },
-            ]}
-            onPress={() => setShowOnlyFavorites((prev) => !prev)}
+            style={[s.sortOption, sortMode === 'date' && !theme.accentGradient && { backgroundColor: theme.accent }]}
+            onPress={() => setSortMode('date')}
           >
-            <Ionicons
-              name={showOnlyFavorites ? 'star' : 'star-outline'}
-              size={15}
-              color={showOnlyFavorites ? '#FFFFFF' : theme.text.secondary}
-            />
-            <Text style={[s.headerActionButtonText, { color: showOnlyFavorites ? '#FFFFFF' : theme.text.secondary }]}>
-              Favs
-            </Text>
+            {sortMode === 'date' && theme.accentGradient && theme.accentGradient.length >= 2 ? (
+              <LinearGradient
+                colors={theme.accentGradient as any}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[s.sortOptionGradient, { borderWidth: 1, borderColor: theme.accent }]}
+              >
+                <Ionicons
+                  name="time-outline"
+                  size={13}
+                  color="#FFFFFF"
+                />
+                <Text style={[s.sortOptionText, { color: '#FFFFFF' }]}>
+                  Date
+                </Text>
+              </LinearGradient>
+            ) : (
+              <>
+                <Ionicons
+                  name="time-outline"
+                  size={13}
+                  color={sortMode === 'date' ? '#FFFFFF' : theme.text.secondary}
+                />
+                <Text
+                  style={[
+                    s.sortOptionText,
+                    { color: sortMode === 'date' ? '#FFFFFF' : theme.text.secondary },
+                  ]}
+                >
+                  Date
+                </Text>
+              </>
+            )}
           </Pressable>
-
           <Pressable
-            style={[
-              s.headerIconButton,
-              {
-                backgroundColor: isSortReversed ? theme.accent : theme.surface,
-                borderColor: isSortReversed ? theme.accent : theme.border,
-              },
-            ]}
-            onPress={() => setIsSortReversed((prev) => !prev)}
+            style={[s.sortOption, sortMode === 'name' && !theme.accentGradient && { backgroundColor: theme.accent }]}
+            onPress={() => setSortMode('name')}
           >
-            <Ionicons
-              name="swap-vertical-outline"
-              size={16}
-              color={isSortReversed ? '#FFFFFF' : theme.text.secondary}
-            />
+            {sortMode === 'name' && theme.accentGradient && theme.accentGradient.length >= 2 ? (
+              <LinearGradient
+                colors={theme.accentGradient as any}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[s.sortOptionGradient, { borderWidth: 1, borderColor: theme.accent }]}
+              >
+                <Ionicons
+                  name="text-outline"
+                  size={13}
+                  color="#FFFFFF"
+                />
+                <Text style={[s.sortOptionText, { color: '#FFFFFF' }]}>
+                  Name
+                </Text>
+              </LinearGradient>
+            ) : (
+              <>
+                <Ionicons
+                  name="text-outline"
+                  size={13}
+                  color={sortMode === 'name' ? '#FFFFFF' : theme.text.secondary}
+                />
+                <Text
+                  style={[
+                    s.sortOptionText,
+                    { color: sortMode === 'name' ? '#FFFFFF' : theme.text.secondary },
+                  ]}
+                >
+                  Name
+                </Text>
+              </>
+            )}
           </Pressable>
         </View>
-      </View>
+
+        <Pressable
+          style={[
+            s.headerActionButton,
+            {
+              backgroundColor: showOnlyFavorites ? theme.accent : theme.surface,
+              borderColor: showOnlyFavorites ? theme.accent : theme.border,
+            },
+          ]}
+          onPress={() => setShowOnlyFavorites((prev) => !prev)}
+        >
+          <Ionicons
+            name={showOnlyFavorites ? 'star' : 'star-outline'}
+            size={15}
+            color={showOnlyFavorites ? '#FFFFFF' : theme.text.secondary}
+          />
+          <Text style={[s.headerActionButtonText, { color: showOnlyFavorites ? '#FFFFFF' : theme.text.secondary }]}>
+            Favs
+          </Text>
+        </Pressable>
+
+        <Pressable
+          style={[
+            s.headerIconButton,
+            {
+              backgroundColor: isSortReversed ? theme.accent : theme.surface,
+              borderColor: isSortReversed ? theme.accent : theme.border,
+            },
+          ]}
+          onPress={() => setIsSortReversed((prev) => !prev)}
+        >
+          <Ionicons
+            name="swap-vertical-outline"
+            size={16}
+            color={isSortReversed ? '#FFFFFF' : theme.text.secondary}
+          />
+        </Pressable>
+      </Animated.View>
 
       <FlatList
         data={sortedGroupedItems}
@@ -1739,7 +1753,9 @@ const s = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     gap: 8,
-    marginTop: 14,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
   },
   sortControl: {
     flexDirection: 'row',
