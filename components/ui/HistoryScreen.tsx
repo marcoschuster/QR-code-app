@@ -1219,7 +1219,6 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
             style={[
               s.searchPill,
               {
-                backgroundColor: theme.background,
                 borderColor: theme.border,
                 shadowColor: theme.shadow,
               },
