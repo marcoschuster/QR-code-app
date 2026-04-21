@@ -2042,7 +2042,7 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   listContent: {
-    paddingTop: 16,
+    paddingTop: 80,
     paddingBottom: 140,
   },
   emptyListContent: {
