@@ -1971,7 +1971,6 @@ const s = StyleSheet.create({
     padding: 0,
   },
   searchClip: {
-    height: SEARCH_DRAWER_HEIGHT,
     overflow: 'hidden',
   },
   searchClipContent: {
