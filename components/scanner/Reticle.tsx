@@ -9,8 +9,9 @@ const DEFAULT_LEFT = (SCREEN_WIDTH - DEFAULT_SIZE) / 2;
 const CORNER_LENGTH = 32;
 const STROKE_WIDTH = 4;
 const RADIUS = 8;
-const IDLE_DELAY_MS = 3000;
-const IDLE_PAUSE_MS = 900;
+const INITIAL_IDLE_DELAY_MS = 4000;
+const IDLE_PAUSE_MIN_MS = 3000;
+const IDLE_PAUSE_MAX_MS = 6500;
 type IdleMode = 'shiver' | 'ripple' | 'morph' | 'tilt' | 'pulse' | 'glide';
 
 const IDLE_MODES: IdleMode[] = ['shiver', 'ripple', 'morph', 'tilt', 'pulse', 'glide'];
@@ -48,6 +49,12 @@ interface ReticleProps {
 function pickNextMode(previousMode: IdleMode | null) {
   const choices = IDLE_MODES.filter((mode) => mode !== previousMode);
   return choices[Math.floor(Math.random() * choices.length)] || IDLE_MODES[0];
+}
+
+function getRandomIdlePauseMs() {
+  return Math.round(
+    IDLE_PAUSE_MIN_MS + Math.random() * (IDLE_PAUSE_MAX_MS - IDLE_PAUSE_MIN_MS)
+  );
 }
 
 function getShiverOffsets(index: number) {
@@ -155,7 +162,7 @@ export function Reticle({ targetBounds, isLocking }: ReticleProps) {
 
         idleProgress.setValue(0);
         setIdleMode(null);
-        scheduleIdleMode(IDLE_PAUSE_MS);
+        scheduleIdleMode(getRandomIdlePauseMs());
       });
     }, delayMs);
   };
@@ -238,7 +245,7 @@ export function Reticle({ targetBounds, isLocking }: ReticleProps) {
     ]).start();
 
     stopIdleAnimation();
-    scheduleIdleMode(IDLE_DELAY_MS);
+    scheduleIdleMode(INITIAL_IDLE_DELAY_MS);
 
     return () => {
       stopIdleAnimation();

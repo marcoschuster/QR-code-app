@@ -1,0 +1,44 @@
+env: load .env
+env: export EXPO_DEBUG EXPO_DEV_TIMEOUT EXPO_NO_DOCTOR EXPO_PUBLIC_GOOGLE_SAFE_BROWSING_API_KEY EXPO_SKIP_VALIDATION METRO_SERVER_TIMEOUT NODE_OPTIONS
+Starting project at C:\Work\Products\Tools\qr-scanner-app
+
+Expo Metro config:
+- Version: 55.0.15
+- Extensions: ts, tsx, mjs, js, jsx, json, cjs, scss, sass, css
+- React Native: C:\Work\Products\Tools\qr-scanner-app\node_modules\react-native
+- Watch Folders: 
+- Node Module Paths: 
+- Sass: null
+- Reanimated: 4.3.0
+- Worklets: 0.8.1
+- Babel Runtime: null
+
+
+Expo Metro config:
+- Version: 55.0.15
+- Extensions: ts, tsx, mjs, js, jsx, json, cjs, scss, sass, css
+- React Native: C:\Work\Products\Tools\qr-scanner-app\node_modules\react-native
+- Watch Folders: 
+- Node Module Paths: 
+- Sass: null
+- Reanimated: 4.3.0
+- Worklets: 0.8.1
+- Babel Runtime: null
+
+Starting Metro Bundler
+
+warning: Bundler cache is empty, rebuilding (this may take a minute)
+ ERROR  An unknown error occurred while installing React Native DevTools. Details:
+
+spawn EPERM
+Waiting on http://localhost:8091
+Logs for your project will appear below.
+Android .\index.ts ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Android .\index.ts ▓░░░░░░░░░░░░░░░ 12.2% ( 12/119)
+Android .\index.ts ▓▓▓▓▓░░░░░░░░░░░ 37.5% (218/356)
+Android .\index.ts ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 72.1% (526/642)
+Android .\index.ts ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 78.7% (826/939)
+Android .\index.ts ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 96.8% (1279/1300)
+Android Bundled 20702ms index.ts (1314 modules)
+ LOG  [App Swipe] swipeNavigation setting: true
+ LOG  [App Swipe] panHandlers exist: true

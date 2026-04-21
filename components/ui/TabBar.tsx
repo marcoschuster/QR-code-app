@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Animated, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppTheme } from '../../hooks/useAppTheme';
 import { spacing, typography } from '../../constants/theme';
@@ -12,25 +12,54 @@ interface TabBarProps {
   onToggleHidden?: () => void;
 }
 
+type TabBarMotionState = 'shown' | 'showing' | 'hidden' | 'hiding';
+
 export function TabBar({ activeTab, onTabChange, hidden = false, onToggleHidden }: TabBarProps) {
   const { theme } = useAppTheme();
-  const translateY = useRef(new Animated.Value(0)).current;
-  const opacity = useRef(new Animated.Value(1)).current;
+  const progress = useRef(new Animated.Value(0)).current;
+  const motionState = useRef<TabBarMotionState>('shown');
+  const translateY = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 120],
+  });
+  const opacity = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 0],
+  });
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(translateY, {
-        toValue: hidden ? 120 : 0,
-        duration: 220,
+    const nextValue = hidden ? 1 : 0;
+    const nextState: TabBarMotionState = hidden ? 'hiding' : 'showing';
+
+    if (
+      (hidden && (motionState.current === 'hidden' || motionState.current === 'hiding')) ||
+      (!hidden && (motionState.current === 'shown' || motionState.current === 'showing'))
+    ) {
+      return;
+    }
+
+    motionState.current = nextState;
+    progress.stopAnimation((currentValue) => {
+      if (Math.abs(currentValue - nextValue) < 0.01) {
+        progress.setValue(nextValue);
+        motionState.current = hidden ? 'hidden' : 'shown';
+        return;
+      }
+
+      Animated.timing(progress, {
+        toValue: nextValue,
+        duration: 240,
+        easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
-      }),
-      Animated.timing(opacity, {
-        toValue: hidden ? 0 : 1,
-        duration: 180,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [hidden, opacity, translateY]);
+      }).start(({ finished }) => {
+        if (!finished) {
+          return;
+        }
+
+        motionState.current = hidden ? 'hidden' : 'shown';
+      });
+    });
+  }, [hidden, progress]);
 
   const tabs = [
     { id: 'scan', icon: 'camera-outline', activeIcon: 'camera', label: 'Scan' },
@@ -111,6 +140,11 @@ const styles = StyleSheet.create({
   },
   shell: {
     borderRadius: 32,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.22,
+    shadowRadius: 28,
+    elevation: 20,
   },
   shellSurface: {
     borderRadius: 32,
