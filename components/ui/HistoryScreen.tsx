@@ -9,10 +9,12 @@ import {
   Linking,
   Modal,
   Animated,
+  Easing,
   TextInput,
   ScrollView,
   Platform,
   Alert,
+  GestureResponderEvent,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Clipboard from 'expo-clipboard';
@@ -379,6 +381,8 @@ interface HistoryScreenProps {
 }
 
 type HistorySortMode = 'date' | 'name';
+type VisibilityMotionState = 'visible' | 'showing' | 'hidden' | 'hiding';
+const SEARCH_DRAWER_HEIGHT = 60;
 
 export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) {
   const { clearAll, removeItem, removeScanId, getGroupedItems, updateItem } = useHistoryStore();
@@ -421,8 +425,13 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
   const { theme } = useAppTheme();
   const lastScrollY = useRef(0);
   const tabBarHidden = useRef(false);
-  const controlsCollapsed = useRef(false);
-  const controlsOffset = useRef(new Animated.Value(0)).current;
+  const searchVisibility = useRef(new Animated.Value(1)).current;
+  const searchMotionState = useRef<VisibilityMotionState>('visible');
+  const scrollDirection = useRef<-1 | 0 | 1>(0);
+  const scrollTravel = useRef(0);
+  const inspectHoldTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inspectTouchActive = useRef(false);
+  const touchInspecting = useRef(false);
   const groupedItems = getGroupedItems();
   const visibleGroupedItems = showOnlyFavorites
     ? groupedItems.filter((item) => item.isFavorite)
@@ -445,6 +454,22 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
   });
   const primaryAction = selectedItem ? getHistoryPrimaryAction(selectedItem) : null;
   const insights = buildHistoryInsights(groupedItems);
+  const searchHeight = searchVisibility.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, SEARCH_DRAWER_HEIGHT],
+  });
+  const searchTranslateY = searchVisibility.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-22, 0],
+  });
+  const searchOpacity = searchVisibility.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 1],
+  });
+  const searchScale = searchVisibility.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.985, 1],
+  });
 
   useEffect(() => {
     if (selectedItem) {
@@ -490,7 +515,11 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
     closeRenameDialog();
   };
 
-  const setTabBarHidden = useCallback((hidden: boolean) => {
+  const setTabBarHidden = useCallback((hidden: boolean, force = false) => {
+    if (touchInspecting.current && !hidden && !force) {
+      return;
+    }
+
     if (tabBarHidden.current === hidden) {
       return;
     }
@@ -503,9 +532,139 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
     setTabBarHidden(false);
 
     return () => {
+      if (inspectHoldTimeout.current) {
+        clearTimeout(inspectHoldTimeout.current);
+        inspectHoldTimeout.current = null;
+      }
       onTabBarVisibilityChange?.(false);
     };
   }, [onTabBarVisibilityChange, setTabBarHidden]);
+
+  const animateSearchVisibility = useCallback(
+    (visible: boolean, force = false) => {
+      if (touchInspecting.current && visible && !force) {
+        return;
+      }
+
+      const nextValue = visible ? 1 : 0;
+      const nextState: VisibilityMotionState = visible ? 'showing' : 'hiding';
+
+      if (
+        (visible &&
+          (searchMotionState.current === 'visible' || searchMotionState.current === 'showing')) ||
+        (!visible &&
+          (searchMotionState.current === 'hidden' || searchMotionState.current === 'hiding'))
+      ) {
+        return;
+      }
+
+      searchMotionState.current = nextState;
+      searchVisibility.stopAnimation((currentValue) => {
+        if (Math.abs(currentValue - nextValue) < 0.01) {
+          searchVisibility.setValue(nextValue);
+          searchMotionState.current = visible ? 'visible' : 'hidden';
+          return;
+        }
+
+        Animated.timing(searchVisibility, {
+          toValue: nextValue,
+          duration: 320,
+          easing: Easing.bezier(0.22, 1, 0.36, 1),
+          useNativeDriver: false,
+        }).start(({ finished }) => {
+          if (!finished) {
+            return;
+          }
+
+          searchMotionState.current = visible ? 'visible' : 'hidden';
+        });
+      });
+    },
+    [searchVisibility]
+  );
+
+  const hideChromeForInspection = useCallback(() => {
+    scrollDirection.current = 0;
+    scrollTravel.current = 0;
+    setTabBarHidden(true);
+    animateSearchVisibility(false);
+  }, [animateSearchVisibility, setTabBarHidden]);
+
+  const restoreChromeAfterInspection = useCallback(() => {
+    scrollDirection.current = 0;
+    scrollTravel.current = 0;
+    setTabBarHidden(false, true);
+    animateSearchVisibility(true, true);
+  }, [animateSearchVisibility, setTabBarHidden]);
+
+  const cancelInspectHold = useCallback(() => {
+    if (inspectHoldTimeout.current) {
+      clearTimeout(inspectHoldTimeout.current);
+      inspectHoldTimeout.current = null;
+    }
+  }, []);
+
+  const getRemainingTouches = (event?: GestureResponderEvent) =>
+    event?.nativeEvent.touches?.length ?? 0;
+
+  const handleInspectTouchStart = useCallback((event?: GestureResponderEvent) => {
+    inspectTouchActive.current = getRemainingTouches(event) > 0 || !event;
+    if (touchInspecting.current) {
+      hideChromeForInspection();
+      return;
+    }
+
+    inspectTouchActive.current = true;
+    cancelInspectHold();
+
+    inspectHoldTimeout.current = setTimeout(() => {
+      if (!inspectTouchActive.current) {
+        inspectHoldTimeout.current = null;
+        return;
+      }
+
+      touchInspecting.current = true;
+      hideChromeForInspection();
+      inspectHoldTimeout.current = null;
+    }, 1300);
+  }, [cancelInspectHold, hideChromeForInspection]);
+
+  const handleInspectTouchMove = useCallback((event?: GestureResponderEvent) => {
+    inspectTouchActive.current = getRemainingTouches(event) > 0 || !event;
+
+    if (touchInspecting.current) {
+      hideChromeForInspection();
+    }
+  }, [hideChromeForInspection]);
+
+  const releaseInspectMode = useCallback(() => {
+    inspectTouchActive.current = false;
+    cancelInspectHold();
+
+    if (touchInspecting.current) {
+      touchInspecting.current = false;
+      restoreChromeAfterInspection();
+    }
+  }, [cancelInspectHold, restoreChromeAfterInspection]);
+
+  const handleInspectTouchEnd = useCallback((event?: GestureResponderEvent) => {
+    if (getRemainingTouches(event) > 0) {
+      inspectTouchActive.current = true;
+      return;
+    }
+
+    releaseInspectMode();
+  }, [releaseInspectMode]);
+
+  const handleInspectTouchCancel = useCallback((event?: GestureResponderEvent) => {
+    if (touchInspecting.current || getRemainingTouches(event) > 0) {
+      inspectTouchActive.current = true;
+      return;
+    }
+
+    inspectTouchActive.current = false;
+    cancelInspectHold();
+  }, [cancelInspectHold]);
 
   const handleClearAll = () => {
     setConfirmDialog({
@@ -606,23 +765,46 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
   const handleScroll = ({ nativeEvent }: { nativeEvent: { contentOffset: { y: number } } }) => {
     const currentY = nativeEvent.contentOffset.y;
     const deltaY = currentY - lastScrollY.current;
+    const absDeltaY = Math.abs(deltaY);
+
+    if (absDeltaY < 1) {
+      lastScrollY.current = currentY;
+      return;
+    }
+
+    if (touchInspecting.current) {
+      lastScrollY.current = currentY;
+      return;
+    }
 
     if (currentY <= 16) {
       setTabBarHidden(false);
-      controlsCollapsed.current = false;
-      Animated.timing(controlsOffset, { toValue: 0, duration: 200, useNativeDriver: true }).start();
-    } else if (deltaY > 10) {
-      setTabBarHidden(true);
-      if (!controlsCollapsed.current) {
-        controlsCollapsed.current = true;
-        Animated.timing(controlsOffset, { toValue: -60, duration: 200, useNativeDriver: true }).start();
+      scrollDirection.current = 0;
+      scrollTravel.current = 0;
+      animateSearchVisibility(true);
+      lastScrollY.current = currentY;
+      return;
+    }
+
+    const nextDirection: -1 | 1 = deltaY > 0 ? 1 : -1;
+
+    if (scrollDirection.current !== nextDirection) {
+      scrollDirection.current = nextDirection;
+      scrollTravel.current = 0;
+    }
+
+    scrollTravel.current += absDeltaY;
+
+    if (nextDirection === 1) {
+      if (scrollTravel.current >= 32 && currentY > 72) {
+        setTabBarHidden(true);
+        animateSearchVisibility(false);
+        scrollTravel.current = 0;
       }
-    } else if (deltaY < -10) {
+    } else if (scrollTravel.current >= 24) {
       setTabBarHidden(false);
-      if (controlsCollapsed.current) {
-        controlsCollapsed.current = false;
-        Animated.timing(controlsOffset, { toValue: 0, duration: 200, useNativeDriver: true }).start();
-      }
+      animateSearchVisibility(true);
+      scrollTravel.current = 0;
     }
 
     lastScrollY.current = currentY;
@@ -889,146 +1071,175 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
 
   return (
     <View style={[s.container, { backgroundColor: theme.background }]}>
-      <View style={[s.header, { borderBottomColor: theme.border }]}>
+      <View
+        style={[
+          s.header,
+          {
+            backgroundColor: theme.background,
+            borderBottomColor: theme.border,
+          },
+        ]}
+      >
         <View style={s.headerTopRow}>
           <Text style={[s.headerTitle, { color: theme.text.primary }]}>History</Text>
           <Pressable onPress={handleClearAll}>
             <Text style={[s.clearBtn, { color: theme.danger }]}>Clear All</Text>
           </Pressable>
         </View>
-        <View style={[s.searchPill, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-          <Ionicons name="search-outline" size={18} color={theme.text.tertiary} />
-          <TextInput
-            style={[s.searchInput, { color: theme.text.primary }]}
-            placeholder="Search scans..."
-            placeholderTextColor={theme.text.tertiary}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-          {searchQuery.length > 0 && (
-            <Pressable onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={18} color={theme.text.tertiary} />
+        <View style={s.headerControlsRow}>
+          <View style={[s.sortControl, { backgroundColor: theme.surfaceStrong, borderColor: theme.border }]}>
+            <Pressable
+              style={[s.sortOption, sortMode === 'date' && !theme.accentGradient && { backgroundColor: theme.accent }]}
+              onPress={() => setSortMode('date')}
+            >
+              {sortMode === 'date' && theme.accentGradient && theme.accentGradient.length >= 2 ? (
+                <LinearGradient
+                  colors={theme.accentGradient as any}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={[s.sortOptionGradient, { borderWidth: 1, borderColor: theme.accent }]}
+                >
+                  <Ionicons
+                    name="time-outline"
+                    size={13}
+                    color="#FFFFFF"
+                  />
+                  <Text style={[s.sortOptionText, { color: '#FFFFFF' }]}>
+                    Date
+                  </Text>
+                </LinearGradient>
+              ) : (
+                <>
+                  <Ionicons
+                    name="time-outline"
+                    size={13}
+                    color={sortMode === 'date' ? '#FFFFFF' : theme.text.secondary}
+                  />
+                  <Text
+                    style={[
+                      s.sortOptionText,
+                      { color: sortMode === 'date' ? '#FFFFFF' : theme.text.secondary },
+                    ]}
+                  >
+                    Date
+                  </Text>
+                </>
+              )}
             </Pressable>
-          )}
+            <Pressable
+              style={[s.sortOption, sortMode === 'name' && !theme.accentGradient && { backgroundColor: theme.accent }]}
+              onPress={() => setSortMode('name')}
+            >
+              {sortMode === 'name' && theme.accentGradient && theme.accentGradient.length >= 2 ? (
+                <LinearGradient
+                  colors={theme.accentGradient as any}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={[s.sortOptionGradient, { borderWidth: 1, borderColor: theme.accent }]}
+                >
+                  <Ionicons
+                    name="text-outline"
+                    size={13}
+                    color="#FFFFFF"
+                  />
+                  <Text style={[s.sortOptionText, { color: '#FFFFFF' }]}>
+                    Name
+                  </Text>
+                </LinearGradient>
+              ) : (
+                <>
+                  <Ionicons
+                    name="text-outline"
+                    size={13}
+                    color={sortMode === 'name' ? '#FFFFFF' : theme.text.secondary}
+                  />
+                  <Text
+                    style={[
+                      s.sortOptionText,
+                      { color: sortMode === 'name' ? '#FFFFFF' : theme.text.secondary },
+                    ]}
+                  >
+                    Name
+                  </Text>
+                </>
+              )}
+            </Pressable>
+          </View>
+
+          <Pressable
+            style={[
+              s.headerActionButton,
+              {
+                backgroundColor: showOnlyFavorites ? theme.accent : theme.surface,
+                borderColor: showOnlyFavorites ? theme.accent : theme.border,
+              },
+            ]}
+            onPress={() => setShowOnlyFavorites((prev) => !prev)}
+          >
+            <Ionicons
+              name={showOnlyFavorites ? 'star' : 'star-outline'}
+              size={15}
+              color={showOnlyFavorites ? '#FFFFFF' : theme.text.secondary}
+            />
+            <Text style={[s.headerActionButtonText, { color: showOnlyFavorites ? '#FFFFFF' : theme.text.secondary }]}>
+              Favs
+            </Text>
+          </Pressable>
+
+          <Pressable
+            style={[
+              s.headerIconButton,
+              {
+                backgroundColor: isSortReversed ? theme.accent : theme.surface,
+                borderColor: isSortReversed ? theme.accent : theme.border,
+              },
+            ]}
+            onPress={() => setIsSortReversed((prev) => !prev)}
+          >
+            <Ionicons
+              name="swap-vertical-outline"
+              size={16}
+              color={isSortReversed ? '#FFFFFF' : theme.text.secondary}
+            />
+          </Pressable>
         </View>
       </View>
 
-      <Animated.View style={[s.headerControlsRow, { transform: [{ translateY: controlsOffset }] }]}>
-        <View style={[s.sortControl, { backgroundColor: theme.surfaceStrong, borderColor: theme.border }]}>
-          <Pressable
-            style={[s.sortOption, sortMode === 'date' && !theme.accentGradient && { backgroundColor: theme.accent }]}
-            onPress={() => setSortMode('date')}
-          >
-            {sortMode === 'date' && theme.accentGradient && theme.accentGradient.length >= 2 ? (
-              <LinearGradient
-                colors={theme.accentGradient as any}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={[s.sortOptionGradient, { borderWidth: 1, borderColor: theme.accent }]}
-              >
-                <Ionicons
-                  name="time-outline"
-                  size={13}
-                  color="#FFFFFF"
-                />
-                <Text style={[s.sortOptionText, { color: '#FFFFFF' }]}>
-                  Date
-                </Text>
-              </LinearGradient>
-            ) : (
-              <>
-                <Ionicons
-                  name="time-outline"
-                  size={13}
-                  color={sortMode === 'date' ? '#FFFFFF' : theme.text.secondary}
-                />
-                <Text
-                  style={[
-                    s.sortOptionText,
-                    { color: sortMode === 'date' ? '#FFFFFF' : theme.text.secondary },
-                  ]}
-                >
-                  Date
-                </Text>
-              </>
-            )}
-          </Pressable>
-          <Pressable
-            style={[s.sortOption, sortMode === 'name' && !theme.accentGradient && { backgroundColor: theme.accent }]}
-            onPress={() => setSortMode('name')}
-          >
-            {sortMode === 'name' && theme.accentGradient && theme.accentGradient.length >= 2 ? (
-              <LinearGradient
-                colors={theme.accentGradient as any}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={[s.sortOptionGradient, { borderWidth: 1, borderColor: theme.accent }]}
-              >
-                <Ionicons
-                  name="text-outline"
-                  size={13}
-                  color="#FFFFFF"
-                />
-                <Text style={[s.sortOptionText, { color: '#FFFFFF' }]}>
-                  Name
-                </Text>
-              </LinearGradient>
-            ) : (
-              <>
-                <Ionicons
-                  name="text-outline"
-                  size={13}
-                  color={sortMode === 'name' ? '#FFFFFF' : theme.text.secondary}
-                />
-                <Text
-                  style={[
-                    s.sortOptionText,
-                    { color: sortMode === 'name' ? '#FFFFFF' : theme.text.secondary },
-                  ]}
-                >
-                  Name
-                </Text>
-              </>
-            )}
-          </Pressable>
-        </View>
-
-        <Pressable
+      <Animated.View style={s.searchClip}>
+        <Animated.View
           style={[
-            s.headerActionButton,
+            s.searchClipContent,
             {
-              backgroundColor: showOnlyFavorites ? theme.accent : theme.surface,
-              borderColor: showOnlyFavorites ? theme.accent : theme.border,
+              opacity: searchOpacity,
+              transform: [{ translateY: searchTranslateY }, { scale: searchScale }],
             },
           ]}
-          onPress={() => setShowOnlyFavorites((prev) => !prev)}
         >
-          <Ionicons
-            name={showOnlyFavorites ? 'star' : 'star-outline'}
-            size={15}
-            color={showOnlyFavorites ? '#FFFFFF' : theme.text.secondary}
-          />
-          <Text style={[s.headerActionButtonText, { color: showOnlyFavorites ? '#FFFFFF' : theme.text.secondary }]}>
-            Favs
-          </Text>
-        </Pressable>
-
-        <Pressable
-          style={[
-            s.headerIconButton,
-            {
-              backgroundColor: isSortReversed ? theme.accent : theme.surface,
-              borderColor: isSortReversed ? theme.accent : theme.border,
-            },
-          ]}
-          onPress={() => setIsSortReversed((prev) => !prev)}
-        >
-          <Ionicons
-            name="swap-vertical-outline"
-            size={16}
-            color={isSortReversed ? '#FFFFFF' : theme.text.secondary}
-          />
-        </Pressable>
+          <View
+            style={[
+              s.searchPill,
+              {
+                backgroundColor: theme.surface,
+                borderColor: theme.border,
+                shadowColor: theme.shadow,
+              },
+            ]}
+          >
+            <Ionicons name="search-outline" size={18} color={theme.text.tertiary} />
+            <TextInput
+              style={[s.searchInput, { color: theme.text.primary }]}
+              placeholder="Search scans..."
+              placeholderTextColor={theme.text.tertiary}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            {searchQuery.length > 0 && (
+              <Pressable onPress={() => setSearchQuery('')}>
+                <Ionicons name="close-circle" size={18} color={theme.text.tertiary} />
+              </Pressable>
+            )}
+          </View>
+        </Animated.View>
       </Animated.View>
 
       <FlatList
@@ -1038,6 +1249,12 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
           s.listContent,
           sortedGroupedItems.length === 0 && s.emptyListContent,
         ]}
+        onTouchStart={handleInspectTouchStart}
+        onTouchMove={handleInspectTouchMove}
+        onTouchEnd={handleInspectTouchEnd}
+        onTouchCancel={handleInspectTouchCancel}
+        onResponderRelease={handleInspectTouchEnd}
+        onResponderTerminate={handleInspectTouchCancel}
         onScroll={handleScroll}
         ListEmptyComponent={
           <View style={s.empty}>
@@ -1716,8 +1933,10 @@ const s = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingTop: 60,
-    paddingBottom: 16,
+    paddingBottom: 12,
     borderBottomWidth: 1,
+    zIndex: 3,
+    elevation: 6,
   },
   headerTopRow: {
     flexDirection: 'row',
@@ -1737,24 +1956,40 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 14,
-    paddingVertical: 10,
-    marginTop: 12,
+    paddingVertical: 9,
     borderRadius: 24,
     borderWidth: 1,
     gap: 8,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 5,
   },
   searchInput: {
     flex: 1,
     fontSize: 15,
     padding: 0,
   },
+  searchClip: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: SEARCH_DRAWER_HEIGHT,
+    overflow: 'hidden',
+    zIndex: 5,
+  },
+  searchClipContent: {
+    paddingHorizontal: 20,
+    paddingTop: 6,
+    paddingBottom: 10,
+  },
   headerControlsRow: {
     flexDirection: 'row',
     width: '100%',
     alignItems: 'center',
     gap: 8,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+    marginTop: 12,
   },
   sortControl: {
     flexDirection: 'row',
