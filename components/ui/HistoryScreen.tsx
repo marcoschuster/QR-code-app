@@ -1205,7 +1205,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
         </View>
       </View>
 
-      <Animated.View style={s.searchClip}>
+      <Animated.View style={[s.searchClip, { zIndex: searchOpacity.interpolate({ inputRange: [0, 1], outputRange: [1, 5] }) }]}>
         <Animated.View
           style={[
             s.searchClipContent,
@@ -1972,7 +1972,7 @@ const s = StyleSheet.create({
   },
   searchClip: {
     position: 'absolute',
-    top: 100,
+    top: 150,
     left: 0,
     right: 0,
     overflow: 'hidden',
