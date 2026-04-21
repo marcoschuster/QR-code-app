@@ -1219,7 +1219,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
             style={[
               s.searchPill,
               {
-                backgroundColor: theme.surface,
+                backgroundColor: theme.background,
                 borderColor: theme.border,
                 shadowColor: theme.shadow,
               },
@@ -1960,10 +1960,10 @@ const s = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 1,
     gap: 8,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
   },
   searchInput: {
     flex: 1,
@@ -1971,13 +1971,8 @@ const s = StyleSheet.create({
     padding: 0,
   },
   searchClip: {
-    position: 'absolute',
-    top: 70,
-    left: 0,
-    right: 0,
     height: SEARCH_DRAWER_HEIGHT,
     overflow: 'hidden',
-    zIndex: 5,
   },
   searchClipContent: {
     paddingHorizontal: 20,
