@@ -1932,7 +1932,7 @@ const s = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 20,
-    paddingTop: 60,
+    paddingTop: 50,
     paddingBottom: 12,
     borderBottomWidth: 1,
     zIndex: 3,
@@ -1972,7 +1972,7 @@ const s = StyleSheet.create({
   },
   searchClip: {
     position: 'absolute',
-    top: 0,
+    top: 70,
     left: 0,
     right: 0,
     height: SEARCH_DRAWER_HEIGHT,
