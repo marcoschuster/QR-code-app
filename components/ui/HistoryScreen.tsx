@@ -1275,14 +1275,17 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
                     Faster signal on how people actually use your scans.
                   </Text>
                 </View>
-                <Pressable onPress={() => setInsightsCollapsed(!insightsCollapsed)}>
-                  <Ionicons
-                    name={insightsCollapsed ? 'chevron-down' : 'chevron-up'}
-                    size={20}
-                    color={theme.text.secondary}
-                  />
-                </Pressable>
               </View>
+              <Pressable
+                onPress={() => setInsightsCollapsed(!insightsCollapsed)}
+                style={s.insightsCollapseButton}
+              >
+                <Ionicons
+                  name={insightsCollapsed ? 'chevron-down' : 'chevron-up'}
+                  size={20}
+                  color={theme.text.secondary}
+                />
+              </Pressable>
 
               {!insightsCollapsed && (
                 <>
@@ -2042,7 +2045,7 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   listContent: {
-    paddingTop: 32,
+    paddingTop: 44,
     paddingBottom: 140,
   },
   emptyListContent: {
@@ -2057,6 +2060,17 @@ const s = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 14,
+  },
+  insightsCollapseButton: {
+    position: 'absolute',
+    bottom: 12,
+    right: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   insightsTitle: {
     fontSize: 18,
