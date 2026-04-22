@@ -1210,43 +1210,32 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
         </View>
       </View>
 
-      <Animated.View style={[s.searchClip, { zIndex: searchOpacity.interpolate({ inputRange: [0, 1], outputRange: [1, 5] }) }]} pointerEvents="box-none">
-        <Animated.View
-          style={[
-            s.searchClipContent,
-            {
-              opacity: searchOpacity,
-              transform: [{ translateY: searchTranslateY }, { scale: searchScale }],
-            },
-          ]}
-          pointerEvents="box-none"
-        >
-          <View
-            style={[
-              s.searchPill,
-              {
-                backgroundColor: theme.surfaceStrong,
-                borderColor: theme.border,
-                shadowColor: theme.shadow,
-              },
-            ]}
-            pointerEvents="box-none"
-          >
-            <Ionicons name="search-outline" size={18} color={theme.text.tertiary} />
-            <TextInput
-              style={[s.searchInput, { color: theme.text.primary }]}
-              placeholder="Search scans..."
-              placeholderTextColor={theme.text.tertiary}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-            {searchQuery.length > 0 && (
-              <Pressable onPress={() => setSearchQuery('')}>
-                <Ionicons name="close-circle" size={18} color={theme.text.tertiary} />
-              </Pressable>
-            )}
-          </View>
-        </Animated.View>
+      <Animated.View
+        style={[
+          s.searchPill,
+          {
+            opacity: searchOpacity,
+            transform: [{ translateY: searchTranslateY }, { scale: searchScale }],
+            backgroundColor: theme.surfaceStrong,
+            borderColor: theme.border,
+            shadowColor: theme.shadow,
+            zIndex: searchOpacity.interpolate({ inputRange: [0, 1], outputRange: [1, 5] }),
+          },
+        ]}
+      >
+        <Ionicons name="search-outline" size={18} color={theme.text.tertiary} />
+        <TextInput
+          style={[s.searchInput, { color: theme.text.primary }]}
+          placeholder="Search scans..."
+          placeholderTextColor={theme.text.tertiary}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+        {searchQuery.length > 0 && (
+          <Pressable onPress={() => setSearchQuery('')}>
+            <Ionicons name="close-circle" size={18} color={theme.text.tertiary} />
+          </Pressable>
+        )}
       </Animated.View>
 
       <FlatList
@@ -1258,9 +1247,6 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
         ]}
         onScroll={handleScroll}
         scrollEventThrottle={16}
-        onTouchStart={handleInspectTouchStart}
-        onTouchEnd={handleInspectTouchEnd}
-        onTouchCancel={handleInspectTouchCancel}
         ListEmptyComponent={
           <View style={s.empty}>
             <Text style={s.emptyIcon}>⭐</Text>
