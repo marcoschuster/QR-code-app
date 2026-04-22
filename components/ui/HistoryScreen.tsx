@@ -1996,12 +1996,7 @@ const s = StyleSheet.create({
     padding: 0,
   },
   searchClip: {
-    position: 'absolute',
-    top: 150,
-    left: 0,
-    right: 0,
     overflow: 'hidden',
-    zIndex: 5,
   },
   searchClipContent: {
     paddingHorizontal: 20,
