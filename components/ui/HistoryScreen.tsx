@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -19,8 +19,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Clipboard from 'expo-clipboard';
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { runOnJS } from 'react-native-reanimated';
 import { useHistoryStore } from '../../store/useHistoryStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { HistoryItem, ThemeColors } from '../../constants/types';
@@ -430,6 +428,8 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
   const searchMotionState = useRef<VisibilityMotionState>('visible');
   const scrollDirection = useRef<-1 | 0 | 1>(0);
   const scrollTravel = useRef(0);
+  const inspectHoldTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inspectTouchActive = useRef(false);
   const touchInspecting = useRef(false);
   const groupedItems = getGroupedItems();
   const visibleGroupedItems = showOnlyFavorites
@@ -531,6 +531,10 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
     setTabBarHidden(false);
 
     return () => {
+      if (inspectHoldTimeout.current) {
+        clearTimeout(inspectHoldTimeout.current);
+        inspectHoldTimeout.current = null;
+      }
       onTabBarVisibilityChange?.(false);
     };
   }, [onTabBarVisibilityChange, setTabBarHidden]);
@@ -592,44 +596,66 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
     animateSearchVisibility(true, true);
   }, [animateSearchVisibility, setTabBarHidden]);
 
-  const beginInspectMode = useCallback(() => {
+  const cancelInspectHold = useCallback(() => {
+    if (inspectHoldTimeout.current) {
+      clearTimeout(inspectHoldTimeout.current);
+      inspectHoldTimeout.current = null;
+    }
+  }, []);
+
+  const handleInspectTouchStart = useCallback(() => {
+    inspectTouchActive.current = true;
+
     if (touchInspecting.current) {
       hideChromeForInspection();
       return;
     }
 
-    touchInspecting.current = true;
-    hideChromeForInspection();
-  }, [hideChromeForInspection]);
+    cancelInspectHold();
+    inspectHoldTimeout.current = setTimeout(() => {
+      if (!inspectTouchActive.current) {
+        inspectHoldTimeout.current = null;
+        return;
+      }
+
+      touchInspecting.current = true;
+      hideChromeForInspection();
+      inspectHoldTimeout.current = null;
+    }, 1300);
+  }, [cancelInspectHold, hideChromeForInspection]);
 
   const releaseInspectMode = useCallback(() => {
+    inspectTouchActive.current = false;
+    cancelInspectHold();
+
     if (touchInspecting.current) {
       touchInspecting.current = false;
       restoreChromeAfterInspection();
     }
-  }, [restoreChromeAfterInspection]);
+  }, [cancelInspectHold, restoreChromeAfterInspection]);
+
+  const handleInspectTouchEnd = useCallback(() => {
+    releaseInspectMode();
+  }, [releaseInspectMode]);
+
+  const handleInspectTouchCancel = useCallback(() => {
+    if (touchInspecting.current) {
+      return;
+    }
+
+    inspectTouchActive.current = false;
+    cancelInspectHold();
+  }, [cancelInspectHold]);
 
   const handleInspectScrollBeginDrag = useCallback(() => {
     if (touchInspecting.current) {
       hideChromeForInspection();
+      return;
     }
-  }, [hideChromeForInspection]);
 
-  const inspectGesture = useMemo(() => {
-    const nativeScrollGesture = Gesture.Native();
-    const longPressGesture = Gesture.LongPress()
-      .minDuration(1300)
-      .maxDistance(10)
-      .shouldCancelWhenOutside(false)
-      .onStart(() => {
-        runOnJS(beginInspectMode)();
-      })
-      .onFinalize(() => {
-        runOnJS(releaseInspectMode)();
-      });
-
-    return Gesture.Simultaneous(nativeScrollGesture, longPressGesture);
-  }, [beginInspectMode, releaseInspectMode]);
+    inspectTouchActive.current = false;
+    cancelInspectHold();
+  }, [cancelInspectHold, hideChromeForInspection]);
 
   const handleClearAll = () => {
     setConfirmDialog({
@@ -1207,8 +1233,15 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
         </Animated.View>
       </Animated.View>
 
-      <GestureDetector gesture={inspectGesture}>
-        <View style={s.listTouchRegion}>
+      <View
+        style={s.listTouchRegion}
+        pointerEvents="box-none"
+        {...({
+          onTouchStartCapture: handleInspectTouchStart,
+          onTouchEndCapture: handleInspectTouchEnd,
+          onTouchCancelCapture: handleInspectTouchCancel,
+        } as any)}
+      >
           <FlatList
             data={sortedGroupedItems}
             keyExtractor={(item) => item.id}
@@ -1314,8 +1347,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
             )}
             scrollEventThrottle={16}
           />
-        </View>
-      </GestureDetector>
+      </View>
 
       <ConfirmDialog
         visible={confirmDialog.visible}
