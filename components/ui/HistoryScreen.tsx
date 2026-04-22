@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -14,12 +14,13 @@ import {
   ScrollView,
   Platform,
   Alert,
-  GestureResponderEvent,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Clipboard from 'expo-clipboard';
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { runOnJS } from 'react-native-reanimated';
 import { useHistoryStore } from '../../store/useHistoryStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { HistoryItem, ThemeColors } from '../../constants/types';
@@ -429,8 +430,6 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
   const searchMotionState = useRef<VisibilityMotionState>('visible');
   const scrollDirection = useRef<-1 | 0 | 1>(0);
   const scrollTravel = useRef(0);
-  const inspectHoldTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const inspectTouchActive = useRef(false);
   const touchInspecting = useRef(false);
   const groupedItems = getGroupedItems();
   const visibleGroupedItems = showOnlyFavorites
@@ -532,10 +531,6 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
     setTabBarHidden(false);
 
     return () => {
-      if (inspectHoldTimeout.current) {
-        clearTimeout(inspectHoldTimeout.current);
-        inspectHoldTimeout.current = null;
-      }
       onTabBarVisibilityChange?.(false);
     };
   }, [onTabBarVisibilityChange, setTabBarHidden]);
@@ -597,74 +592,44 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
     animateSearchVisibility(true, true);
   }, [animateSearchVisibility, setTabBarHidden]);
 
-  const cancelInspectHold = useCallback(() => {
-    if (inspectHoldTimeout.current) {
-      clearTimeout(inspectHoldTimeout.current);
-      inspectHoldTimeout.current = null;
-    }
-  }, []);
-
-  const getRemainingTouches = (event?: GestureResponderEvent) =>
-    event?.nativeEvent.touches?.length ?? 0;
-
-  const handleInspectTouchStart = useCallback((event?: GestureResponderEvent) => {
-    inspectTouchActive.current = getRemainingTouches(event) > 0 || !event;
+  const beginInspectMode = useCallback(() => {
     if (touchInspecting.current) {
       hideChromeForInspection();
       return;
     }
-    cancelInspectHold();
 
-    inspectHoldTimeout.current = setTimeout(() => {
-      if (!inspectTouchActive.current) {
-        inspectHoldTimeout.current = null;
-        return;
-      }
-
-      touchInspecting.current = true;
-      hideChromeForInspection();
-      inspectHoldTimeout.current = null;
-    }, 1300);
-  }, [cancelInspectHold, hideChromeForInspection]);
+    touchInspecting.current = true;
+    hideChromeForInspection();
+  }, [hideChromeForInspection]);
 
   const releaseInspectMode = useCallback(() => {
-    inspectTouchActive.current = false;
-    cancelInspectHold();
-
     if (touchInspecting.current) {
       touchInspecting.current = false;
       restoreChromeAfterInspection();
     }
-  }, [cancelInspectHold, restoreChromeAfterInspection]);
-
-  const handleInspectTouchEnd = useCallback((event?: GestureResponderEvent) => {
-    if (getRemainingTouches(event) > 0) {
-      inspectTouchActive.current = true;
-      return;
-    }
-
-    releaseInspectMode();
-  }, [releaseInspectMode]);
-
-  const handleInspectTouchCancel = useCallback((event?: GestureResponderEvent) => {
-    if (touchInspecting.current || getRemainingTouches(event) > 0) {
-      inspectTouchActive.current = true;
-      return;
-    }
-
-    inspectTouchActive.current = false;
-    cancelInspectHold();
-  }, [cancelInspectHold]);
+  }, [restoreChromeAfterInspection]);
 
   const handleInspectScrollBeginDrag = useCallback(() => {
     if (touchInspecting.current) {
       hideChromeForInspection();
-      return;
     }
+  }, [hideChromeForInspection]);
 
-    inspectTouchActive.current = false;
-    cancelInspectHold();
-  }, [cancelInspectHold, hideChromeForInspection]);
+  const inspectGesture = useMemo(() => {
+    const nativeScrollGesture = Gesture.Native();
+    const longPressGesture = Gesture.LongPress()
+      .minDuration(1300)
+      .maxDistance(10)
+      .shouldCancelWhenOutside(false)
+      .onStart(() => {
+        runOnJS(beginInspectMode)();
+      })
+      .onFinalize(() => {
+        runOnJS(releaseInspectMode)();
+      });
+
+    return Gesture.Simultaneous(nativeScrollGesture, longPressGesture);
+  }, [beginInspectMode, releaseInspectMode]);
 
   const handleClearAll = () => {
     setConfirmDialog({
@@ -1242,106 +1207,101 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
         </Animated.View>
       </Animated.View>
 
-      <View
-        style={s.listTouchRegion}
-        pointerEvents="box-none"
-        onTouchStart={handleInspectTouchStart}
-        onTouchEnd={handleInspectTouchEnd}
-        onTouchCancel={handleInspectTouchCancel}
-      >
-        <FlatList
-          data={sortedGroupedItems}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={[
-            s.listContent,
-            sortedGroupedItems.length === 0 && s.emptyListContent,
-          ]}
-          onScrollBeginDrag={handleInspectScrollBeginDrag}
-          onScroll={handleScroll}
-          ListEmptyComponent={
-            <View style={s.empty}>
-              <Text style={s.emptyIcon}>⭐</Text>
-              <Text style={[s.emptyTitle, { color: theme.text.primary }]}>No favorites yet</Text>
-              <Text style={[s.emptySubtitle, { color: theme.text.secondary }]}>
-                Favorite scans will appear here when the filter is enabled.
-              </Text>
-            </View>
-          }
-          ListHeaderComponent={
-            showInsights ? (
-              <Card style={s.insightsCard}>
-                <View style={s.insightsHeader}>
-                  <View>
-                    <Text style={[s.insightsTitle, { color: theme.text.primary }]}>Insights</Text>
-                    <Text style={[s.insightsSubtitle, { color: theme.text.secondary }]}>
-                      Faster signal on how people actually use your scans.
-                    </Text>
+      <GestureDetector gesture={inspectGesture}>
+        <View style={s.listTouchRegion}>
+          <FlatList
+            data={sortedGroupedItems}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={[
+              s.listContent,
+              sortedGroupedItems.length === 0 && s.emptyListContent,
+            ]}
+            onScrollBeginDrag={handleInspectScrollBeginDrag}
+            onScroll={handleScroll}
+            ListEmptyComponent={
+              <View style={s.empty}>
+                <Text style={s.emptyIcon}>⭐</Text>
+                <Text style={[s.emptyTitle, { color: theme.text.primary }]}>No favorites yet</Text>
+                <Text style={[s.emptySubtitle, { color: theme.text.secondary }]}>
+                  Favorite scans will appear here when the filter is enabled.
+                </Text>
+              </View>
+            }
+            ListHeaderComponent={
+              showInsights ? (
+                <Card style={s.insightsCard}>
+                  <View style={s.insightsHeader}>
+                    <View>
+                      <Text style={[s.insightsTitle, { color: theme.text.primary }]}>Insights</Text>
+                      <Text style={[s.insightsSubtitle, { color: theme.text.secondary }]}>
+                        Faster signal on how people actually use your scans.
+                      </Text>
+                    </View>
                   </View>
-                </View>
-                <Pressable
-                  onPress={() => setInsightsCollapsed(!insightsCollapsed)}
-                  style={s.insightsCollapseButton}
-                >
-                  <Ionicons
-                    name={insightsCollapsed ? 'chevron-down' : 'chevron-up'}
-                    size={20}
-                    color={theme.text.secondary}
-                  />
-                </Pressable>
+                  <Pressable
+                    onPress={() => setInsightsCollapsed(!insightsCollapsed)}
+                    style={s.insightsCollapseButton}
+                  >
+                    <Ionicons
+                      name={insightsCollapsed ? 'chevron-down' : 'chevron-up'}
+                      size={20}
+                      color={theme.text.secondary}
+                    />
+                  </Pressable>
 
-                {!insightsCollapsed && (
-                  <>
-                    <View style={s.insightsGrid}>
-                      <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                        <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.totalScans}</Text>
-                        <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Total scans</Text>
+                  {!insightsCollapsed && (
+                    <>
+                      <View style={s.insightsGrid}>
+                        <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                          <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.totalScans}</Text>
+                          <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Total scans</Text>
+                        </View>
+                        <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                          <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.uniqueCodes}</Text>
+                          <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Unique codes</Text>
+                        </View>
+                        <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                          <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.thisWeekScans}</Text>
+                          <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Last 7 days</Text>
+                        </View>
+                        <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                          <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.favorites}</Text>
+                          <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Favorites</Text>
+                        </View>
                       </View>
-                      <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                        <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.uniqueCodes}</Text>
-                        <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Unique codes</Text>
-                      </View>
-                      <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                        <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.thisWeekScans}</Text>
-                        <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Last 7 days</Text>
-                      </View>
-                      <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                        <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.favorites}</Text>
-                        <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Favorites</Text>
-                      </View>
-                    </View>
 
-                    <View style={s.insightHighlights}>
-                      <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                        <Ionicons name="layers-outline" size={15} color={theme.accent} />
-                        <Text style={[s.insightChipText, { color: theme.text.primary }]}>
-                          Top type: {insights.topTypeLabel}
-                        </Text>
+                      <View style={s.insightHighlights}>
+                        <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                          <Ionicons name="layers-outline" size={15} color={theme.accent} />
+                          <Text style={[s.insightChipText, { color: theme.text.primary }]}>
+                            Top type: {insights.topTypeLabel}
+                          </Text>
+                        </View>
+                        <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                          <Ionicons name="repeat-outline" size={15} color={theme.accent} />
+                          <Text style={[s.insightChipText, { color: theme.text.primary }]}>
+                            Repeats: {insights.repeatedCodes}
+                          </Text>
+                        </View>
+                        <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                          <Ionicons name="shield-checkmark-outline" size={15} color={theme.success} />
+                          <Text style={[s.insightChipText, { color: theme.text.primary }]}>
+                            Safe links: {insights.safeLinks}
+                          </Text>
+                        </View>
+                        <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                          <Ionicons name="warning-outline" size={15} color={theme.danger} />
+                          <Text style={[s.insightChipText, { color: theme.text.primary }]}>
+                            Flagged: {insights.riskyLinks}
+                          </Text>
+                        </View>
                       </View>
-                      <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                        <Ionicons name="repeat-outline" size={15} color={theme.accent} />
-                        <Text style={[s.insightChipText, { color: theme.text.primary }]}>
-                          Repeats: {insights.repeatedCodes}
-                        </Text>
-                      </View>
-                      <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                        <Ionicons name="shield-checkmark-outline" size={15} color={theme.success} />
-                        <Text style={[s.insightChipText, { color: theme.text.primary }]}>
-                          Safe links: {insights.safeLinks}
-                        </Text>
-                      </View>
-                      <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                        <Ionicons name="warning-outline" size={15} color={theme.danger} />
-                        <Text style={[s.insightChipText, { color: theme.text.primary }]}>
-                          Flagged: {insights.riskyLinks}
-                        </Text>
-                      </View>
-                    </View>
-                  </>
-                )}
-              </Card>
-            ) : null
-          }
-          renderItem={({ item }) => (
+                    </>
+                  )}
+                </Card>
+              ) : null
+            }
+            renderItem={({ item }) => (
           <HistoryItemComponent
             item={item}
             isExpanded={expandedItems.has(item.id)}
@@ -1351,10 +1311,11 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
             onPress={() => setSelectedItem(item)}
             theme={theme}
           />
-          )}
-          scrollEventThrottle={16}
-        />
-      </View>
+            )}
+            scrollEventThrottle={16}
+          />
+        </View>
+      </GestureDetector>
 
       <ConfirmDialog
         visible={confirmDialog.visible}
