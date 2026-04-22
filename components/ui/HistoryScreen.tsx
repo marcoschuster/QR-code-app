@@ -1250,12 +1250,6 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
       <View
         style={s.listTouchRegion}
         pointerEvents="box-none"
-        {...({
-          onTouchStart: handleInspectTouchStart,
-          onTouchMove: handleInspectTouchMove,
-          onTouchEnd: handleInspectTouchEnd,
-          onTouchCancel: handleInspectTouchCancel,
-        } as any)}
       >
           <FlatList
             data={sortedGroupedItems}
