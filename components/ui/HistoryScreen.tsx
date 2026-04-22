@@ -1237,9 +1237,9 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
         style={s.listTouchRegion}
         pointerEvents="box-none"
         {...({
-          onTouchStartCapture: handleInspectTouchStart,
-          onTouchEndCapture: handleInspectTouchEnd,
-          onTouchCancelCapture: handleInspectTouchCancel,
+          onTouchStart: handleInspectTouchStart,
+          onTouchEnd: handleInspectTouchEnd,
+          onTouchCancel: handleInspectTouchCancel,
         } as any)}
       >
           <FlatList
