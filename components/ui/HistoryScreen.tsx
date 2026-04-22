@@ -1210,7 +1210,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
         </View>
       </View>
 
-      <Animated.View style={[s.searchClip, { zIndex: searchOpacity.interpolate({ inputRange: [0, 1], outputRange: [1, 5] }) }]}>
+      <Animated.View style={[s.searchClip, { zIndex: searchOpacity.interpolate({ inputRange: [0, 1], outputRange: [1, 5] }) }]} pointerEvents="box-none">
         <Animated.View
           style={[
             s.searchClipContent,
@@ -1247,19 +1247,15 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
         </Animated.View>
       </Animated.View>
 
-      <View
-        style={s.listTouchRegion}
-        pointerEvents="box-none"
-      >
-          <FlatList
-            data={sortedGroupedItems}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={[
-              s.listContent,
-              sortedGroupedItems.length === 0 && s.emptyListContent,
-            ]}
-            onScrollBeginDrag={handleInspectScrollBeginDrag}
-            onScroll={handleScroll}
+      <FlatList
+        data={sortedGroupedItems}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={[
+          s.listContent,
+          sortedGroupedItems.length === 0 && s.emptyListContent,
+        ]}
+        onScrollBeginDrag={handleInspectScrollBeginDrag}
+        onScroll={handleScroll}
             ListEmptyComponent={
               <View style={s.empty}>
                 <Text style={s.emptyIcon}>⭐</Text>
@@ -1901,19 +1897,38 @@ function HistoryItemMenu({
           onPress={onClose}
         />
         <View
-          style={[
-            s.actionMenu,
-            {
-              backgroundColor: theme.surfaceStrong,
-              borderColor: theme.border,
-              shadowColor: theme.shadow,
-            },
-          ]}
+          style={s.listTouchRegion}
+          pointerEvents="box-none"
         >
-          <Text style={[s.actionMenuTitle, { color: theme.text.primary }]}>
-            {truncateText(getHistoryItemName(item), 48)}
-          </Text>
-          {menuOptions.map((option) => (
+          <View
+            style={[
+              s.actionMenu,
+              {
+                backgroundColor: theme.surfaceStrong,
+                borderColor: theme.border,
+                shadowColor: theme.shadow,
+              },
+            ]}
+          >
+            <Text style={[s.actionMenuTitle, { color: theme.text.primary }]}>
+              {truncateText(getHistoryItemName(item), 48)}
+            </Text>
+            {menuOptions.map((option) => (
+              <Pressable
+                key={option.label}
+                style={({ pressed }) => [
+                  s.actionMenuOption,
+                  pressed && { backgroundColor: theme.background },
+                ]}
+                onPress={option.onPress}
+              >
+                <Ionicons name={option.icon} size={20} color={option.color} />
+                <Text style={[s.actionMenuOptionText, { color: option.color }]}>
+                  {option.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
             <Pressable
               key={option.label}
               style={({ pressed }) => [
