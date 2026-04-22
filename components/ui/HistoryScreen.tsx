@@ -1219,6 +1219,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
               transform: [{ translateY: searchTranslateY }, { scale: searchScale }],
             },
           ]}
+          pointerEvents="box-none"
         >
           <View
             style={[
