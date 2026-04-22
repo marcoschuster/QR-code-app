@@ -1230,6 +1230,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
                 shadowColor: theme.shadow,
               },
             ]}
+            pointerEvents="box-none"
           >
             <Ionicons name="search-outline" size={18} color={theme.text.tertiary} />
             <TextInput
