@@ -430,6 +430,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
   const scrollTravel = useRef(0);
   const inspectHoldTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inspectTouchActive = useRef(false);
+  const inspectTouchStartY = useRef(0);
   const touchInspecting = useRef(false);
   const groupedItems = getGroupedItems();
   const visibleGroupedItems = showOnlyFavorites
@@ -603,8 +604,9 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
     }
   }, []);
 
-  const handleInspectTouchStart = useCallback(() => {
+  const handleInspectTouchStart = useCallback((e: any) => {
     inspectTouchActive.current = true;
+    inspectTouchStartY.current = e.nativeEvent.pageY;
 
     if (touchInspecting.current) {
       hideChromeForInspection();
@@ -637,6 +639,18 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
   const handleInspectTouchEnd = useCallback(() => {
     releaseInspectMode();
   }, [releaseInspectMode]);
+
+  const handleInspectTouchMove = useCallback((e: any) => {
+    if (!inspectTouchActive.current) return;
+
+    const currentY = e.nativeEvent.pageY;
+    const deltaY = Math.abs(currentY - inspectTouchStartY.current);
+
+    if (deltaY > 10) {
+      inspectTouchActive.current = false;
+      cancelInspectHold();
+    }
+  }, [cancelInspectHold]);
 
   const handleInspectTouchCancel = useCallback(() => {
     if (touchInspecting.current) {
@@ -1238,6 +1252,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
         pointerEvents="box-none"
         {...({
           onTouchStart: handleInspectTouchStart,
+          onTouchMove: handleInspectTouchMove,
           onTouchEnd: handleInspectTouchEnd,
           onTouchCancel: handleInspectTouchCancel,
         } as any)}
