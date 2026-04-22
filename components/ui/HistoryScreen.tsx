@@ -1256,6 +1256,11 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
           s.listContent,
           sortedGroupedItems.length === 0 && s.emptyListContent,
         ]}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+        onTouchStart={handleInspectTouchStart}
+        onTouchEnd={handleInspectTouchEnd}
+        onTouchCancel={handleInspectTouchCancel}
         ListEmptyComponent={
           <View style={s.empty}>
             <Text style={s.emptyIcon}>⭐</Text>
@@ -1350,7 +1355,6 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
             theme={theme}
           />
         )}
-        scrollEventThrottle={16}
       />
 
       <ConfirmDialog
