@@ -1930,20 +1930,6 @@ function HistoryItemMenu({
               </Pressable>
             ))}
           </View>
-            <Pressable
-              key={option.label}
-              style={({ pressed }) => [
-                s.actionMenuOption,
-                pressed && { backgroundColor: theme.background },
-              ]}
-              onPress={option.onPress}
-            >
-              <Ionicons name={option.icon} size={20} color={option.color} />
-              <Text style={[s.actionMenuOptionText, { color: option.color }]}>
-                {option.label}
-              </Text>
-            </Pressable>
-          ))}
         </View>
       </View>
     </Modal>
