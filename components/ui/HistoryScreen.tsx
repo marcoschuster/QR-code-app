@@ -1256,7 +1256,6 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
           s.listContent,
           sortedGroupedItems.length === 0 && s.emptyListContent,
         ]}
-        onScroll={handleScroll}
             ListEmptyComponent={
               <View style={s.empty}>
                 <Text style={s.emptyIcon}>⭐</Text>
