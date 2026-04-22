@@ -1340,15 +1340,15 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
               ) : null
             }
             renderItem={({ item }) => (
-          <HistoryItemComponent
-            item={item}
-            isExpanded={expandedItems.has(item.id)}
-            onToggleExpanded={() => toggleExpanded(item.id)}
-            onOpenMenu={() => setMenuItem(item)}
-            onRemoveScan={handleRemoveScan}
-            onPress={() => setSelectedItem(item)}
-            theme={theme}
-          />
+              <HistoryItemComponent
+                item={item}
+                isExpanded={expandedItems.has(item.id)}
+                onToggleExpanded={() => toggleExpanded(item.id)}
+                onOpenMenu={() => setMenuItem(item)}
+                onRemoveScan={handleRemoveScan}
+                onPress={() => setSelectedItem(item)}
+                theme={theme}
+              />
             )}
             scrollEventThrottle={16}
           />
