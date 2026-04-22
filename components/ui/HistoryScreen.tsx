@@ -613,8 +613,6 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
       hideChromeForInspection();
       return;
     }
-
-    inspectTouchActive.current = true;
     cancelInspectHold();
 
     inspectHoldTimeout.current = setTimeout(() => {
@@ -628,14 +626,6 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
       inspectHoldTimeout.current = null;
     }, 1300);
   }, [cancelInspectHold, hideChromeForInspection]);
-
-  const handleInspectTouchMove = useCallback((event?: GestureResponderEvent) => {
-    inspectTouchActive.current = getRemainingTouches(event) > 0 || !event;
-
-    if (touchInspecting.current) {
-      hideChromeForInspection();
-    }
-  }, [hideChromeForInspection]);
 
   const releaseInspectMode = useCallback(() => {
     inspectTouchActive.current = false;
@@ -665,6 +655,16 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
     inspectTouchActive.current = false;
     cancelInspectHold();
   }, [cancelInspectHold]);
+
+  const handleInspectScrollBeginDrag = useCallback(() => {
+    if (touchInspecting.current) {
+      hideChromeForInspection();
+      return;
+    }
+
+    inspectTouchActive.current = false;
+    cancelInspectHold();
+  }, [cancelInspectHold, hideChromeForInspection]);
 
   const handleClearAll = () => {
     setConfirmDialog({
@@ -1250,11 +1250,9 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
           sortedGroupedItems.length === 0 && s.emptyListContent,
         ]}
         onTouchStart={handleInspectTouchStart}
-        onTouchMove={handleInspectTouchMove}
         onTouchEnd={handleInspectTouchEnd}
         onTouchCancel={handleInspectTouchCancel}
-        onResponderRelease={handleInspectTouchEnd}
-        onResponderTerminate={handleInspectTouchCancel}
+        onScrollBeginDrag={handleInspectScrollBeginDrag}
         onScroll={handleScroll}
         ListEmptyComponent={
           <View style={s.empty}>
