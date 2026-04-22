@@ -1242,105 +1242,102 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
         </Animated.View>
       </Animated.View>
 
-      <View
+      <FlatList
+        data={sortedGroupedItems}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={[
+          s.listContent,
+          sortedGroupedItems.length === 0 && s.emptyListContent,
+        ]}
         onTouchStart={handleInspectTouchStart}
         onTouchEnd={handleInspectTouchEnd}
         onTouchCancel={handleInspectTouchCancel}
-        style={s.listTouchRegion}
-      >
-        <FlatList
-          data={sortedGroupedItems}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={[
-            s.listContent,
-            sortedGroupedItems.length === 0 && s.emptyListContent,
-          ]}
-          onScrollBeginDrag={handleInspectScrollBeginDrag}
-          onScroll={handleScroll}
-          ListEmptyComponent={
-            <View style={s.empty}>
-              <Text style={s.emptyIcon}>⭐</Text>
-              <Text style={[s.emptyTitle, { color: theme.text.primary }]}>No favorites yet</Text>
-              <Text style={[s.emptySubtitle, { color: theme.text.secondary }]}>
-                Favorite scans will appear here when the filter is enabled.
-              </Text>
-            </View>
-          }
-          ListHeaderComponent={
-            showInsights ? (
-              <Card style={s.insightsCard}>
-                <View style={s.insightsHeader}>
-                  <View>
-                    <Text style={[s.insightsTitle, { color: theme.text.primary }]}>Insights</Text>
-                    <Text style={[s.insightsSubtitle, { color: theme.text.secondary }]}>
-                      Faster signal on how people actually use your scans.
-                    </Text>
-                  </View>
+        onScrollBeginDrag={handleInspectScrollBeginDrag}
+        onScroll={handleScroll}
+        ListEmptyComponent={
+          <View style={s.empty}>
+            <Text style={s.emptyIcon}>⭐</Text>
+            <Text style={[s.emptyTitle, { color: theme.text.primary }]}>No favorites yet</Text>
+            <Text style={[s.emptySubtitle, { color: theme.text.secondary }]}>
+              Favorite scans will appear here when the filter is enabled.
+            </Text>
+          </View>
+        }
+        ListHeaderComponent={
+          showInsights ? (
+            <Card style={s.insightsCard}>
+              <View style={s.insightsHeader}>
+                <View>
+                  <Text style={[s.insightsTitle, { color: theme.text.primary }]}>Insights</Text>
+                  <Text style={[s.insightsSubtitle, { color: theme.text.secondary }]}>
+                    Faster signal on how people actually use your scans.
+                  </Text>
                 </View>
-                <Pressable
-                  onPress={() => setInsightsCollapsed(!insightsCollapsed)}
-                  style={s.insightsCollapseButton}
-                >
-                  <Ionicons
-                    name={insightsCollapsed ? 'chevron-down' : 'chevron-up'}
-                    size={20}
-                    color={theme.text.secondary}
-                  />
-                </Pressable>
+              </View>
+              <Pressable
+                onPress={() => setInsightsCollapsed(!insightsCollapsed)}
+                style={s.insightsCollapseButton}
+              >
+                <Ionicons
+                  name={insightsCollapsed ? 'chevron-down' : 'chevron-up'}
+                  size={20}
+                  color={theme.text.secondary}
+                />
+              </Pressable>
 
-                {!insightsCollapsed && (
-                  <>
-                    <View style={s.insightsGrid}>
-                      <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                        <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.totalScans}</Text>
-                        <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Total scans</Text>
-                      </View>
-                      <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                        <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.uniqueCodes}</Text>
-                        <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Unique codes</Text>
-                      </View>
-                      <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                        <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.thisWeekScans}</Text>
-                        <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Last 7 days</Text>
-                      </View>
-                      <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                        <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.favorites}</Text>
-                        <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Favorites</Text>
-                      </View>
+              {!insightsCollapsed && (
+                <>
+                  <View style={s.insightsGrid}>
+                    <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                      <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.totalScans}</Text>
+                      <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Total scans</Text>
                     </View>
+                    <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                      <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.uniqueCodes}</Text>
+                      <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Unique codes</Text>
+                    </View>
+                    <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                      <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.thisWeekScans}</Text>
+                      <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Last 7 days</Text>
+                    </View>
+                    <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                      <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.favorites}</Text>
+                      <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Favorites</Text>
+                    </View>
+                  </View>
 
-                    <View style={s.insightHighlights}>
-                      <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                        <Ionicons name="layers-outline" size={15} color={theme.accent} />
-                        <Text style={[s.insightChipText, { color: theme.text.primary }]}>
-                          Top type: {insights.topTypeLabel}
-                        </Text>
-                      </View>
-                      <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                        <Ionicons name="repeat-outline" size={15} color={theme.accent} />
-                        <Text style={[s.insightChipText, { color: theme.text.primary }]}>
-                          Repeats: {insights.repeatedCodes}
-                        </Text>
-                      </View>
-                      <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                        <Ionicons name="shield-checkmark-outline" size={15} color={theme.success} />
-                        <Text style={[s.insightChipText, { color: theme.text.primary }]}>
-                          Safe links: {insights.safeLinks}
-                        </Text>
-                      </View>
-                      <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                        <Ionicons name="warning-outline" size={15} color={theme.danger} />
-                        <Text style={[s.insightChipText, { color: theme.text.primary }]}>
-                          Flagged: {insights.riskyLinks}
-                        </Text>
-                      </View>
+                  <View style={s.insightHighlights}>
+                    <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                      <Ionicons name="layers-outline" size={15} color={theme.accent} />
+                      <Text style={[s.insightChipText, { color: theme.text.primary }]}>
+                        Top type: {insights.topTypeLabel}
+                      </Text>
                     </View>
-                  </>
-                )}
-              </Card>
-            ) : null
-          }
-          renderItem={({ item }) => (
+                    <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                      <Ionicons name="repeat-outline" size={15} color={theme.accent} />
+                      <Text style={[s.insightChipText, { color: theme.text.primary }]}>
+                        Repeats: {insights.repeatedCodes}
+                      </Text>
+                    </View>
+                    <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                      <Ionicons name="shield-checkmark-outline" size={15} color={theme.success} />
+                      <Text style={[s.insightChipText, { color: theme.text.primary }]}>
+                        Safe links: {insights.safeLinks}
+                      </Text>
+                    </View>
+                    <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                      <Ionicons name="warning-outline" size={15} color={theme.danger} />
+                      <Text style={[s.insightChipText, { color: theme.text.primary }]}>
+                        Flagged: {insights.riskyLinks}
+                      </Text>
+                    </View>
+                  </View>
+                </>
+              )}
+            </Card>
+          ) : null
+        }
+        renderItem={({ item }) => (
           <HistoryItemComponent
             item={item}
             isExpanded={expandedItems.has(item.id)}
@@ -1350,10 +1347,9 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
             onPress={() => setSelectedItem(item)}
             theme={theme}
           />
-          )}
-          scrollEventThrottle={16}
-        />
-      </View>
+        )}
+        scrollEventThrottle={16}
+      />
 
       <ConfirmDialog
         visible={confirmDialog.visible}
@@ -2049,9 +2045,6 @@ const s = StyleSheet.create({
   listContent: {
     paddingTop: 44,
     paddingBottom: 140,
-  },
-  listTouchRegion: {
-    flex: 1,
   },
   emptyListContent: {
     flexGrow: 1,
