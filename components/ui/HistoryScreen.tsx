@@ -1352,7 +1352,6 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
         )}
         scrollEventThrottle={16}
       />
-      </View>
 
       <ConfirmDialog
         visible={confirmDialog.visible}
@@ -1376,14 +1375,16 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
           item={menuItem}
           theme={theme}
           onClose={() => setMenuItem(null)}
-          onToggleFavorite={() => handleToggleFavorite(menuItem)}
-          onRename={() => openRenameDialog(menuItem)}
-          onCopyText={() => handleCopyItemAsText(menuItem)}
-          onCopyCsv={() => handleCopyItemAsCsv(menuItem)}
+          onToggleFavorite={() => menuItem && handleToggleFavorite(menuItem)}
+          onRename={() => menuItem && openRenameDialog(menuItem)}
+          onCopyText={() => menuItem && handleCopyItemAsText(menuItem)}
+          onCopyCsv={() => menuItem && handleCopyItemAsCsv(menuItem)}
           onDelete={() => {
-            const itemId = menuItem.id;
-            setMenuItem(null);
-            handleRemoveItem(itemId);
+            if (menuItem) {
+              const itemId = menuItem.id;
+              setMenuItem(null);
+              handleRemoveItem(itemId);
+            }
           }}
         />
       ) : null}
@@ -1480,10 +1481,10 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
                 <View style={s.detailHeaderRow}>
                   <Text style={[s.detailLabel, { color: theme.text.secondary }]}>Name</Text>
                   <Pressable onPress={() => isEditingName ? handleSaveName() : setIsEditingName(true)}>
-                    <Ionicons 
-                      name={isEditingName ? "checkmark-circle-outline" : "create-outline"} 
-                      size={20} 
-                      color={theme.accent} 
+                    <Ionicons
+                      name={isEditingName ? "checkmark-circle-outline" : "create-outline"}
+                      size={20}
+                      color={theme.accent}
                     />
                   </Pressable>
                 </View>
@@ -1500,26 +1501,26 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
                   />
                 ) : (
                   <Text style={[s.detailValue, { color: theme.text.primary }]}>
-                    {getHistoryItemName(selectedItem)}
+                    {getHistoryItemName(selectedItem!)}
                   </Text>
                 )}
               </View>
-              <DetailCard label="Type" value={getDetailTypeLabel(selectedItem.type)} theme={theme} />
-              {renderSelectedItemDetails(selectedItem, theme)}
-              {selectedItem.type !== 'vcard' && selectedItem.type !== 'calendar' ? (
+              <DetailCard label="Type" value={getDetailTypeLabel(selectedItem!.type)} theme={theme} />
+              {renderSelectedItemDetails(selectedItem!, theme)}
+              {selectedItem!.type !== 'vcard' && selectedItem!.type !== 'calendar' ? (
                 <DetailCard
-                  label={selectedItem.type === 'url' ? 'Link' : 'Content'}
-                  value={getHistoryItemContentValue(selectedItem)}
+                  label={selectedItem!.type === 'url' ? 'Link' : 'Content'}
+                  value={getHistoryItemContentValue(selectedItem!)}
                   theme={theme}
                 />
               ) : null}
               <DetailCard
                 label="Scanned"
-                value={`${new Date(selectedItem.timestamp).toLocaleDateString()} at ${formatTime(selectedItem.hours, selectedItem.minutes)}`}
+                value={`${new Date(selectedItem!.timestamp).toLocaleDateString()} at ${formatTime(selectedItem!.hours, selectedItem!.minutes)}`}
                 theme={theme}
               />
-              {selectedItem.scanCount && selectedItem.scanCount > 1 ? (
-                <DetailCard label="Scan Count" value={`${selectedItem.scanCount} times`} theme={theme} />
+              {selectedItem!.scanCount && selectedItem!.scanCount > 1 ? (
+                <DetailCard label="Scan Count" value={`${selectedItem!.scanCount} times`} theme={theme} />
               ) : null}
             </ScrollView>
 
@@ -1550,7 +1551,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
                 ) : null}
                 <View style={s.modalActionButton}>
                   <Button
-                    title={selectedItem.type === 'url' ? 'Copy Link' : 'Copy Content'}
+                    title={selectedItem!.type === 'url' ? 'Copy Link' : 'Copy Content'}
                     onPress={handleCopySelectedItem}
                     variant={primaryAction ? 'secondary' : 'primary'}
                     icon={
@@ -1563,7 +1564,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
                   />
                 </View>
               </View>
-              {selectedItem.type === 'phone' ? (
+              {selectedItem!.type === 'phone' ? (
                 <View style={[s.modalActionRow, s.modalActionRowSpacing]}>
                   <View style={s.modalActionButton}>
                     <Button
@@ -1582,14 +1583,14 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
                   <View style={s.modalActionButton} />
                 </View>
               ) : null}
-              {selectedItem.type === 'coupon' || selectedItem.type === 'whatsapp' ? (
+              {selectedItem!.type === 'coupon' || selectedItem!.type === 'whatsapp' ? (
                 <View style={[s.modalActionRow, s.modalActionRowSpacing]}>
                   <View style={s.modalActionButton}>
                     <Button
                       title={
-                        selectedItem.type === 'coupon'
+                        selectedItem!.type === 'coupon'
                           ? 'Copy Code'
-                          : selectedItem.parsedData?.message
+                          : selectedItem!.parsedData?.message
                             ? 'Copy Message'
                             : 'Copy Number'
                       }
