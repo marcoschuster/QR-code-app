@@ -428,10 +428,6 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
   const searchMotionState = useRef<VisibilityMotionState>('visible');
   const scrollDirection = useRef<-1 | 0 | 1>(0);
   const scrollTravel = useRef(0);
-  const inspectHoldTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const inspectTouchActive = useRef(false);
-  const inspectTouchStartY = useRef(0);
-  const touchInspecting = useRef(false);
   const groupedItems = getGroupedItems();
   const visibleGroupedItems = showOnlyFavorites
     ? groupedItems.filter((item) => item.isFavorite)
@@ -454,10 +450,6 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
   });
   const primaryAction = selectedItem ? getHistoryPrimaryAction(selectedItem) : null;
   const insights = buildHistoryInsights(groupedItems);
-  const searchHeight = searchVisibility.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, SEARCH_DRAWER_HEIGHT],
-  });
   const searchTranslateY = searchVisibility.interpolate({
     inputRange: [0, 1],
     outputRange: [-22, 0],
@@ -515,11 +507,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
     closeRenameDialog();
   };
 
-  const setTabBarHidden = useCallback((hidden: boolean, force = false) => {
-    if (touchInspecting.current && !hidden && !force) {
-      return;
-    }
-
+  const setTabBarHidden = useCallback((hidden: boolean) => {
     if (tabBarHidden.current === hidden) {
       return;
     }
@@ -532,20 +520,12 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
     setTabBarHidden(false);
 
     return () => {
-      if (inspectHoldTimeout.current) {
-        clearTimeout(inspectHoldTimeout.current);
-        inspectHoldTimeout.current = null;
-      }
       onTabBarVisibilityChange?.(false);
     };
   }, [onTabBarVisibilityChange, setTabBarHidden]);
 
   const animateSearchVisibility = useCallback(
-    (visible: boolean, force = false) => {
-      if (touchInspecting.current && visible && !force) {
-        return;
-      }
-
+    (visible: boolean) => {
       const nextValue = visible ? 1 : 0;
       const nextState: VisibilityMotionState = visible ? 'showing' : 'hiding';
 
@@ -582,94 +562,6 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
     },
     [searchVisibility]
   );
-
-  const hideChromeForInspection = useCallback(() => {
-    scrollDirection.current = 0;
-    scrollTravel.current = 0;
-    setTabBarHidden(true);
-    animateSearchVisibility(false);
-  }, [animateSearchVisibility, setTabBarHidden]);
-
-  const restoreChromeAfterInspection = useCallback(() => {
-    scrollDirection.current = 0;
-    scrollTravel.current = 0;
-    setTabBarHidden(false, true);
-    animateSearchVisibility(true, true);
-  }, [animateSearchVisibility, setTabBarHidden]);
-
-  const cancelInspectHold = useCallback(() => {
-    if (inspectHoldTimeout.current) {
-      clearTimeout(inspectHoldTimeout.current);
-      inspectHoldTimeout.current = null;
-    }
-  }, []);
-
-  const handleInspectTouchStart = useCallback((e: any) => {
-    inspectTouchActive.current = true;
-    inspectTouchStartY.current = e.nativeEvent.pageY;
-
-    if (touchInspecting.current) {
-      hideChromeForInspection();
-      return;
-    }
-
-    cancelInspectHold();
-    inspectHoldTimeout.current = setTimeout(() => {
-      if (!inspectTouchActive.current) {
-        inspectHoldTimeout.current = null;
-        return;
-      }
-
-      touchInspecting.current = true;
-      hideChromeForInspection();
-      inspectHoldTimeout.current = null;
-    }, 1300);
-  }, [cancelInspectHold, hideChromeForInspection]);
-
-  const releaseInspectMode = useCallback(() => {
-    inspectTouchActive.current = false;
-    cancelInspectHold();
-
-    if (touchInspecting.current) {
-      touchInspecting.current = false;
-      restoreChromeAfterInspection();
-    }
-  }, [cancelInspectHold, restoreChromeAfterInspection]);
-
-  const handleInspectTouchEnd = useCallback(() => {
-    releaseInspectMode();
-  }, [releaseInspectMode]);
-
-  const handleInspectTouchMove = useCallback((e: any) => {
-    if (!inspectTouchActive.current) return;
-
-    const currentY = e.nativeEvent.pageY;
-    const deltaY = Math.abs(currentY - inspectTouchStartY.current);
-
-    if (deltaY > 10) {
-      inspectTouchActive.current = false;
-      cancelInspectHold();
-    }
-  }, [cancelInspectHold]);
-
-  const handleInspectTouchCancel = useCallback(() => {
-    if (touchInspecting.current) {
-      return;
-    }
-
-    inspectTouchActive.current = false;
-    cancelInspectHold();
-  }, [cancelInspectHold]);
-
-  const handleInspectScrollBeginDrag = useCallback(() => {
-    if (touchInspecting.current) {
-      hideChromeForInspection();
-      return;
-    }
-
-    inspectTouchActive.current = false;
-    cancelInspectHold();
-  }, [cancelInspectHold, hideChromeForInspection]);
 
   const handleClearAll = () => {
     setConfirmDialog({
@@ -773,11 +665,6 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
     const absDeltaY = Math.abs(deltaY);
 
     if (absDeltaY < 1) {
-      lastScrollY.current = currentY;
-      return;
-    }
-
-    if (touchInspecting.current) {
       lastScrollY.current = currentY;
       return;
     }
@@ -1081,7 +968,6 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
           s.header,
           {
             backgroundColor: theme.background,
-            borderBottomColor: theme.border,
           },
         ]}
       >
@@ -1245,8 +1131,8 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
           s.listContent,
           sortedGroupedItems.length === 0 && s.emptyListContent,
         ]}
-        onScrollBeginDrag={handleInspectScrollBeginDrag}
-        onScrollEndDrag={handleInspectTouchEnd}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         ListEmptyComponent={
           <View style={s.empty}>
             <Text style={s.emptyIcon}>⭐</Text>
@@ -1722,6 +1608,7 @@ function HistoryItemComponent({
         },
       ]}
       borderRadius={28}
+      enableRipple={false}
       showOutline={false}
       showHighlight={false}
     >
@@ -1887,10 +1774,7 @@ function HistoryItemMenu({
           style={[s.actionMenuBackdrop, { backgroundColor: theme.backdrop }]}
           onPress={onClose}
         />
-        <View
-          style={s.listTouchRegion}
-          pointerEvents="box-none"
-        >
+        <View style={s.container} pointerEvents="box-none">
           <View
             style={[
               s.actionMenu,
@@ -1933,10 +1817,8 @@ const s = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingTop: 50,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
+    paddingBottom: 0,
     zIndex: 3,
-    elevation: 6,
   },
   headerTopRow: {
     flexDirection: 'row',
@@ -1953,6 +1835,10 @@ const s = StyleSheet.create({
     fontWeight: '500',
   },
   searchPill: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    top: 132,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 14,
@@ -1964,6 +1850,7 @@ const s = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 8,
+    zIndex: 4,
   },
   searchInput: {
     flex: 1,
@@ -1982,6 +1869,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     marginTop: 12,
+    marginBottom: 0,
   },
   sortControl: {
     flexDirection: 'row',
@@ -2037,11 +1925,8 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   listContent: {
-    paddingTop: 44,
+    paddingTop: 88,
     paddingBottom: 140,
-  },
-  listTouchRegion: {
-    flex: 1,
   },
   emptyListContent: {
     flexGrow: 1,
