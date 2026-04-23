@@ -548,8 +548,8 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
 
         Animated.timing(searchVisibility, {
           toValue: nextValue,
-          duration: 320,
-          easing: Easing.bezier(0.22, 1, 0.36, 1),
+          duration: 200,
+          easing: Easing.out(Easing.ease),
           useNativeDriver: false,
         }).start(({ finished }) => {
           if (!finished) {
@@ -688,12 +688,12 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
     scrollTravel.current += absDeltaY;
 
     if (nextDirection === 1) {
-      if (scrollTravel.current >= 32 && currentY > 72) {
+      if (scrollTravel.current >= 20 && currentY > 48) {
         setTabBarHidden(true);
         animateSearchVisibility(false);
         scrollTravel.current = 0;
       }
-    } else if (scrollTravel.current >= 24) {
+    } else if (scrollTravel.current >= 16) {
       setTabBarHidden(false);
       animateSearchVisibility(true);
       scrollTravel.current = 0;
@@ -1131,8 +1131,8 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
           s.listContent,
           sortedGroupedItems.length === 0 && s.emptyListContent,
         ]}
-        onMomentumScrollBegin={handleScroll}
-        onMomentumScrollEnd={handleScroll}
+        onScroll={handleScroll}
+        scrollEventThrottle={100}
         ListEmptyComponent={
           <View style={s.empty}>
             <Text style={s.emptyIcon}>⭐</Text>
