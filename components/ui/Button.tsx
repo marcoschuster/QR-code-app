@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { spacing, borderRadius, typography } from '../../constants/theme';
 import { useAppTheme } from '../../hooks/useAppTheme';
+import { PremiumPressable } from './PremiumPressable';
 
 interface ButtonProps {
   title: string;
@@ -117,15 +118,18 @@ export function Button({
   const buttonStyle = getButtonStyle();
 
   return (
-    <Pressable
-      style={({ pressed }) => [
+    <PremiumPressable
+      style={[
         styles.button,
         hasGradient && !disabled ? { ...buttonStyle, borderWidth: 0 } : buttonStyle,
         variant !== 'secondary' && !disabled ? { shadowColor: theme.shadow } : null,
-        pressed && styles.pressed,
       ]}
       onPress={onPress}
       disabled={disabled}
+      borderRadius={radius}
+      shadowColor={theme.shadow}
+      pressScale={0.978}
+      pressTranslateY={1}
     >
       {hasGradient && !disabled ? (
         <>
@@ -140,7 +144,7 @@ export function Button({
       ) : (
         buttonContent
       )}
-    </Pressable>
+    </PremiumPressable>
   );
 }
 
@@ -153,39 +157,12 @@ const styles = StyleSheet.create({
     shadowRadius: 22,
     elevation: 8,
   },
-  buttonWrapper: {
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
   absoluteGradient: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-  },
-  gradientBackground: {
-    flex: 1,
-  },
-  gradientWrapper: {
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  gradientContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  gradientContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-  },
-  pressed: {
-    opacity: 0.8,
-    transform: [{ scale: 0.97 }],
   },
   icon: {
     alignItems: 'center',

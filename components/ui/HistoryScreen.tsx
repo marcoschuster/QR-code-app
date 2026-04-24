@@ -27,6 +27,7 @@ import { Button } from './Button';
 import { Card } from './Card';
 import { ConfirmDialog } from './ConfirmDialog';
 import { LiquidGlassSurface } from './LiquidGlassSurface';
+import { PremiumPressable } from './PremiumPressable';
 import { SuccessDialog } from './SuccessDialog';
 
 const getDomainFromUrl = (url: string) => {
@@ -988,9 +989,11 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
       >
         <View style={s.headerTopRow}>
           <Text style={[s.headerTitle, { color: theme.text.primary }]}>History</Text>
-          <Pressable onPress={handleClearAll}>
-            <Text style={[s.clearBtn, { color: theme.danger }]}>Clear All</Text>
-          </Pressable>
+          <PremiumPressable onPress={handleClearAll} borderRadius={14} pressScale={0.985} pressTranslateY={1}>
+            <View style={s.clearButtonInner}>
+              <Text style={[s.clearBtn, { color: theme.danger }]}>Clear All</Text>
+            </View>
+          </PremiumPressable>
         </View>
         <View style={s.headerControlsRow}>
           <View
@@ -1023,10 +1026,12 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
                 </View>
               )}
             </Animated.View>
-            <Pressable
+            <PremiumPressable
               style={s.sortOption}
               onPress={() => setSortMode('date')}
-              android_ripple={{ color: 'transparent' }}
+              borderRadius={12}
+              pressScale={0.988}
+              pressTranslateY={1}
             >
               <View style={s.sortOptionContent}>
                 <Ionicons
@@ -1043,11 +1048,13 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
                   Date
                 </Text>
               </View>
-            </Pressable>
-            <Pressable
+            </PremiumPressable>
+            <PremiumPressable
               style={s.sortOption}
               onPress={() => setSortMode('name')}
-              android_ripple={{ color: 'transparent' }}
+              borderRadius={12}
+              pressScale={0.988}
+              pressTranslateY={1}
             >
               <View style={s.sortOptionContent}>
                 <Ionicons
@@ -1064,10 +1071,10 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
                   Name
                 </Text>
               </View>
-            </Pressable>
+            </PremiumPressable>
           </View>
 
-          <Pressable
+          <PremiumPressable
             style={[
               s.headerActionButton,
               {
@@ -1076,18 +1083,23 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
               },
             ]}
             onPress={() => setShowOnlyFavorites((prev) => !prev)}
+            borderRadius={16}
+            pressScale={0.982}
+            pressTranslateY={1}
           >
-            <Ionicons
-              name={showOnlyFavorites ? 'star' : 'star-outline'}
-              size={15}
-              color={showOnlyFavorites ? '#FFFFFF' : theme.text.secondary}
-            />
-            <Text style={[s.headerActionButtonText, { color: showOnlyFavorites ? '#FFFFFF' : theme.text.secondary }]}>
-              Favs
-            </Text>
-          </Pressable>
+            <View style={s.headerActionButtonContent}>
+              <Ionicons
+                name={showOnlyFavorites ? 'star' : 'star-outline'}
+                size={15}
+                color={showOnlyFavorites ? '#FFFFFF' : theme.text.secondary}
+              />
+              <Text style={[s.headerActionButtonText, { color: showOnlyFavorites ? '#FFFFFF' : theme.text.secondary }]}>
+                Favs
+              </Text>
+            </View>
+          </PremiumPressable>
 
-          <Pressable
+          <PremiumPressable
             style={[
               s.headerIconButton,
               {
@@ -1096,13 +1108,18 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
               },
             ]}
             onPress={() => setIsSortReversed((prev) => !prev)}
+            borderRadius={16}
+            pressScale={0.982}
+            pressTranslateY={1}
           >
-            <Ionicons
-              name="swap-vertical-outline"
-              size={16}
-              color={isSortReversed ? '#FFFFFF' : theme.text.secondary}
-            />
-          </Pressable>
+            <View style={s.headerIconButtonContent}>
+              <Ionicons
+                name="swap-vertical-outline"
+                size={16}
+                color={isSortReversed ? '#FFFFFF' : theme.text.secondary}
+              />
+            </View>
+          </PremiumPressable>
         </View>
       </View>
 
@@ -1844,6 +1861,10 @@ const s = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
+  clearButtonInner: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
   searchPill: {
     position: 'absolute',
     left: 20,
@@ -1937,14 +1958,17 @@ const s = StyleSheet.create({
     fontWeight: '600',
   },
   headerActionButton: {
+    minHeight: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  headerActionButtonContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
-    minHeight: 32,
-    borderRadius: 16,
-    borderWidth: 1,
     paddingHorizontal: 10,
+    minHeight: 32,
   },
   headerActionButtonText: {
     fontSize: 11,
@@ -1955,6 +1979,10 @@ const s = StyleSheet.create({
     height: 32,
     borderRadius: 16,
     borderWidth: 1,
+  },
+  headerIconButtonContent: {
+    width: 32,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
   },
