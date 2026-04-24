@@ -1838,7 +1838,7 @@ const s = StyleSheet.create({
     position: 'absolute',
     left: 20,
     right: 20,
-    top: 132,
+    top: 124,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 14,
@@ -1925,7 +1925,7 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   listContent: {
-    paddingTop: 88,
+    paddingTop: 80,
     paddingBottom: 140,
   },
   emptyListContent: {

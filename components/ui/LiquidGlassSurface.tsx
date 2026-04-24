@@ -207,9 +207,9 @@ export function LiquidGlassSurface({
     <View
       style={style}
       onLayout={handleLayout}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      onTouchCancel={handleTouchEnd}
+      onTouchStart={enableRipple ? handleTouchStart : undefined}
+      onTouchEnd={enableRipple ? handleTouchEnd : undefined}
+      onTouchCancel={enableRipple ? handleTouchEnd : undefined}
     >
       {/* Depth pulse glow */}
       <Animated.View
