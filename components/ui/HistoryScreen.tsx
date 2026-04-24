@@ -398,6 +398,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
   const [isSortReversed, setIsSortReversed] = useState(false);
   const [insightsCollapsed, setInsightsCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortControlWidth, setSortControlWidth] = useState(0);
   const [confirmDialog, setConfirmDialog] = useState<{
     visible: boolean;
     title: string;
@@ -425,6 +426,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
   const lastScrollY = useRef(0);
   const tabBarHidden = useRef(false);
   const searchVisibility = useRef(new Animated.Value(1)).current;
+  const sortIndicatorProgress = useRef(new Animated.Value(sortMode === 'name' ? 1 : 0)).current;
   const searchMotionState = useRef<VisibilityMotionState>('visible');
   const scrollDirection = useRef<-1 | 0 | 1>(0);
   const scrollTravel = useRef(0);
@@ -462,6 +464,10 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
     inputRange: [0, 1],
     outputRange: [0.985, 1],
   });
+  const sortIndicatorTranslateX = sortIndicatorProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, Math.max((sortControlWidth - 4) / 2, 0)],
+  });
 
   useEffect(() => {
     if (selectedItem) {
@@ -469,6 +475,15 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
       setEditingNameValue(selectedItem.name || getHistoryItemName(selectedItem));
     }
   }, [selectedItem]);
+
+  useEffect(() => {
+    Animated.timing(sortIndicatorProgress, {
+      toValue: sortMode === 'name' ? 1 : 0,
+      duration: 360,
+      easing: Easing.bezier(0.22, 1, 0.36, 1),
+      useNativeDriver: true,
+    }).start();
+  }, [sortIndicatorProgress, sortMode]);
 
   const handleSaveName = () => {
     if (selectedItem) {
@@ -978,82 +993,77 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
           </Pressable>
         </View>
         <View style={s.headerControlsRow}>
-          <View style={[s.sortControl, { backgroundColor: theme.surfaceStrong, borderColor: theme.border }]}>
-            <Pressable
-              style={[s.sortOption, sortMode === 'date' && !theme.accentGradient && { backgroundColor: theme.accent }]}
-              onPress={() => setSortMode('date')}
+          <View
+            style={[s.sortControl, { backgroundColor: theme.surfaceStrong, borderColor: theme.border }]}
+            onLayout={(event) => setSortControlWidth(event.nativeEvent.layout.width)}
+          >
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                s.sortIndicator,
+                {
+                  width: Math.max((sortControlWidth - 4) / 2, 0),
+                  transform: [{ translateX: sortIndicatorTranslateX }],
+                  shadowColor: theme.shadow,
+                },
+              ]}
             >
-              {sortMode === 'date' && theme.accentGradient && theme.accentGradient.length >= 2 ? (
+              {theme.accentGradient && theme.accentGradient.length >= 2 ? (
                 <LinearGradient
                   colors={theme.accentGradient as any}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
-                  style={[s.sortOptionGradient, { borderWidth: 1, borderColor: theme.accent }]}
+                  style={[s.sortIndicatorFill, { borderColor: theme.accent }]}
                 >
-                  <Ionicons
-                    name="time-outline"
-                    size={13}
-                    color="#FFFFFF"
-                  />
-                  <Text style={[s.sortOptionText, { color: '#FFFFFF' }]}>
-                    Date
-                  </Text>
+                  <View style={s.sortIndicatorSheen} />
                 </LinearGradient>
               ) : (
-                <>
-                  <Ionicons
-                    name="time-outline"
-                    size={13}
-                    color={sortMode === 'date' ? '#FFFFFF' : theme.text.secondary}
-                  />
-                  <Text
-                    style={[
-                      s.sortOptionText,
-                      { color: sortMode === 'date' ? '#FFFFFF' : theme.text.secondary },
-                    ]}
-                  >
-                    Date
-                  </Text>
-                </>
+                <View style={[s.sortIndicatorFill, { backgroundColor: theme.accent, borderColor: theme.accent }]}>
+                  <View style={s.sortIndicatorSheen} />
+                </View>
               )}
+            </Animated.View>
+            <Pressable
+              style={s.sortOption}
+              onPress={() => setSortMode('date')}
+              android_ripple={{ color: 'transparent' }}
+            >
+              <View style={s.sortOptionContent}>
+                <Ionicons
+                  name="time-outline"
+                  size={13}
+                  color={sortMode === 'date' ? '#FFFFFF' : theme.text.secondary}
+                />
+                <Text
+                  style={[
+                    s.sortOptionText,
+                    { color: sortMode === 'date' ? '#FFFFFF' : theme.text.secondary },
+                  ]}
+                >
+                  Date
+                </Text>
+              </View>
             </Pressable>
             <Pressable
-              style={[s.sortOption, sortMode === 'name' && !theme.accentGradient && { backgroundColor: theme.accent }]}
+              style={s.sortOption}
               onPress={() => setSortMode('name')}
+              android_ripple={{ color: 'transparent' }}
             >
-              {sortMode === 'name' && theme.accentGradient && theme.accentGradient.length >= 2 ? (
-                <LinearGradient
-                  colors={theme.accentGradient as any}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={[s.sortOptionGradient, { borderWidth: 1, borderColor: theme.accent }]}
+              <View style={s.sortOptionContent}>
+                <Ionicons
+                  name="text-outline"
+                  size={13}
+                  color={sortMode === 'name' ? '#FFFFFF' : theme.text.secondary}
+                />
+                <Text
+                  style={[
+                    s.sortOptionText,
+                    { color: sortMode === 'name' ? '#FFFFFF' : theme.text.secondary },
+                  ]}
                 >
-                  <Ionicons
-                    name="text-outline"
-                    size={13}
-                    color="#FFFFFF"
-                  />
-                  <Text style={[s.sortOptionText, { color: '#FFFFFF' }]}>
-                    Name
-                  </Text>
-                </LinearGradient>
-              ) : (
-                <>
-                  <Ionicons
-                    name="text-outline"
-                    size={13}
-                    color={sortMode === 'name' ? '#FFFFFF' : theme.text.secondary}
-                  />
-                  <Text
-                    style={[
-                      s.sortOptionText,
-                      { color: sortMode === 'name' ? '#FFFFFF' : theme.text.secondary },
-                    ]}
-                  >
-                    Name
-                  </Text>
-                </>
-              )}
+                  Name
+                </Text>
+              </View>
             </Pressable>
           </View>
 
@@ -1877,18 +1887,42 @@ const s = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     padding: 2,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  sortIndicator: {
+    position: 'absolute',
+    top: 2,
+    bottom: 2,
+    left: 2,
+    borderRadius: 12,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 14,
+    elevation: 6,
+  },
+  sortIndicatorFill: {
+    flex: 1,
+    borderRadius: 12,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  sortIndicatorSheen: {
+    position: 'absolute',
+    top: -8,
+    bottom: -8,
+    width: '46%',
+    right: 6,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    transform: [{ rotate: '12deg' }],
   },
   sortOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    paddingHorizontal: 7,
-    paddingVertical: 5,
-    borderRadius: 12,
     flex: 1,
+    borderRadius: 12,
+    zIndex: 1,
   },
-  sortOptionGradient: {
+  sortOptionContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1896,7 +1930,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 7,
     paddingVertical: 5,
     borderRadius: 12,
-    width: '100%',
+    minHeight: 28,
   },
   sortOptionText: {
     fontSize: 11,
