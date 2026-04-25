@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     left: 0,
     width: ACTIVE_PILL_WIDTH,
     height: ACTIVE_PILL_HEIGHT,
-    borderRadius: ACTIVE_PILL_HEIGHT / 2,
+    borderRadius: 16,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.12,
     shadowRadius: 14,
