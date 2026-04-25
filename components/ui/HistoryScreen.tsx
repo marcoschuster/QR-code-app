@@ -1918,7 +1918,6 @@ const s = StyleSheet.create({
     top: 2,
     bottom: 2,
     left: 2,
-    borderRadius: 12,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.18,
     shadowRadius: 14,
