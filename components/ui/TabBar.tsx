@@ -87,8 +87,8 @@ export function TabBar({ activeTab, onTabChange, hidden = false, onToggleHidden 
   });
 
   const activePillScale = activeProgress.interpolate({
-    inputRange: [0, 0.5, 1, 1.5, 2],
-    outputRange: [1, 1.1, 1, 1.1, 1],
+    inputRange: [0, 0.3, 0.7, 1, 1.3, 1.7, 2],
+    outputRange: [1, 0.7, 0.85, 1, 0.7, 0.85, 1],
   });
 
   useEffect(() => {
