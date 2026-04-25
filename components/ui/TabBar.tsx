@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
   },
   activePill: {
     position: 'absolute',
-    top: 8,
+    top: 12,
     left: 0,
     width: ACTIVE_PILL_WIDTH,
     height: ACTIVE_PILL_HEIGHT,

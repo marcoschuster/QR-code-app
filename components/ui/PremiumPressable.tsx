@@ -145,7 +145,6 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   pressable: {
-    overflow: 'hidden',
   },
   sheenWrap: {
     position: 'absolute',
