@@ -1029,6 +1029,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
             <PremiumPressable
               style={s.sortOption}
               onPress={() => setSortMode('date')}
+              borderRadius={12}
               pressScale={0.988}
               pressTranslateY={1}
               enableSheen={false}
@@ -1052,6 +1053,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
             <PremiumPressable
               style={s.sortOption}
               onPress={() => setSortMode('name')}
+              borderRadius={12}
               pressScale={0.988}
               pressTranslateY={1}
               enableSheen={false}
@@ -1905,6 +1907,7 @@ const s = StyleSheet.create({
   sortControl: {
     flexDirection: 'row',
     flex: 1,
+    borderRadius: 16,
     borderWidth: 1,
     padding: 2,
     position: 'relative',
@@ -1915,6 +1918,7 @@ const s = StyleSheet.create({
     top: 2,
     bottom: 2,
     left: 2,
+    borderRadius: 12,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.18,
     shadowRadius: 14,
@@ -1922,7 +1926,7 @@ const s = StyleSheet.create({
   },
   sortIndicatorFill: {
     flex: 1,
-    borderWidth: 0,
+    borderRadius: 12,
     overflow: 'hidden',
   },
   sortIndicatorSheen: {
@@ -1931,11 +1935,13 @@ const s = StyleSheet.create({
     bottom: 0,
     width: '38%',
     right: 4,
+    borderRadius: 12,
     backgroundColor: 'rgba(255,255,255,0.10)',
     transform: [{ rotate: '12deg' }],
   },
   sortOption: {
     flex: 1,
+    borderRadius: 12,
     zIndex: 1,
   },
   sortOptionContent: {
@@ -1945,6 +1951,7 @@ const s = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 7,
     paddingVertical: 5,
+    borderRadius: 12,
     minHeight: 28,
   },
   sortOptionText: {
