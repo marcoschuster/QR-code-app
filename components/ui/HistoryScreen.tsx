@@ -1016,12 +1016,12 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
                   colors={theme.accentGradient as any}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
-                  style={[s.sortIndicatorFill, { borderColor: theme.accent }]}
+                  style={s.sortIndicatorFill}
                 >
                   <View style={s.sortIndicatorSheen} />
                 </LinearGradient>
               ) : (
-                <View style={[s.sortIndicatorFill, { backgroundColor: theme.accent, borderColor: theme.accent }]}>
+                <View style={[s.sortIndicatorFill, { backgroundColor: theme.accent }]}>
                   <View style={s.sortIndicatorSheen} />
                 </View>
               )}
@@ -1032,6 +1032,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
               borderRadius={12}
               pressScale={0.988}
               pressTranslateY={1}
+              enableSheen={false}
             >
               <View style={s.sortOptionContent}>
                 <Ionicons
@@ -1055,6 +1056,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
               borderRadius={12}
               pressScale={0.988}
               pressTranslateY={1}
+              enableSheen={false}
             >
               <View style={s.sortOptionContent}>
                 <Ionicons
@@ -1925,17 +1927,17 @@ const s = StyleSheet.create({
   sortIndicatorFill: {
     flex: 1,
     borderRadius: 12,
-    borderWidth: 1,
+    borderWidth: 0,
     overflow: 'hidden',
   },
   sortIndicatorSheen: {
     position: 'absolute',
-    top: -8,
-    bottom: -8,
-    width: '46%',
-    right: 6,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.18)',
+    top: 0,
+    bottom: 0,
+    width: '38%',
+    right: 4,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.10)',
     transform: [{ rotate: '12deg' }],
   },
   sortOption: {
