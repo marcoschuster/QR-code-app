@@ -148,7 +148,7 @@ export function TabBar({ activeTab, onTabChange, hidden = false, onToggleHidden 
                   >
                     <Ionicons
                       name={(isActive ? tab.activeIcon : tab.icon) as keyof typeof Ionicons.glyphMap}
-                      size={24}
+                      size={isActive ? 28 : 26}
                       color={isActive ? theme.accent : theme.text.secondary}
                     />
                   </View>
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
   },
   activePill: {
     position: 'absolute',
-    top: 10,
+    top: 6,
     left: 0,
     width: ACTIVE_PILL_WIDTH,
     height: ACTIVE_PILL_HEIGHT,
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   label: {
-    marginTop: 4,
+    marginTop: 2,
     textAlign: 'center',
     fontFamily: typography.fontFamily,
     fontSize: 12,
