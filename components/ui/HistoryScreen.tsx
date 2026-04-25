@@ -1952,7 +1952,6 @@ const s = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 7,
     paddingVertical: 5,
-    borderRadius: 12,
     minHeight: 28,
   },
   sortOptionText: {
