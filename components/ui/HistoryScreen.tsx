@@ -1017,13 +1017,9 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={s.sortIndicatorFill}
-                >
-                  <View style={s.sortIndicatorSheen} />
-                </LinearGradient>
+                />
               ) : (
-                <View style={[s.sortIndicatorFill, { backgroundColor: theme.accent }]}>
-                  <View style={s.sortIndicatorSheen} />
-                </View>
+                <View style={[s.sortIndicatorFill, { backgroundColor: theme.accent }]} />
               )}
             </Animated.View>
             <PremiumPressable
@@ -1034,7 +1030,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
               pressTranslateY={1}
               enableSheen={false}
             >
-              <View style={s.sortOptionContent}>
+              <View style={[s.sortOptionContent, { backgroundColor: 'transparent' }]}>
                 <Ionicons
                   name="time-outline"
                   size={13}
@@ -1058,7 +1054,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
               pressTranslateY={1}
               enableSheen={false}
             >
-              <View style={s.sortOptionContent}>
+              <View style={[s.sortOptionContent, { backgroundColor: 'transparent' }]}>
                 <Ionicons
                   name="text-outline"
                   size={13}
@@ -1871,7 +1867,7 @@ const s = StyleSheet.create({
     position: 'absolute',
     left: 20,
     right: 20,
-    top: 124,
+    top: 140,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 14,
