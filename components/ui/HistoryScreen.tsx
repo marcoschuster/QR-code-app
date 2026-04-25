@@ -1029,7 +1029,6 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
             <PremiumPressable
               style={s.sortOption}
               onPress={() => setSortMode('date')}
-              borderRadius={12}
               pressScale={0.988}
               pressTranslateY={1}
               enableSheen={false}
@@ -1053,7 +1052,6 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
             <PremiumPressable
               style={s.sortOption}
               onPress={() => setSortMode('name')}
-              borderRadius={12}
               pressScale={0.988}
               pressTranslateY={1}
               enableSheen={false}
