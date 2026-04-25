@@ -109,7 +109,7 @@ export function Button({
   const buttonContent = (
     <>
       {icon && <View style={styles.icon}>{icon}</View>}
-      <Text style={getTextStyle()} numberOfLines={1} ellipsizeMode="tail">
+      <Text style={getTextStyle()}>
         {title}
       </Text>
     </>
