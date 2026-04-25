@@ -1907,7 +1907,6 @@ const s = StyleSheet.create({
   sortControl: {
     flexDirection: 'row',
     flex: 1,
-    borderRadius: 16,
     borderWidth: 1,
     padding: 2,
     position: 'relative',
