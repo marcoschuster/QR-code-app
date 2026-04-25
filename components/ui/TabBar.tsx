@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Animated, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppTheme } from '../../hooks/useAppTheme';
@@ -13,11 +13,18 @@ interface TabBarProps {
 }
 
 type TabBarMotionState = 'shown' | 'showing' | 'hidden' | 'hiding';
+const TAB_BAR_WIDTH = 270;
+const TAB_BAR_HORIZONTAL_PADDING = 20;
+const TAB_GAP = 12;
+const ACTIVE_PILL_WIDTH = 72;
+const ACTIVE_PILL_HEIGHT = 68;
 
 export function TabBar({ activeTab, onTabChange, hidden = false, onToggleHidden }: TabBarProps) {
   const { theme } = useAppTheme();
   const progress = useRef(new Animated.Value(0)).current;
+  const activeProgress = useRef(new Animated.Value(0)).current;
   const motionState = useRef<TabBarMotionState>('shown');
+  const [tabBarWidth, setTabBarWidth] = useState(TAB_BAR_WIDTH);
   const translateY = progress.interpolate({
     inputRange: [0, 1],
     outputRange: [0, 120],
@@ -66,6 +73,27 @@ export function TabBar({ activeTab, onTabChange, hidden = false, onToggleHidden 
     { id: 'generate', icon: 'qr-code-outline', activeIcon: 'qr-code', label: 'Generate' },
     { id: 'history', icon: 'time-outline', activeIcon: 'time', label: 'History' },
   ];
+  const activeIndex = Math.max(0, tabs.findIndex((tab) => tab.id === activeTab));
+  const tabSlotWidth =
+    (tabBarWidth - TAB_BAR_HORIZONTAL_PADDING * 2 - TAB_GAP * (tabs.length - 1)) / tabs.length;
+  const activePillTranslateX = activeProgress.interpolate({
+    inputRange: tabs.map((_, index) => index),
+    outputRange: tabs.map(
+      (_, index) =>
+        TAB_BAR_HORIZONTAL_PADDING +
+        index * (tabSlotWidth + TAB_GAP) +
+        (tabSlotWidth - ACTIVE_PILL_WIDTH) / 2
+    ),
+  });
+
+  useEffect(() => {
+    Animated.spring(activeProgress, {
+      toValue: activeIndex,
+      friction: 9,
+      tension: 150,
+      useNativeDriver: true,
+    }).start();
+  }, [activeIndex, activeProgress]);
 
   return (
     <Animated.View
@@ -82,7 +110,21 @@ export function TabBar({ activeTab, onTabChange, hidden = false, onToggleHidden 
         style={styles.shell}
       >
         <LiquidGlassSurface borderRadius={32} style={styles.shellSurface} blurIntensity={46}>
-          <View style={styles.tabBar}>
+          <View
+            style={styles.tabBar}
+            onLayout={(event) => setTabBarWidth(event.nativeEvent.layout.width)}
+          >
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                styles.activePill,
+                {
+                  backgroundColor: theme.glassHighlight,
+                  shadowColor: theme.accent,
+                  transform: [{ translateX: activePillTranslateX }],
+                },
+              ]}
+            />
             {tabs.map((tab) => {
               const isActive = activeTab === tab.id;
               return (
@@ -97,10 +139,6 @@ export function TabBar({ activeTab, onTabChange, hidden = false, onToggleHidden 
                   <View
                     style={[
                       styles.iconContainer,
-                      isActive && {
-                        backgroundColor: theme.glassHighlight,
-                        borderColor: theme.border,
-                      },
                     ]}
                   >
                     <Ionicons
@@ -156,6 +194,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     width: 270,
     gap: 12,
+    position: 'relative',
   },
   tab: {
     flex: 1,
@@ -170,15 +209,18 @@ const styles = StyleSheet.create({
     minWidth: 40,
     height: 32,
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'transparent',
   },
-  activeDot: {
+  activePill: {
     position: 'absolute',
-    bottom: -4,
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+    top: 5,
+    left: 0,
+    width: ACTIVE_PILL_WIDTH,
+    height: ACTIVE_PILL_HEIGHT,
+    borderRadius: ACTIVE_PILL_HEIGHT / 2,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    elevation: 3,
   },
   label: {
     marginTop: 4,
