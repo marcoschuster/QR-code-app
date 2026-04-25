@@ -4,10 +4,13 @@ import { useRouter } from 'expo-router';
 import { ScannerScreen } from '../../components/scanner/CameraView';
 import { ScanResultSheet } from '../../components/scanner/ScanResultSheet';
 import { TabBar } from '../../components/ui/TabBar';
+import { HistoryScreen } from '../../components/ui/HistoryScreen';
+import { QrGeneratorContent } from '../../components/generator/QrGeneratorContent';
 import { ScanSafetyState } from '../../constants/types';
 import { useHistoryStore } from '../../store/useHistoryStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { checkUrlSafety, getThreatCheckSourceHint } from '../../services/threatCheck';
+import { useAppTheme } from '../../hooks/useAppTheme';
 
 const MIN_THREAT_CHECK_INDICATOR_MS = 600;
 const MAX_THREAT_CHECK_WAIT_MS = 3500;
@@ -28,6 +31,7 @@ async function resolveThreatCheck(url: string) {
 
 export default function ScannerTab() {
   const router = useRouter();
+  const { theme, isDark } = useAppTheme();
   const [activeTab, setActiveTab] = useState('scan');
   const [scanResult, setScanResult] = useState<any>(null);
   const [showResult, setShowResult] = useState(false);
@@ -150,8 +154,6 @@ export default function ScannerTab() {
   };
 
   const handleTabChange = (tab: string) => {
-    if (tab === 'generate') { router.push('/(tabs)/generate'); return; }
-    if (tab === 'history') { router.push('/(tabs)/history'); return; }
     setActiveTab(tab);
   };
 
@@ -211,8 +213,8 @@ export default function ScannerTab() {
   ).current;
 
   return (
-    <View style={st.root} {...panResponder.panHandlers}>
-      <StatusBar hidden />
+    <View style={[st.root, { backgroundColor: activeTab === 'scan' ? '#000' : theme.background }]} {...panResponder.panHandlers}>
+      <StatusBar hidden={activeTab === 'scan'} barStyle={isDark ? 'light-content' : 'dark-content'} />
 
       {activeTab === 'scan' && (
         <ScannerScreen
@@ -224,6 +226,10 @@ export default function ScannerTab() {
         />
       )}
 
+      {activeTab === 'history' && <HistoryScreen />}
+
+      {activeTab === 'generate' && <QrGeneratorContent />}
+
       <Modal
         visible={showResult && scanResult !== null}
         animationType="slide"
@@ -232,10 +238,10 @@ export default function ScannerTab() {
       >
         <View style={st.modalOverlay}>
           {scanResult ? (
-            <ScanResultSheet 
-              visible={showResult} 
-              data={scanResult} 
-              onClose={handleCloseResult} 
+            <ScanResultSheet
+              visible={showResult}
+              data={scanResult}
+              onClose={handleCloseResult}
             />
           ) : null}
         </View>

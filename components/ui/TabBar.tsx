@@ -70,8 +70,8 @@ export function TabBar({ activeTab, onTabChange, hidden = false, onToggleHidden 
 
   const tabs = [
     { id: 'scan', icon: 'camera-outline', activeIcon: 'camera', label: 'Scan' },
-    { id: 'generate', icon: 'qr-code-outline', activeIcon: 'qr-code', label: 'Generate' },
     { id: 'history', icon: 'time-outline', activeIcon: 'time', label: 'History' },
+    { id: 'generate', icon: 'qr-code-outline', activeIcon: 'qr-code', label: 'Generate' },
   ];
   const activeIndex = Math.max(0, tabs.findIndex((tab) => tab.id === activeTab));
   const tabSlotWidth =
