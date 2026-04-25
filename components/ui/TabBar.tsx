@@ -17,7 +17,7 @@ const TAB_BAR_WIDTH = 270;
 const TAB_BAR_HORIZONTAL_PADDING = 20;
 const TAB_GAP = 12;
 const ACTIVE_PILL_WIDTH = 72;
-const ACTIVE_PILL_HEIGHT = 68;
+const ACTIVE_PILL_HEIGHT = 73;
 
 export function TabBar({ activeTab, onTabChange, hidden = false, onToggleHidden }: TabBarProps) {
   const { theme } = useAppTheme();
