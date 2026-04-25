@@ -1938,7 +1938,6 @@ const s = StyleSheet.create({
   },
   sortOption: {
     flex: 1,
-    borderRadius: 12,
     zIndex: 1,
   },
   sortOptionContent: {
