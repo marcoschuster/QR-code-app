@@ -16,8 +16,8 @@ type TabBarMotionState = 'shown' | 'showing' | 'hidden' | 'hiding';
 const TAB_BAR_WIDTH = 270;
 const TAB_BAR_HORIZONTAL_PADDING = 20;
 const TAB_GAP = 12;
-const ACTIVE_PILL_WIDTH = 72;
-const ACTIVE_PILL_HEIGHT = 73;
+const ACTIVE_PILL_WIDTH = 80;
+const ACTIVE_PILL_HEIGHT = 80;
 
 export function TabBar({ activeTab, onTabChange, hidden = false, onToggleHidden }: TabBarProps) {
   const { theme } = useAppTheme();
@@ -86,6 +86,11 @@ export function TabBar({ activeTab, onTabChange, hidden = false, onToggleHidden 
     ),
   });
 
+  const activePillScale = activeProgress.interpolate({
+    inputRange: [0, 0.5, 1, 1.5, 2],
+    outputRange: [1, 1.1, 1, 1.1, 1],
+  });
+
   useEffect(() => {
     Animated.spring(activeProgress, {
       toValue: activeIndex,
@@ -121,7 +126,7 @@ export function TabBar({ activeTab, onTabChange, hidden = false, onToggleHidden 
                 {
                   backgroundColor: theme.glassHighlight,
                   shadowColor: theme.accent,
-                  transform: [{ translateX: activePillTranslateX }],
+                  transform: [{ translateX: activePillTranslateX }, { scale: activePillScale }],
                 },
               ]}
             />
@@ -212,11 +217,11 @@ const styles = StyleSheet.create({
   },
   activePill: {
     position: 'absolute',
-    top: 12,
+    top: 10,
     left: 0,
     width: ACTIVE_PILL_WIDTH,
     height: ACTIVE_PILL_HEIGHT,
-    borderRadius: 16,
+    borderRadius: ACTIVE_PILL_HEIGHT / 2,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.12,
     shadowRadius: 14,
