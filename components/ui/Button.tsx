@@ -151,7 +151,6 @@ export function Button({
 const styles = StyleSheet.create({
   button: {
     gap: spacing.sm,
-    overflow: 'hidden',
     shadowOffset: { width: 0, height: 14 },
     shadowOpacity: 0.18,
     shadowRadius: 22,

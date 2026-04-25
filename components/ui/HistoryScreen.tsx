@@ -1913,6 +1913,10 @@ const s = StyleSheet.create({
     padding: 2,
     position: 'relative',
     overflow: 'hidden',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 4,
   },
   sortIndicator: {
     position: 'absolute',
