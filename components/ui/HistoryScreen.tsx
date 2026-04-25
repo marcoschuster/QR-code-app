@@ -1007,7 +1007,6 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
                 {
                   width: Math.max((sortControlWidth - 4) / 2, 0),
                   transform: [{ translateX: sortIndicatorTranslateX }],
-                  shadowColor: theme.shadow,
                 },
               ]}
             >
@@ -1862,6 +1861,11 @@ const s = StyleSheet.create({
   clearButtonInner: {
     paddingHorizontal: 6,
     paddingVertical: 2,
+    shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
   },
   searchPill: {
     position: 'absolute',
@@ -1915,10 +1919,6 @@ const s = StyleSheet.create({
     bottom: 2,
     left: 2,
     borderRadius: 12,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
-    shadowRadius: 14,
-    elevation: 6,
   },
   sortIndicatorFill: {
     flex: 1,
