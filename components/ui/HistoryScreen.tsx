@@ -989,7 +989,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
       >
         <View style={s.headerTopRow}>
           <Text style={[s.headerTitle, { color: theme.text.primary }]}>History</Text>
-          <PremiumPressable onPress={handleClearAll} borderRadius={14} pressScale={0.985} pressTranslateY={1}>
+          <PremiumPressable onPress={handleClearAll} borderRadius={14} shadowColor='transparent' pressScale={0.985} pressTranslateY={1}>
             <View style={s.clearButtonInner}>
               <Text style={[s.clearBtn, { color: theme.danger }]}>Clear All</Text>
             </View>
@@ -1025,6 +1025,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
               style={s.sortOption}
               onPress={() => setSortMode('date')}
               borderRadius={12}
+              shadowColor='transparent'
               pressScale={0.988}
               pressTranslateY={1}
               enableSheen={false}
@@ -1049,6 +1050,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
               style={s.sortOption}
               onPress={() => setSortMode('name')}
               borderRadius={12}
+              shadowColor='transparent'
               pressScale={0.988}
               pressTranslateY={1}
               enableSheen={false}
