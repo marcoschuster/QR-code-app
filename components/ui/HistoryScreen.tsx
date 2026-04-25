@@ -1935,7 +1935,6 @@ const s = StyleSheet.create({
     bottom: 0,
     width: '38%',
     right: 4,
-    borderRadius: 12,
     backgroundColor: 'rgba(255,255,255,0.10)',
     transform: [{ rotate: '12deg' }],
   },
