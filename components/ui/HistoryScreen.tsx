@@ -997,7 +997,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
         </View>
         <View style={s.headerControlsRow}>
           <View
-            style={[s.sortControl, { backgroundColor: theme.surfaceStrong, borderColor: theme.border }]}
+            style={[s.sortControl, { backgroundColor: theme.surfaceStrong }]}
             onLayout={(event) => setSortControlWidth(event.nativeEvent.layout.width)}
           >
             <Animated.View
@@ -1910,7 +1910,6 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     flex: 1,
     borderRadius: 16,
-    borderWidth: 1,
     padding: 2,
     position: 'relative',
     overflow: 'hidden',
