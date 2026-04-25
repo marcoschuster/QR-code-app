@@ -1926,7 +1926,6 @@ const s = StyleSheet.create({
   },
   sortIndicatorFill: {
     flex: 1,
-    borderRadius: 12,
     borderWidth: 0,
     overflow: 'hidden',
   },
