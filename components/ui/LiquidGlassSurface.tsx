@@ -195,12 +195,12 @@ export function LiquidGlassSurface({
 
   const whitePulseOpacity = pulseOpacity.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 0.7],
+    outputRange: [0, isDark ? 0.25 : 0.7],
   });
 
   const accentPulseOpacity = pulseOpacity.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 0.65],
+    outputRange: [0, isDark ? 0.4 : 0.65],
   });
 
   return (
@@ -219,6 +219,8 @@ export function LiquidGlassSurface({
           {
             borderRadius: borderRadius + 24,
             opacity: whitePulseOpacity,
+            backgroundColor: isDark ? theme.accent : 'rgba(255,255,255,0.08)',
+            shadowColor: isDark ? theme.accent : '#FFFFFF',
             transform: [
               { translateX: pulseTranslateX },
               { translateY: pulseTranslateY },
@@ -243,6 +245,8 @@ export function LiquidGlassSurface({
           {
             borderRadius: borderRadius + 32,
             opacity: accentPulseOpacity,
+            backgroundColor: isDark ? theme.accent : 'rgba(255,255,255,0.06)',
+            shadowColor: isDark ? theme.accent : '#ffffff',
             transform: [
               { translateX: pulseTranslateX },
               { translateY: pulseTranslateY },
@@ -268,6 +272,7 @@ export function LiquidGlassSurface({
             borderRadius: borderRadius + 18,
             shadowColor: theme.accent,
             opacity: accentPulseOpacity,
+            backgroundColor: isDark ? theme.accent : 'rgba(255,255,255,0.05)',
             transform: [
               { translateX: pulseTranslateX },
               { translateY: pulseTranslateY },
@@ -337,7 +342,10 @@ export function LiquidGlassSurface({
 
       {/* Iridescent gloss overlay */}
       <LinearGradient
-        colors={['rgba(255,255,255,0.45)', 'rgba(180,200,255,0.15)', 'rgba(255,180,220,0.12)', 'rgba(255,255,255,0.3)'] as any}
+        colors={isDark 
+          ? ['rgba(255,255,255,0.12)', 'rgba(180,200,255,0.06)', 'rgba(255,180,220,0.05)', 'rgba(255,255,255,0.08)'] as any
+          : ['rgba(255,255,255,0.45)', 'rgba(180,200,255,0.15)', 'rgba(255,180,220,0.12)', 'rgba(255,255,255,0.3)'] as any
+        }
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[StyleSheet.absoluteFillObject, styles.iridescentOverlay, { borderRadius }]}

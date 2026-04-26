@@ -11,11 +11,11 @@ interface ChipProps {
 }
 
 export function Chip({ title, selected = false, onPress }: ChipProps) {
-  const { theme } = useAppTheme();
+  const { theme, isDark } = useAppTheme();
   const hasGradient = selected && theme.accentGradient && theme.accentGradient.length >= 2;
 
   const chipStyle = {
-    backgroundColor: selected && !hasGradient ? theme.accent : theme.surfaceStrong,
+    backgroundColor: selected && !hasGradient ? theme.accent : isDark ? 'rgba(20, 20, 30, 0.7)' : theme.surfaceStrong,
     borderWidth: 1,
     borderColor: selected ? theme.accent : theme.border,
     borderRadius: borderRadius.lg,

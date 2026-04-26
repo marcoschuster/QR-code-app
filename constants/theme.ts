@@ -158,16 +158,16 @@ export const lightTheme: ThemeColors = {
 };
 
 export const darkTheme: ThemeColors = {
-  background: 'rgba(10, 10, 18, 0.82)',
-  surface: 'rgba(17,18,20,0.72)',
-  surfaceStrong: 'rgba(23,24,28,0.82)',
+  background: 'rgba(8, 8, 14, 0.92)',
+  surface: 'rgba(12, 12, 18, 0.85)',
+  surfaceStrong: 'rgba(16, 16, 22, 0.92)',
   accent: '#FF0000',
-  surfaceGradient: ['rgba(255,255,255,0.12)', 'rgba(255,255,255,0.04)'],
-  backgroundGradient: ['#0f0c29', '#302b63', '#24243e'],
-  backgroundAccentGradient: ['rgba(79,70,229,0.18)', 'rgba(124,58,237,0.14)', 'rgba(6,182,212,0.1)'],
-  backgroundBlobs: ['rgba(79,70,229,0.4)', 'rgba(124,58,237,0.4)', 'rgba(6,182,212,0.4)'],
-  glassHighlight: 'rgba(255,255,255,0.16)',
-  backdrop: 'rgba(3, 6, 18, 0.56)',
+  surfaceGradient: ['rgba(20, 20, 30, 0.6)', 'rgba(12, 12, 18, 0.4)'],
+  backgroundGradient: ['#0a0a12', '#0f0f1a', '#080810'],
+  backgroundAccentGradient: ['rgba(79,70,229,0.12)', 'rgba(124,58,237,0.08)', 'rgba(6,182,212,0.06)'],
+  backgroundBlobs: ['rgba(79,70,229,0.25)', 'rgba(124,58,237,0.25)', 'rgba(6,182,212,0.25)'],
+  glassHighlight: 'rgba(255,255,255,0.08)',
+  backdrop: 'rgba(3, 6, 18, 0.72)',
   danger: '#FF453A',
   success: '#30D158',
   warning: '#FFD60A',
@@ -176,7 +176,7 @@ export const darkTheme: ThemeColors = {
     secondary: 'rgba(255,255,255,0.6)',
     tertiary: 'rgba(255,255,255,0.4)',
   },
-  border: 'rgba(255,255,255,0.14)',
+  border: 'rgba(255,255,255,0.08)',
   shadow: '#020617',
 };
 
