@@ -373,7 +373,7 @@ export function LiquidGlassSurface({
         />
       )}
 
-      {showOutline && !isDark ? (
+      {showOutline ? (
         <>
           <Animated.View
             pointerEvents="none"
@@ -381,7 +381,7 @@ export function LiquidGlassSurface({
               styles.borderOverlay,
               {
                 borderRadius,
-                borderColor: theme.glassHighlight,
+                borderColor: isDark ? 'rgba(255,255,255,0.12)' : theme.glassHighlight,
               },
             ]}
           />
@@ -391,23 +391,62 @@ export function LiquidGlassSurface({
               styles.innerGlow,
               {
                 borderRadius,
-                borderColor: theme.glassHighlight,
+                borderColor: isDark ? 'rgba(255,255,255,0.08)' : theme.glassHighlight,
               },
             ]}
           />
         </>
       ) : null}
 
-      {showHighlight && !isDark ? (
-        <View
-          pointerEvents="none"
-          style={[
-            styles.topHighlight,
-            {
-              backgroundColor: theme.glassHighlight,
-            },
-          ]}
-        />
+      {showHighlight ? (
+        <>
+          <View
+            pointerEvents="none"
+            style={[
+              styles.topHighlight,
+              {
+                backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : theme.glassHighlight,
+              },
+            ]}
+          />
+          {/* Corner highlights for premium glass effect */}
+          <View
+            pointerEvents="none"
+            style={[
+              styles.topLeftCorner,
+              {
+                borderColor: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.4)',
+              },
+            ]}
+          />
+          <View
+            pointerEvents="none"
+            style={[
+              styles.topRightCorner,
+              {
+                borderColor: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.4)',
+              },
+            ]}
+          />
+          <View
+            pointerEvents="none"
+            style={[
+              styles.bottomLeftCorner,
+              {
+                borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.3)',
+              },
+            ]}
+          />
+          <View
+            pointerEvents="none"
+            style={[
+              styles.bottomRightCorner,
+              {
+                borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.3)',
+              },
+            ]}
+          />
+        </>
       ) : null}
 
       {/* Specular highlight */}
@@ -478,6 +517,46 @@ const styles = StyleSheet.create({
     right: 18,
     height: 2,
     opacity: 0.72,
+  },
+  topLeftCorner: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 24,
+    height: 24,
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderTopLeftRadius: 12,
+  },
+  topRightCorner: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 24,
+    height: 24,
+    borderTopWidth: 1,
+    borderRightWidth: 1,
+    borderTopRightRadius: 12,
+  },
+  bottomLeftCorner: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    width: 24,
+    height: 24,
+    borderBottomWidth: 1,
+    borderLeftWidth: 1,
+    borderBottomLeftRadius: 12,
+  },
+  bottomRightCorner: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 24,
+    height: 24,
+    borderBottomWidth: 1,
+    borderRightWidth: 1,
+    borderBottomRightRadius: 12,
   },
   pulseBase: {
     position: 'absolute',

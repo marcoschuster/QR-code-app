@@ -114,7 +114,7 @@ export function TabBar({ activeTab, onTabChange, hidden = false, onToggleHidden 
       <View
         style={styles.shell}
       >
-        <LiquidGlassSurface borderRadius={32} style={styles.shellSurface} blurIntensity={50} showOutline={!isDark} showHighlight={!isDark}>
+        <LiquidGlassSurface borderRadius={32} style={styles.shellSurface} blurIntensity={50} showOutline showHighlight>
           <View
             style={styles.tabBar}
             onLayout={(event) => setTabBarWidth(event.nativeEvent.layout.width)}
@@ -124,8 +124,13 @@ export function TabBar({ activeTab, onTabChange, hidden = false, onToggleHidden 
               style={[
                 styles.activePill,
                 {
-                  backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : theme.glassHighlight,
-                  shadowColor: isDark ? 'rgba(255,255,255,0.3)' : theme.accent,
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : theme.glassHighlight,
+                  shadowColor: isDark ? 'rgba(255,255,255,0.4)' : theme.accent,
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: isDark ? 0.5 : 0.12,
+                  shadowRadius: isDark ? 20 : 14,
+                  borderWidth: isDark ? 1 : 0,
+                  borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'transparent',
                   transform: [{ translateX: activePillTranslateX }, { scale: activePillScale }],
                 },
               ]}
