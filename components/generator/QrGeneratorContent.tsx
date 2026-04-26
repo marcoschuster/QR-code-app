@@ -31,6 +31,10 @@ import {
   type GeneratedQrCodeImage,
 } from '../../services/qrCodeImage';
 import {
+  createBarcodeImage,
+  getBarcodeSymbologyForTemplate,
+} from '../../services/barcodeImage';
+import {
   GENERATOR_TEMPLATES,
   buildGeneratorContent,
   createInitialGeneratorValues,
@@ -98,7 +102,7 @@ export function QrGeneratorContent() {
 
   // Barcode types
   const barcodeTypes: GeneratorTemplateId[] = [
-    'ean-13', 'ean-8', 'upc-a', 'code-128', 'code-39', 'itf-14',
+    'product-code', 'ean-13', 'ean-8', 'upc-a', 'code-128', 'code-39', 'itf-14',
     'code-93', 'pharmacode', 'msi-plesey', 'codabar'
   ];
 
@@ -175,9 +179,12 @@ export function QrGeneratorContent() {
     try {
       setGenerationProgress(8);
       const content = buildGeneratorContent(selectedTemplateId, formValues);
-      const qrCode = createQrCodeImage(content);
+      const barcodeSymbology = getBarcodeSymbologyForTemplate(selectedTemplateId, content);
+      const generatedImage = barcodeSymbology
+        ? createBarcodeImage(content, barcodeSymbology)
+        : createQrCodeImage(content);
 
-      setGeneratedCode(qrCode);
+      setGeneratedCode(generatedImage);
       setErrorMessage('');
       setGenerationProgress(100);
       savePreset({
@@ -190,7 +197,7 @@ export function QrGeneratorContent() {
     } catch (error) {
       setGeneratedCode(null);
       setErrorMessage(
-        error instanceof Error ? error.message : 'The QR code could not be generated.'
+        error instanceof Error ? error.message : 'The code image could not be generated.'
       );
       setGenerationProgress(0);
     }
@@ -217,7 +224,11 @@ export function QrGeneratorContent() {
     setIsSaving(true);
 
     try {
-      const result = await saveQrCodeImage(generatedCode.imageBase64);
+      const isBarcode = generatedCode.kind === 'barcode';
+      const result = await saveQrCodeImage(
+        generatedCode.imageBase64,
+        isBarcode ? 'barcode' : 'qr-code'
+      );
 
       if (!result) {
         return;
@@ -228,7 +239,7 @@ export function QrGeneratorContent() {
         title: Platform.OS === 'web' ? 'Download Started' : 'Image Saved',
         message:
           Platform.OS === 'web'
-            ? `Your QR code is downloading as ${result.fileName}.`
+            ? `Your ${isBarcode ? 'barcode' : 'QR code'} is downloading as ${result.fileName}.`
             : result.uri
               ? `Saved as ${result.fileName}.`
               : `${result.fileName} is ready in the app documents folder.`,
@@ -237,7 +248,7 @@ export function QrGeneratorContent() {
       setNoticeDialog({
         visible: true,
         title: 'Save Failed',
-        message: error instanceof Error ? error.message : 'The QR code image could not be saved.',
+        message: error instanceof Error ? error.message : 'The code image could not be saved.',
       });
     } finally {
       setIsSaving(false);
@@ -419,7 +430,7 @@ export function QrGeneratorContent() {
             </View>
 
             <Text style={[styles.helperText, { color: errorMessage ? theme.danger : theme.text.secondary }]}>
-              {errorMessage || 'All code types are encoded into QR images in this version.'}
+              {errorMessage || 'QR templates export QR images. Barcode templates export matching barcode PNGs.'}
             </Text>
 
             <View style={styles.progressBlock}>
@@ -438,7 +449,7 @@ export function QrGeneratorContent() {
               />
               <ActionButton
                 title="Generate"
-                icon="qr-code-outline"
+                icon={barcodeTypes.includes(selectedTemplateId) ? 'barcode-outline' : 'qr-code-outline'}
                 onPress={handleGenerate}
                 theme={theme}
                 isDark={isDark}
@@ -464,13 +475,16 @@ export function QrGeneratorContent() {
               >
                 <Image
                   source={{ uri: generatedCode.imageUri }}
-                  style={styles.previewImage}
+                  style={[
+                    styles.previewImage,
+                    generatedCode.kind === 'barcode' && styles.barcodePreviewImage,
+                  ]}
                   resizeMode="contain"
                 />
               </View>
 
               <Text style={[styles.previewLabel, { color: theme.text.secondary }]}>
-                Encoded Content
+                {generatedCode.kind === 'barcode' ? 'Barcode Data' : 'Encoded Content'}
               </Text>
               <Text style={[styles.previewLink, { color: theme.text.secondary }]}>
                 {generatedCode.content}
@@ -937,6 +951,11 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     maxWidth: 280,
     maxHeight: 280,
+  },
+  barcodePreviewImage: {
+    aspectRatio: 2.35,
+    maxWidth: 360,
+    maxHeight: 180,
   },
   previewTitle: {
     fontFamily: typography.fontFamily,

@@ -1002,8 +1002,8 @@ export function buildGeneratorContent(
     }
     case 'code-128': {
       const data = required(values, 'data').trim();
-      if (!/^[A-Z0-9\s\-\.\$\/\+\%]+$/.test(data)) {
-        throw new Error('Code 128 supports uppercase letters, digits, and special characters.');
+      if (!/^[\x20-\x7e]+$/.test(data)) {
+        throw new Error('Code 128 supports printable ASCII characters.');
       }
       return generateQRCode('barcode', { barcode: data, barcodeType: 'CODE_128' });
     }

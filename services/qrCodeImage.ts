@@ -24,6 +24,8 @@ export interface GeneratedQrCodeImage {
   imageUri: string;
   moduleCount: number;
   pixelSize: number;
+  kind?: 'qr' | 'barcode';
+  symbology?: string;
 }
 
 export interface SavedQrCodeImage {
@@ -69,11 +71,15 @@ export function createQrCodeImage(content: string): GeneratedQrCodeImage {
     imageUri: `data:image/png;base64,${imageBase64}`,
     moduleCount,
     pixelSize,
+    kind: 'qr',
   };
 }
 
-export async function saveQrCodeImage(imageBase64: string): Promise<SavedQrCodeImage | null> {
-  const fileName = buildQrFileName();
+export async function saveQrCodeImage(
+  imageBase64: string,
+  filePrefix = 'qr-code'
+): Promise<SavedQrCodeImage | null> {
+  const fileName = buildQrFileName(filePrefix);
 
   if (Platform.OS === 'web') {
     downloadBrowserFile(imageBase64, fileName);
@@ -100,10 +106,10 @@ function hasUriScheme(value: string) {
   return /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(value);
 }
 
-function buildQrFileName() {
+function buildQrFileName(filePrefix: string) {
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
 
-  return `qr-code-${timestamp}.png`;
+  return `${filePrefix}-${timestamp}.png`;
 }
 
 async function getExportDirectory() {
