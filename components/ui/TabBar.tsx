@@ -114,7 +114,7 @@ export function TabBar({ activeTab, onTabChange, hidden = false, onToggleHidden 
       <View
         style={styles.shell}
       >
-        <LiquidGlassSurface borderRadius={32} style={styles.shellSurface} blurIntensity={46}>
+        <LiquidGlassSurface borderRadius={32} style={styles.shellSurface} blurIntensity={50} showOutline showHighlight>
           <View
             style={styles.tabBar}
             onLayout={(event) => setTabBarWidth(event.nativeEvent.layout.width)}

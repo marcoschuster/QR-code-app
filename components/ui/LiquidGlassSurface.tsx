@@ -442,7 +442,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   iridescentOverlay: {
-    opacity: 0.45,
+    opacity: 0.25,
   },
   innerGlow: {
     ...StyleSheet.absoluteFillObject,
