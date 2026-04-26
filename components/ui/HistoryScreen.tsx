@@ -1940,7 +1940,7 @@ const s = StyleSheet.create({
     width: '38%',
     right: 4,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.10)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
     transform: [{ rotate: '12deg' }],
   },
   sortOption: {
@@ -2015,7 +2015,7 @@ const s = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    backgroundColor: 'rgba(0, 0, 0, 0.02)',
     alignItems: 'center',
     justifyContent: 'center',
   },

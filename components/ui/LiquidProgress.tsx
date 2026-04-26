@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useAppTheme } from '../../hooks/useAppTheme';
 
 interface LiquidProgressProps {
   value: number;
@@ -9,6 +10,7 @@ interface LiquidProgressProps {
 const clamp = (value: number) => Math.max(0, Math.min(100, value));
 
 export function LiquidProgress({ value }: LiquidProgressProps) {
+  const { isDark } = useAppTheme();
   const progress = useRef(new Animated.Value(0)).current;
   const shimmer = useRef(new Animated.Value(0)).current;
   const wave = useRef(new Animated.Value(0)).current;
@@ -67,7 +69,7 @@ export function LiquidProgress({ value }: LiquidProgressProps) {
 
   return (
     <View
-      style={styles.track}
+      style={[styles.track, { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.1)' }]}
       onLayout={(event) => {
         widthRef.current = event.nativeEvent.layout.width;
       }}
@@ -84,6 +86,7 @@ export function LiquidProgress({ value }: LiquidProgressProps) {
           style={[
             styles.shimmer,
             {
+              backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.28)',
               transform: [{ translateX: shimmerTranslateX }],
             },
           ]}
@@ -97,9 +100,9 @@ export function LiquidProgress({ value }: LiquidProgressProps) {
             },
           ]}
         >
-          <View style={styles.waveA} />
-          <View style={styles.waveB} />
-          <View style={styles.waveA} />
+          <View style={[styles.waveA, { backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.32)' }]} />
+          <View style={[styles.waveB, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.2)' }]} />
+          <View style={[styles.waveA, { backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.32)' }]} />
         </Animated.View>
       </Animated.View>
     </View>
