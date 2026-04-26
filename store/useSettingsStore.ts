@@ -17,6 +17,7 @@ const defaultSettings: SettingsState = {
   defaultErrorCorrection: 'M',
   defaultOutputFormat: 'QR',
   showInsights: true,
+  historyInsightsCollapsed: false,
   showSmartStart: true,
 };
 

@@ -118,5 +118,6 @@ export interface SettingsState {
   defaultErrorCorrection: 'L' | 'M' | 'Q' | 'H';
   defaultOutputFormat: 'QR' | 'EAN-13' | 'Code 128';
   showInsights: boolean;
+  historyInsightsCollapsed: boolean;
   showSmartStart: boolean;
 }

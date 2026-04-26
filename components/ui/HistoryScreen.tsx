@@ -386,7 +386,12 @@ const SEARCH_DRAWER_HEIGHT = 60;
 
 export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) {
   const { clearAll, removeItem, removeScanId, getGroupedItems, updateItem } = useHistoryStore();
-  const { confirmDeleteHistory, showInsights } = useSettingsStore();
+  const {
+    confirmDeleteHistory,
+    showInsights,
+    historyInsightsCollapsed,
+    updateSettings,
+  } = useSettingsStore();
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [selectedItem, setSelectedItem] = useState<HistoryItem | null>(null);
   const [menuItem, setMenuItem] = useState<HistoryItem | null>(null);
@@ -397,7 +402,6 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
   const [sortMode, setSortMode] = useState<HistorySortMode>('date');
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
   const [isSortReversed, setIsSortReversed] = useState(false);
-  const [insightsCollapsed, setInsightsCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortControlWidth, setSortControlWidth] = useState(0);
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -1175,23 +1179,20 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
               <View style={s.insightsHeader}>
                 <View>
                   <Text style={[s.insightsTitle, { color: theme.text.primary }]}>Insights</Text>
-                  <Text style={[s.insightsSubtitle, { color: theme.text.secondary }]}>
-                    Faster signal on how people actually use your scans.
-                  </Text>
                 </View>
               </View>
               <Pressable
-                onPress={() => setInsightsCollapsed(!insightsCollapsed)}
+                onPress={() => updateSettings({ historyInsightsCollapsed: !historyInsightsCollapsed })}
                 style={s.insightsCollapseButton}
               >
                 <Ionicons
-                  name={insightsCollapsed ? 'chevron-down' : 'chevron-up'}
+                  name={historyInsightsCollapsed ? 'chevron-down' : 'chevron-up'}
                   size={20}
                   color={theme.text.secondary}
                 />
               </Pressable>
 
-              {!insightsCollapsed && (
+              {!historyInsightsCollapsed && (
                 <>
                   <View style={s.insightsGrid}>
                     <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
