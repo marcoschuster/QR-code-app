@@ -212,84 +212,107 @@ export function LiquidGlassSurface({
       onTouchCancel={enableRipple ? handleTouchEnd : undefined}
     >
       {/* Depth pulse glow */}
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          styles.pulseBase,
-          {
-            borderRadius: borderRadius + 24,
-            opacity: whitePulseOpacity,
-            backgroundColor: isDark ? theme.accent : 'rgba(255,255,255,0.08)',
-            shadowColor: isDark ? theme.accent : '#FFFFFF',
-            transform: [
-              { translateX: pulseTranslateX },
-              { translateY: pulseTranslateY },
-              { scale: pulseScale },
-            ],
-          },
-        ]}
-      >
-        {enableGradient && pulseGradientColors ? (
-          <LinearGradient
-            colors={pulseGradientColors as any}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFillObject}
-          />
-        ) : null}
-      </Animated.View>
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          styles.pulseAccent,
-          {
-            borderRadius: borderRadius + 32,
-            opacity: accentPulseOpacity,
-            backgroundColor: isDark ? theme.accent : 'rgba(255,255,255,0.06)',
-            shadowColor: isDark ? theme.accent : '#ffffff',
-            transform: [
-              { translateX: pulseTranslateX },
-              { translateY: pulseTranslateY },
-              { scale: pulseScale },
-            ],
-          },
-        ]}
-      >
-        {enableGradient && pulseGradientColors ? (
-          <LinearGradient
-            colors={pulseGradientColors as any}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFillObject}
-          />
-        ) : null}
-      </Animated.View>
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          styles.pulseLift,
-          {
-            borderRadius: borderRadius + 18,
-            shadowColor: theme.accent,
-            opacity: accentPulseOpacity,
-            backgroundColor: isDark ? theme.accent : 'rgba(255,255,255,0.05)',
-            transform: [
-              { translateX: pulseTranslateX },
-              { translateY: pulseTranslateY },
-              { scale: pulseScale },
-            ],
-          },
-        ]}
-      >
-        {enableGradient && pulseGradientColors ? (
-          <LinearGradient
-            colors={pulseGradientColors as any}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFillObject}
-          />
-        ) : null}
-      </Animated.View>
+      {!isDark && (
+        <>
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.pulseBase,
+              {
+                borderRadius: borderRadius + 24,
+                opacity: whitePulseOpacity,
+                backgroundColor: 'rgba(255,255,255,0.08)',
+                shadowColor: '#FFFFFF',
+                transform: [
+                  { translateX: pulseTranslateX },
+                  { translateY: pulseTranslateY },
+                  { scale: pulseScale },
+                ],
+              },
+            ]}
+          >
+            {enableGradient && pulseGradientColors ? (
+              <LinearGradient
+                colors={pulseGradientColors as any}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={StyleSheet.absoluteFillObject}
+              />
+            ) : null}
+          </Animated.View>
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.pulseAccent,
+              {
+                borderRadius: borderRadius + 32,
+                opacity: accentPulseOpacity,
+                backgroundColor: 'rgba(255,255,255,0.06)',
+                shadowColor: '#ffffff',
+                transform: [
+                  { translateX: pulseTranslateX },
+                  { translateY: pulseTranslateY },
+                  { scale: pulseScale },
+                ],
+              },
+            ]}
+          >
+            {enableGradient && pulseGradientColors ? (
+              <LinearGradient
+                colors={pulseGradientColors as any}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={StyleSheet.absoluteFillObject}
+              />
+            ) : null}
+          </Animated.View>
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.pulseLift,
+              {
+                borderRadius: borderRadius + 18,
+                shadowColor: theme.accent,
+                opacity: accentPulseOpacity,
+                backgroundColor: 'rgba(255,255,255,0.05)',
+                transform: [
+                  { translateX: pulseTranslateX },
+                  { translateY: pulseTranslateY },
+                  { scale: pulseScale },
+                ],
+              },
+            ]}
+          >
+            {enableGradient && pulseGradientColors ? (
+              <LinearGradient
+                colors={pulseGradientColors as any}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={StyleSheet.absoluteFillObject}
+              />
+            ) : null}
+          </Animated.View>
+        </>
+      )}
+
+      {/* Soft glow for dark mode press */}
+      {isDark && (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            StyleSheet.absoluteFillObject,
+            {
+              borderRadius,
+              opacity: accentPulseOpacity,
+              shadowColor: theme.accent,
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: 0.6,
+              shadowRadius: 40,
+              elevation: 0,
+            },
+          ]}
+        />
+      )}
 
       <Animated.View
         style={[
@@ -391,33 +414,35 @@ export function LiquidGlassSurface({
       ) : null}
 
       {/* Specular highlight */}
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          StyleSheet.absoluteFillObject,
-          {
-            borderRadius,
-            overflow: 'hidden',
-          },
-        ]}
-      >
+      {!isDark && (
         <Animated.View
-          style={{
-            position: 'absolute',
-            top: '20%',
-            left: '20%',
-            width: '60%',
-            height: '60%',
-            borderRadius: 999,
-            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(255, 255, 255, 0.12)',
-            transform: [
-              { translateX: specularX },
-              { translateY: specularY },
-              { scale: 1.5 },
-            ],
-          }}
-        />
-      </Animated.View>
+          pointerEvents="none"
+          style={[
+            StyleSheet.absoluteFillObject,
+            {
+              borderRadius,
+              overflow: 'hidden',
+            },
+          ]}
+        >
+          <Animated.View
+            style={{
+              position: 'absolute',
+              top: '20%',
+              left: '20%',
+              width: '60%',
+              height: '60%',
+              borderRadius: 999,
+              backgroundColor: 'rgba(255, 255, 255, 0.12)',
+              transform: [
+                { translateX: specularX },
+                { translateY: specularY },
+                { scale: 1.5 },
+              ],
+            }}
+          />
+        </Animated.View>
+      )}
 
       <View style={contentStyle}>{children}</View>
     </Animated.View>
