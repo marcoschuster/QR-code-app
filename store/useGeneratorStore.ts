@@ -20,7 +20,7 @@ interface GeneratorStore {
   clearPresets: () => void;
 }
 
-const MAX_RECENT_PRESETS = 6;
+const MAX_RECENT_PRESETS = 10;
 
 function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 9);

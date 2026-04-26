@@ -90,6 +90,7 @@ export function QrGeneratorContent() {
     message: '',
   });
   const [typesCollapsed, setTypesCollapsed] = useState(true);
+  const [presetsCollapsed, setPresetsCollapsed] = useState(true);
   const [clipboardSuggestion, setClipboardSuggestion] = useState<GeneratorQuickStartSuggestion | null>(null);
   const [isCheckingClipboard, setIsCheckingClipboard] = useState(false);
   const [generationProgress, setGenerationProgress] = useState(0);
@@ -333,10 +334,24 @@ export function QrGeneratorContent() {
 
             {recentPresets.length > 0 ? (
               <View style={styles.recentPresetsBlock}>
-                <Text style={[styles.recentPresetsLabel, { color: theme.text.secondary }]}>
-                  Recent Presets
-                </Text>
-                {recentPresets.map((preset) => (
+                <View style={styles.recentPresetsHeader}>
+                  <Text style={[styles.recentPresetsLabel, { color: theme.text.secondary }]}>
+                    Recent Presets
+                  </Text>
+                  {recentPresets.length > 3 && (
+                    <Pressable
+                      onPress={() => setPresetsCollapsed(!presetsCollapsed)}
+                      style={styles.collapseButton}
+                    >
+                      <Ionicons
+                        name={presetsCollapsed ? 'chevron-down' : 'chevron-up'}
+                        size={20}
+                        color={theme.text.secondary}
+                      />
+                    </Pressable>
+                  )}
+                </View>
+                {(presetsCollapsed ? recentPresets.slice(0, 3) : recentPresets).map((preset) => (
                   <View
                     key={preset.id}
                     style={[
@@ -369,6 +384,11 @@ export function QrGeneratorContent() {
                     </Pressable>
                   </View>
                 ))}
+                {presetsCollapsed && recentPresets.length > 3 && (
+                  <View style={styles.moreIndicator}>
+                    <Text style={[styles.moreIndicatorText, { color: theme.text.tertiary }]}>•••</Text>
+                  </View>
+                )}
               </View>
             ) : null}
 
@@ -735,7 +755,13 @@ const styles = StyleSheet.create({
   },
   recentPresetsBlock: {
     marginTop: spacing.md,
+    marginBottom: spacing.md,
     gap: spacing.sm,
+  },
+  recentPresetsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   recentPresetsLabel: {
     fontFamily: typography.fontFamily,
@@ -772,6 +798,14 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  moreIndicator: {
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+  },
+  moreIndicatorText: {
+    fontSize: 16,
+    letterSpacing: 2,
   },
   title: {
     fontFamily: typography.fontFamily,
