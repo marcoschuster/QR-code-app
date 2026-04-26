@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleProp, StyleSheet, ViewStyle } from 'react-native';
 import { spacing, borderRadius } from '../../constants/theme';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import { LiquidGlassSurface } from './LiquidGlassSurface';
 
 interface CardProps {
@@ -10,7 +11,8 @@ interface CardProps {
   margin?: number;
 }
 
-export function Card({ children, style, padding, margin = 0 }: CardProps) {
+export function Card({ children, style, margin, padding }: CardProps) {
+  const { theme, isDark } = useAppTheme();
   const cardRadius = borderRadius.lg;
   const flattenedStyle = StyleSheet.flatten(style) || {};
   const {
@@ -58,8 +60,8 @@ export function Card({ children, style, padding, margin = 0 }: CardProps) {
       ]}
       contentStyle={contentPaddingStyle}
       borderRadius={cardRadius}
-      showOutline
-      showHighlight
+      showOutline={!isDark}
+      showHighlight={!isDark}
     >
       {children}
     </LiquidGlassSurface>

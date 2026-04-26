@@ -1195,44 +1195,60 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
               {!historyInsightsCollapsed && (
                 <>
                   <View style={s.insightsGrid}>
-                    <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                      <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.totalScans}</Text>
-                      <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Total scans</Text>
+                    <View style={[s.insightTile, { backgroundColor: 'rgba(15, 15, 22, 0.5)', borderColor: theme.border }]}>
+                      <Text style={[s.insightValue, { color: theme.text.primary }]}>
+                        {insights.totalScans}
+                      </Text>
+                      <Text style={[s.insightLabel, { color: theme.text.secondary }]}>
+                        Total Scans
+                      </Text>
                     </View>
-                    <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                      <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.uniqueCodes}</Text>
-                      <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Unique codes</Text>
+                    <View style={[s.insightTile, { backgroundColor: 'rgba(15, 15, 22, 0.5)', borderColor: theme.border }]}>
+                      <Text style={[s.insightValue, { color: theme.text.primary }]}>
+                        {insights.uniqueCodes}
+                      </Text>
+                      <Text style={[s.insightLabel, { color: theme.text.secondary }]}>
+                        Unique QR Codes
+                      </Text>
                     </View>
-                    <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                      <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.thisWeekScans}</Text>
-                      <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Last 7 days</Text>
+                    <View style={[s.insightTile, { backgroundColor: 'rgba(15, 15, 22, 0.5)', borderColor: theme.border }]}>
+                      <Text style={[s.insightValue, { color: theme.text.primary }]}>
+                        {insights.favorites}
+                      </Text>
+                      <Text style={[s.insightLabel, { color: theme.text.secondary }]}>
+                        Favorites
+                      </Text>
                     </View>
-                    <View style={[s.insightTile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                      <Text style={[s.insightValue, { color: theme.text.primary }]}>{insights.favorites}</Text>
-                      <Text style={[s.insightLabel, { color: theme.text.secondary }]}>Favorites</Text>
+                    <View style={[s.insightTile, { backgroundColor: 'rgba(15, 15, 22, 0.5)', borderColor: theme.border }]}>
+                      <Text style={[s.insightValue, { color: theme.text.primary }]}>
+                        {insights.thisWeekScans}
+                      </Text>
+                      <Text style={[s.insightLabel, { color: theme.text.secondary }]}>
+                        This Week
+                      </Text>
                     </View>
                   </View>
 
                   <View style={s.insightHighlights}>
-                    <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                    <View style={[s.insightChip, { backgroundColor: 'rgba(15, 15, 22, 0.5)', borderColor: theme.border }]}>
                       <Ionicons name="layers-outline" size={15} color={theme.accent} />
                       <Text style={[s.insightChipText, { color: theme.text.primary }]}>
                         Top type: {insights.topTypeLabel}
                       </Text>
                     </View>
-                    <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                    <View style={[s.insightChip, { backgroundColor: 'rgba(15, 15, 22, 0.5)', borderColor: theme.border }]}>
                       <Ionicons name="repeat-outline" size={15} color={theme.accent} />
                       <Text style={[s.insightChipText, { color: theme.text.primary }]}>
                         Repeats: {insights.repeatedCodes}
                       </Text>
                     </View>
-                    <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                    <View style={[s.insightChip, { backgroundColor: 'rgba(15, 15, 22, 0.5)', borderColor: theme.border }]}>
                       <Ionicons name="shield-checkmark-outline" size={15} color={theme.success} />
                       <Text style={[s.insightChipText, { color: theme.text.primary }]}>
                         Safe links: {insights.safeLinks}
                       </Text>
                     </View>
-                    <View style={[s.insightChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                    <View style={[s.insightChip, { backgroundColor: 'rgba(15, 15, 22, 0.5)', borderColor: theme.border }]}>
                       <Ionicons name="warning-outline" size={15} color={theme.danger} />
                       <Text style={[s.insightChipText, { color: theme.text.primary }]}>
                         Flagged: {insights.riskyLinks}
