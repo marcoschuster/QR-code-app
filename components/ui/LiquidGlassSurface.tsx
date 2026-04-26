@@ -364,17 +364,16 @@ export function LiquidGlassSurface({
       </View>
 
       {/* Iridescent gloss overlay */}
-      <LinearGradient
-        colors={isDark 
-          ? ['rgba(255,255,255,0.04)', 'rgba(180,200,255,0.02)', 'rgba(255,180,220,0.015)', 'rgba(255,255,255,0.03)'] as any
-          : ['rgba(255,255,255,0.45)', 'rgba(180,200,255,0.15)', 'rgba(255,180,220,0.12)', 'rgba(255,255,255,0.3)'] as any
-        }
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={[StyleSheet.absoluteFillObject, styles.iridescentOverlay, { borderRadius }]}
-      />
+      {!isDark && (
+        <LinearGradient
+          colors={['rgba(255,255,255,0.45)', 'rgba(180,200,255,0.15)', 'rgba(255,180,220,0.12)', 'rgba(255,255,255,0.3)'] as any}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[StyleSheet.absoluteFillObject, styles.iridescentOverlay, { borderRadius }]}
+        />
+      )}
 
-      {showOutline ? (
+      {showOutline && !isDark ? (
         <>
           <Animated.View
             pointerEvents="none"
@@ -383,12 +382,10 @@ export function LiquidGlassSurface({
               {
                 borderRadius,
                 borderColor: theme.glassHighlight,
-                opacity: borderOpacity,
               },
             ]}
           />
-
-          <View
+          <Animated.View
             pointerEvents="none"
             style={[
               styles.innerGlow,
@@ -401,7 +398,7 @@ export function LiquidGlassSurface({
         </>
       ) : null}
 
-      {showHighlight && showOutline ? (
+      {showHighlight && !isDark ? (
         <View
           pointerEvents="none"
           style={[
