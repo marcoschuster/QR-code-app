@@ -295,26 +295,6 @@ export function LiquidGlassSurface({
         </>
       )}
 
-      {/* Soft glow for dark mode press */}
-      {isDark && (
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            StyleSheet.absoluteFillObject,
-            {
-              borderRadius,
-              opacity: accentPulseOpacity,
-            },
-          ]}
-        >
-          <LinearGradient
-            colors={[theme.accent, 'transparent'] as any}
-            start={{ x: 0.5, y: 0.5 }}
-            end={{ x: 0.5, y: 1 }}
-            style={StyleSheet.absoluteFillObject}
-          />
-        </Animated.View>
-      )}
 
       <Animated.View
         style={[
