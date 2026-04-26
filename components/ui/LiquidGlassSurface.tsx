@@ -321,7 +321,7 @@ export function LiquidGlassSurface({
         style={[StyleSheet.absoluteFillObject, styles.blurClip, { borderRadius }]}
       >
         <BlurView
-          intensity={blurIntensity ?? (isDark ? 42 : 34)}
+          intensity={blurIntensity ?? (isDark ? 50 : 34)}
           tint={isDark ? 'dark' : 'light'}
           blurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : undefined}
           blurTarget={Platform.OS === 'android' ? blurTargetRef ?? undefined : undefined}
@@ -343,7 +343,7 @@ export function LiquidGlassSurface({
       {/* Iridescent gloss overlay */}
       <LinearGradient
         colors={isDark 
-          ? ['rgba(255,255,255,0.12)', 'rgba(180,200,255,0.06)', 'rgba(255,180,220,0.05)', 'rgba(255,255,255,0.08)'] as any
+          ? ['rgba(255,255,255,0.04)', 'rgba(180,200,255,0.02)', 'rgba(255,180,220,0.015)', 'rgba(255,255,255,0.03)'] as any
           : ['rgba(255,255,255,0.45)', 'rgba(180,200,255,0.15)', 'rgba(255,180,220,0.12)', 'rgba(255,255,255,0.3)'] as any
         }
         start={{ x: 0, y: 0 }}

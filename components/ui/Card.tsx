@@ -58,6 +58,8 @@ export function Card({ children, style, padding, margin = 0 }: CardProps) {
       ]}
       contentStyle={contentPaddingStyle}
       borderRadius={cardRadius}
+      showOutline
+      showHighlight
     >
       {children}
     </LiquidGlassSurface>

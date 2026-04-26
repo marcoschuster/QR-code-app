@@ -735,44 +735,6 @@ const s = StyleSheet.create({
   },
   zoomTapZones: {
     ...StyleSheet.absoluteFillObject,
-    flexDirection: 'row',
-  },
-  zoomTapZone: {
-    flex: 1,
-  },
-  zoomFineTuneTrack: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    height: 3,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.28)',
-  },
-  zoomDotsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  zoomDotPressable: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-  },
-  zoomDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.45)',
-  },
-  zoomDotNearActive: {
-    backgroundColor: 'rgba(255,255,255,0.7)',
-  },
-  zoomThumbWrap: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    marginLeft: -20,
     width: 40,
     alignItems: 'center',
     justifyContent: 'center',
