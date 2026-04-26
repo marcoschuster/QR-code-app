@@ -295,6 +295,24 @@ export function LiquidGlassSurface({
         </>
       )}
 
+      {/* Soft blurry glow for dark mode press */}
+      {isDark && (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            StyleSheet.absoluteFillObject,
+            {
+              borderRadius,
+              opacity: accentPulseOpacity,
+              shadowColor: theme.accent,
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: 0.8,
+              shadowRadius: 60,
+              elevation: 0,
+            },
+          ]}
+        />
+      )}
 
       <Animated.View
         style={[

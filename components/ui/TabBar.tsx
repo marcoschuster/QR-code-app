@@ -124,8 +124,8 @@ export function TabBar({ activeTab, onTabChange, hidden = false, onToggleHidden 
               style={[
                 styles.activePill,
                 {
-                  backgroundColor: isDark ? 'transparent' : theme.glassHighlight,
-                  shadowColor: theme.accent,
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : theme.glassHighlight,
+                  shadowColor: isDark ? 'rgba(255,255,255,0.3)' : theme.accent,
                   transform: [{ translateX: activePillTranslateX }, { scale: activePillScale }],
                 },
               ]}
