@@ -984,6 +984,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
           s.header,
           {
             backgroundColor: theme.background,
+            borderBottomColor: theme.border,
           },
         ]}
       >
@@ -1842,8 +1843,9 @@ const s = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 20,
-    paddingTop: 50,
-    paddingBottom: 0,
+    paddingTop: 38,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
     zIndex: 3,
   },
   headerTopRow: {
@@ -1852,7 +1854,7 @@ const s = StyleSheet.create({
     justifyContent: 'space-between',
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '700',
     letterSpacing: -0.5,
   },
@@ -1873,7 +1875,7 @@ const s = StyleSheet.create({
     position: 'absolute',
     left: 20,
     right: 20,
-    top: 140,
+    top: 152,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 14,

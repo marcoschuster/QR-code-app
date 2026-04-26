@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { View, StyleSheet, StatusBar, Linking, PanResponder } from 'react-native';
+import { View, StyleSheet, StatusBar, Linking, PanResponder, Animated, Easing } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { BlurTargetView } from 'expo-blur';
 import { ScannerScreen } from './components/scanner/CameraView';
@@ -42,6 +42,7 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [isTabBarHidden, setIsTabBarHidden] = useState(false);
   const threatCheckRunRef = useRef(0);
+  const tabTransition = useRef(new Animated.Value(1)).current;
 
   const updateItem = useHistoryStore((state) => state.updateItem);
   const { vibrateOnScan, autoOpenUrls, urlThreatScanning, swipeNavigation } = useSettingsStore();
@@ -146,7 +147,20 @@ export default function App() {
   };
 
   const handleTabChange = (tab: string) => {
+    if (tab === activeTab) {
+      return;
+    }
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    tabTransition.stopAnimation();
+    tabTransition.setValue(0);
     setActiveTab(tab);
+    Animated.timing(tabTransition, {
+      toValue: 1,
+      duration: 180,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
 
     if (tab !== 'history') {
       setIsTabBarHidden(false);
@@ -199,6 +213,26 @@ export default function App() {
 
   console.log('[App Swipe] swipeNavigation setting:', swipeNavigation);
   console.log('[App Swipe] panHandlers exist:', panResponder !== null);
+  const tabAnimatedStyle = {
+    opacity: tabTransition.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0.96, 1],
+    }),
+    transform: [
+      {
+        translateY: tabTransition.interpolate({
+          inputRange: [0, 1],
+          outputRange: [4, 0],
+        }),
+      },
+      {
+        scale: tabTransition.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0.995, 1],
+        }),
+      },
+    ],
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]} {...(panResponder?.panHandlers || {})}>
@@ -209,7 +243,7 @@ export default function App() {
 
       <LiquidGlassProvider blurTargetRef={blurTargetRef}>
         {activeTab === 'scan' && !showResult && (
-          <View style={styles.tabContent}>
+          <Animated.View style={[styles.tabContent, styles.animatedTabContent, tabAnimatedStyle]}>
             <ScannerScreen
               key={scannerKey}
               onResult={handleScanResult}
@@ -220,19 +254,19 @@ export default function App() {
                 setShowSettings(true);
               }}
             />
-          </View>
+          </Animated.View>
         )}
         
         {activeTab === 'generate' && (
-          <View style={styles.tabContent}>
+          <Animated.View style={[styles.tabContent, styles.animatedTabContent, tabAnimatedStyle]}>
             <QrGeneratorContent />
-          </View>
+          </Animated.View>
         )}
         
         {activeTab === 'history' && (
-          <View style={styles.tabContent}>
+          <Animated.View style={[styles.tabContent, styles.animatedTabContent, tabAnimatedStyle]}>
             <HistoryScreen onTabBarVisibilityChange={setIsTabBarHidden} />
-          </View>
+          </Animated.View>
         )}
 
         <TabBar
@@ -268,6 +302,9 @@ const styles = StyleSheet.create({
   },
   tabContent: {
     flex: 1,
+  },
+  animatedTabContent: {
+    overflow: 'hidden',
   },
   resultOverlay: {
     zIndex: 100,

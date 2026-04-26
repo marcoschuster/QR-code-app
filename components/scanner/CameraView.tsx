@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import { Reticle } from './Reticle';
 import { PhotoScanner } from './PhotoScanner';
 import { parseQRCode } from '../../services/qrParser';
@@ -82,7 +81,6 @@ export function ScannerScreen({
   onFineTuneActiveChange,
   tabBarHidden = false,
 }: ScannerScreenProps) {
-  const router = useRouter();
   const [permission, requestPermission] = useCameraPermissions();
   const [cameraFacing, setCameraFacing] = useState<'back' | 'front'>('back');
   const [scanned, setScanned] = useState(false);
@@ -336,7 +334,7 @@ export function ScannerScreen({
             style={[s.pill, { backgroundColor: 'rgba(0,0,0,0.45)', borderColor: theme.border }]}
             onPress={() => {
               setTorchOn(false);
-              router.push('/(tabs)/settings');
+              onSettingsPress?.();
             }}
           >
             <Ionicons name="settings-outline" size={22} color="#FFF" />
