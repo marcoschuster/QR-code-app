@@ -304,14 +304,16 @@ export function LiquidGlassSurface({
             {
               borderRadius,
               opacity: accentPulseOpacity,
-              shadowColor: theme.accent,
-              shadowOffset: { width: 0, height: 0 },
-              shadowOpacity: 0.6,
-              shadowRadius: 40,
-              elevation: 0,
             },
           ]}
-        />
+        >
+          <LinearGradient
+            colors={[theme.accent, 'transparent'] as any}
+            start={{ x: 0.5, y: 0.5 }}
+            end={{ x: 0.5, y: 1 }}
+            style={StyleSheet.absoluteFillObject}
+          />
+        </Animated.View>
       )}
 
       <Animated.View

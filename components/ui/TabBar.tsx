@@ -20,7 +20,7 @@ const ACTIVE_PILL_WIDTH = 80;
 const ACTIVE_PILL_HEIGHT = 80;
 
 export function TabBar({ activeTab, onTabChange, hidden = false, onToggleHidden }: TabBarProps) {
-  const { theme } = useAppTheme();
+  const { theme, isDark } = useAppTheme();
   const progress = useRef(new Animated.Value(0)).current;
   const activeProgress = useRef(new Animated.Value(0)).current;
   const motionState = useRef<TabBarMotionState>('shown');
@@ -124,7 +124,7 @@ export function TabBar({ activeTab, onTabChange, hidden = false, onToggleHidden 
               style={[
                 styles.activePill,
                 {
-                  backgroundColor: theme.glassHighlight,
+                  backgroundColor: isDark ? 'transparent' : theme.glassHighlight,
                   shadowColor: theme.accent,
                   transform: [{ translateX: activePillTranslateX }, { scale: activePillScale }],
                 },
