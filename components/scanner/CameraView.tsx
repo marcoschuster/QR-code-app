@@ -434,9 +434,14 @@ function ZoomControl({
   const [fineTuneActive, setFineTuneActive] = useState(false);
   const minPoint = points[0] ?? 0;
   const maxPoint = points[points.length - 1] ?? MAX_ZOOM;
-  const segmentWidth = trackWidth / Math.max(points.length, 1);
-  const thumbTravelWidth = Math.max(1, trackWidth - segmentWidth);
-  const pointCenters = points.map((_, index) => segmentWidth / 2 + index * segmentWidth);
+  const thumbTravelWidth = Math.max(1, trackWidth);
+  const pointCenters = points.map((_, index) => {
+    if (points.length <= 1) {
+      return 0;
+    }
+
+    return (index / (points.length - 1)) * thumbTravelWidth;
+  });
 
   useEffect(() => {
     const previousValue = zoomRef.current;
@@ -478,11 +483,10 @@ function ZoomControl({
 
     animatedZoom.stopAnimation();
     zoomRef.current = clampedZoom;
-    Animated.spring(animatedZoom, {
+    Animated.timing(animatedZoom, {
       toValue: clampedZoom,
       useNativeDriver: false,
-      friction: 8,
-      tension: 110,
+      duration: 140,
     }).start();
     onValueChange(clampedZoom);
   };
@@ -735,9 +739,47 @@ const s = StyleSheet.create({
   },
   zoomTapZones: {
     ...StyleSheet.absoluteFillObject,
-    width: 40,
+    flexDirection: 'row',
+  },
+  zoomTapZone: {
+    flex: 1,
+  },
+  zoomFineTuneTrack: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    height: 4,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  zoomDotsRow: {
+    position: 'absolute',
+    left: -14,
+    right: -14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  zoomDotPressable: {
+    width: 28,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  zoomDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.45)',
+  },
+  zoomDotNearActive: {
+    width: 7,
+    height: 7,
+    backgroundColor: '#FFFFFF',
+  },
+  zoomThumbWrap: {
+    position: 'absolute',
+    left: -25,
   },
   zoomThumbTouch: {
     width: 50,
