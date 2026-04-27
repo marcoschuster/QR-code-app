@@ -1653,7 +1653,7 @@ function HistoryItemComponent({
       ]}
       borderRadius={28}
       enableRipple={false}
-      showOutline={false}
+      showOutline
       showHighlight={false}
     >
       {item.isFavorite ? (
@@ -1686,12 +1686,12 @@ function HistoryItemComponent({
                   colors={theme.accentStrongGradient as any}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
-                  style={[s.scanCount, { borderWidth: 1, borderColor: theme.accent }]}
+                  style={s.scanCount}
                 >
                   <Text style={s.scanCountText}>{item.scanCount}</Text>
                 </LinearGradient>
               ) : (
-                <View style={[s.scanCount, { backgroundColor: theme.accent }]}>
+                <View style={[s.scanCount, { backgroundColor: theme.accent, borderColor: theme.accent }]}>
                   <Text style={s.scanCountText}>{item.scanCount}</Text>
                 </View>
               )
