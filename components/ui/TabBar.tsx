@@ -16,8 +16,8 @@ type TabBarMotionState = 'shown' | 'showing' | 'hidden' | 'hiding';
 const TAB_BAR_WIDTH = 270;
 const TAB_BAR_HORIZONTAL_PADDING = 20;
 const TAB_GAP = 12;
-const ACTIVE_PILL_WIDTH = 80;
-const ACTIVE_PILL_HEIGHT = 80;
+const ACTIVE_PILL_WIDTH = 76;
+const ACTIVE_PILL_HEIGHT = 62;
 
 export function TabBar({ activeTab, onTabChange, hidden = false, onToggleHidden }: TabBarProps) {
   const { theme, isDark } = useAppTheme();
@@ -86,11 +86,6 @@ export function TabBar({ activeTab, onTabChange, hidden = false, onToggleHidden 
     ),
   });
 
-  const activePillScale = activeProgress.interpolate({
-    inputRange: [0, 0.3, 0.7, 1, 1.3, 1.7, 2],
-    outputRange: [1, 0.7, 0.85, 1, 0.7, 0.85, 1],
-  });
-
   useEffect(() => {
     Animated.spring(activeProgress, {
       toValue: activeIndex,
@@ -114,7 +109,7 @@ export function TabBar({ activeTab, onTabChange, hidden = false, onToggleHidden 
       <View
         style={styles.shell}
       >
-        <LiquidGlassSurface borderRadius={32} style={styles.shellSurface} blurIntensity={50} showOutline showHighlight>
+        <LiquidGlassSurface borderRadius={32} style={styles.shellSurface} blurIntensity={50} showHighlight>
           <View
             style={styles.tabBar}
             onLayout={(event) => setTabBarWidth(event.nativeEvent.layout.width)}
@@ -124,17 +119,24 @@ export function TabBar({ activeTab, onTabChange, hidden = false, onToggleHidden 
               style={[
                 styles.activePill,
                 {
-                  backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : theme.glassHighlight,
-                  shadowColor: isDark ? 'rgba(255,255,255,0.4)' : theme.accent,
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: isDark ? 0.5 : 0.12,
-                  shadowRadius: isDark ? 20 : 14,
-                  borderWidth: isDark ? 1 : 0,
-                  borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'transparent',
-                  transform: [{ translateX: activePillTranslateX }, { scale: activePillScale }],
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.14)' : theme.glassHighlight,
+                  borderColor: isDark ? 'rgba(255,255,255,0.24)' : 'transparent',
+                  shadowColor: isDark ? 'rgba(255,255,255,0.36)' : theme.accent,
+                  shadowOffset: { width: 0, height: 8 },
+                  shadowOpacity: isDark ? 0.28 : 0.12,
+                  shadowRadius: isDark ? 24 : 14,
+                  transform: [{ translateX: activePillTranslateX }],
                 },
               ]}
-            />
+            >
+              {isDark ? (
+                <>
+                  <View style={styles.activePillTopGlow} />
+                  <View style={styles.activePillBottomGlow} />
+                  <View style={styles.activePillCenterSheen} />
+                </>
+              ) : null}
+            </Animated.View>
             {tabs.map((tab) => {
               const isActive = activeTab === tab.id;
               return (
@@ -222,15 +224,42 @@ const styles = StyleSheet.create({
   },
   activePill: {
     position: 'absolute',
-    top: 6,
+    top: 15,
     left: 0,
     width: ACTIVE_PILL_WIDTH,
     height: ACTIVE_PILL_HEIGHT,
     borderRadius: ACTIVE_PILL_HEIGHT / 2,
+    borderWidth: 1,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.12,
     shadowRadius: 14,
     elevation: 3,
+    overflow: 'hidden',
+  },
+  activePillTopGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 10,
+    right: 10,
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.55)',
+  },
+  activePillBottomGlow: {
+    position: 'absolute',
+    left: 12,
+    right: 12,
+    bottom: 0,
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+  },
+  activePillCenterSheen: {
+    position: 'absolute',
+    top: 6,
+    left: 8,
+    right: 8,
+    height: 24,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.065)',
   },
   label: {
     marginTop: 2,
