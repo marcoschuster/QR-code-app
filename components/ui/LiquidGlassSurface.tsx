@@ -200,7 +200,7 @@ export function LiquidGlassSurface({
 
   const accentPulseOpacity = pulseOpacity.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, isDark ? 0.4 : 0.65],
+    outputRange: [0, isDark ? 0.34 : 0.65],
   });
 
   return (
@@ -300,15 +300,20 @@ export function LiquidGlassSurface({
         <Animated.View
           pointerEvents="none"
           style={[
-            StyleSheet.absoluteFillObject,
+            styles.darkPulseGlow,
             {
-              borderRadius,
+              borderRadius: borderRadius + 20,
               opacity: accentPulseOpacity,
+              backgroundColor: 'transparent',
               shadowColor: theme.accent,
               shadowOffset: { width: 0, height: 0 },
-              shadowOpacity: 0.8,
-              shadowRadius: 60,
-              elevation: 0,
+              shadowOpacity: 1,
+              shadowRadius: 54,
+              transform: [
+                { translateX: pulseTranslateX },
+                { translateY: pulseTranslateY },
+                { scale: pulseScale },
+              ],
             },
           ]}
         />
@@ -373,6 +378,17 @@ export function LiquidGlassSurface({
         />
       )}
 
+      {isDark && (
+        <LinearGradient
+          pointerEvents="none"
+          colors={['rgba(255,255,255,0.075)', 'rgba(255,255,255,0.026)', 'rgba(255,255,255,0)'] as any}
+          locations={[0, 0.42, 1]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0.15, y: 1 }}
+          style={[StyleSheet.absoluteFillObject, styles.darkGlossOverlay, { borderRadius }]}
+        />
+      )}
+
       {showOutline ? (
         <>
           <Animated.View
@@ -381,7 +397,7 @@ export function LiquidGlassSurface({
               styles.borderOverlay,
               {
                 borderRadius,
-                borderColor: isDark ? 'rgba(255,255,255,0.12)' : theme.glassHighlight,
+                borderColor: isDark ? 'rgba(255,255,255,0.10)' : theme.glassHighlight,
               },
             ]}
           />
@@ -391,14 +407,14 @@ export function LiquidGlassSurface({
               styles.innerGlow,
               {
                 borderRadius,
-                borderColor: isDark ? 'rgba(255,255,255,0.08)' : theme.glassHighlight,
+                borderColor: isDark ? 'rgba(255,255,255,0.045)' : theme.glassHighlight,
               },
             ]}
           />
         </>
       ) : null}
 
-      {showHighlight ? (
+      {showHighlight && !isDark ? (
         <>
           <View
             pointerEvents="none"
@@ -406,43 +422,6 @@ export function LiquidGlassSurface({
               styles.topHighlight,
               {
                 backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : theme.glassHighlight,
-              },
-            ]}
-          />
-          {/* Corner highlights for premium glass effect */}
-          <View
-            pointerEvents="none"
-            style={[
-              styles.topLeftCorner,
-              {
-                borderColor: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.4)',
-              },
-            ]}
-          />
-          <View
-            pointerEvents="none"
-            style={[
-              styles.topRightCorner,
-              {
-                borderColor: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.4)',
-              },
-            ]}
-          />
-          <View
-            pointerEvents="none"
-            style={[
-              styles.bottomLeftCorner,
-              {
-                borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.3)',
-              },
-            ]}
-          />
-          <View
-            pointerEvents="none"
-            style={[
-              styles.bottomRightCorner,
-              {
-                borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.3)',
               },
             ]}
           />
@@ -505,6 +484,9 @@ const styles = StyleSheet.create({
   iridescentOverlay: {
     opacity: 0.25,
   },
+  darkGlossOverlay: {
+    opacity: 1,
+  },
   innerGlow: {
     ...StyleSheet.absoluteFillObject,
     borderWidth: 1,
@@ -518,45 +500,13 @@ const styles = StyleSheet.create({
     height: 2,
     opacity: 0.72,
   },
-  topLeftCorner: {
+  darkPulseGlow: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    width: 24,
-    height: 24,
-    borderTopWidth: 1,
-    borderLeftWidth: 1,
-    borderTopLeftRadius: 12,
-  },
-  topRightCorner: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    width: 24,
-    height: 24,
-    borderTopWidth: 1,
-    borderRightWidth: 1,
-    borderTopRightRadius: 12,
-  },
-  bottomLeftCorner: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    width: 24,
-    height: 24,
-    borderBottomWidth: 1,
-    borderLeftWidth: 1,
-    borderBottomLeftRadius: 12,
-  },
-  bottomRightCorner: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 24,
-    height: 24,
-    borderBottomWidth: 1,
-    borderRightWidth: 1,
-    borderBottomRightRadius: 12,
+    top: -2,
+    right: -16,
+    bottom: -20,
+    left: -16,
+    elevation: 18,
   },
   pulseBase: {
     position: 'absolute',
