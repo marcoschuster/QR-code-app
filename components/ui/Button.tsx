@@ -121,7 +121,7 @@ export function Button({
     <PremiumPressable
       style={[
         styles.button,
-        hasGradient && !disabled ? { ...buttonStyle, borderWidth: 1, borderColor: theme.accent } : buttonStyle,
+        buttonStyle,
         variant !== 'secondary' && !disabled ? { shadowColor: theme.shadow } : null,
       ]}
       onPress={onPress}
@@ -139,6 +139,7 @@ export function Button({
             end={{ x: 1, y: 1 }}
             style={[styles.absoluteGradient, { borderRadius: radius }]}
           />
+          <View style={[styles.borderOverlay, { borderRadius: radius, borderColor: theme.accent }]} />
           {buttonContent}
         </>
       ) : (
@@ -158,10 +159,18 @@ const styles = StyleSheet.create({
   },
   absoluteGradient: {
     position: 'absolute',
-    top: -1,
-    left: -1,
-    right: -1,
-    bottom: -1,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  borderOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderWidth: 1,
   },
   icon: {
     alignItems: 'center',
