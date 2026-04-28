@@ -275,7 +275,7 @@ export function QrGeneratorContent() {
               </Text>
             </View>
 
-            {showSmartStart ? (
+            {showSmartStart && clipboardSuggestion ? (
               <Card style={styles.sectionCard} padding={spacing.lg}>
                 <View style={styles.smartStartHeader}>
                   <View style={styles.smartStartCopy}>
@@ -304,31 +304,25 @@ export function QrGeneratorContent() {
                   </Pressable>
                 </View>
 
-                {clipboardSuggestion ? (
-                  <Pressable
-                    style={({ pressed }) => [
-                      styles.quickStartPressable,
-                      {
-                        opacity: pressed ? 0.78 : 1,
-                      },
-                    ]}
-                    onPress={() => applyTemplateSetup(clipboardSuggestion.templateId, clipboardSuggestion.values)}
-                  >
-                    <View style={styles.quickStartContent}>
-                      <Text style={[styles.quickStartTitle, { color: theme.text.primary }]}>
-                        {clipboardSuggestion.title}
-                      </Text>
-                      <Text style={[styles.quickStartHint, { color: theme.text.secondary }]}>
-                        {clipboardSuggestion.subtitle}
-                      </Text>
-                    </View>
-                    <Ionicons name="arrow-forward-circle-outline" size={22} color={theme.accent} />
-                  </Pressable>
-                ) : (
-                  <Text style={[styles.quickStartHint, { color: theme.text.secondary }]}>
-                    Nothing reusable is currently on the clipboard.
-                  </Text>
-                )}
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.quickStartPressable,
+                    {
+                      opacity: pressed ? 0.78 : 1,
+                    },
+                  ]}
+                  onPress={() => applyTemplateSetup(clipboardSuggestion.templateId, clipboardSuggestion.values)}
+                >
+                  <View style={styles.quickStartContent}>
+                    <Text style={[styles.quickStartTitle, { color: theme.text.primary }]}>
+                      {clipboardSuggestion.title}
+                    </Text>
+                    <Text style={[styles.quickStartHint, { color: theme.text.secondary }]}>
+                      {clipboardSuggestion.subtitle}
+                    </Text>
+                  </View>
+                  <Ionicons name="arrow-forward-circle-outline" size={22} color={theme.accent} />
+                </Pressable>
               </Card>
             ) : null}
 
