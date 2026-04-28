@@ -12,7 +12,7 @@ const ORBIT_RADIUS = Math.min(SCREEN_WIDTH * 0.32, 140);
 const COLOR_SIZE = 36;
 
 const classicColors: AccentColor[] = ['red', 'blue', 'green', 'purple', 'orange', 'pink', 'teal', 'indigo'];
-const gradientColors: AccentColor[] = ['sunset', 'ocean', 'forest', 'berry', 'aurora', 'peach'];
+const gradientColors: AccentColor[] = ['sunset', 'ocean', 'forest', 'berry', 'aurora', 'peach', 'meadow', 'twilight'];
 const gradientLabels: Record<AccentColor, string | undefined> = {
   red: undefined,
   blue: undefined,
@@ -28,6 +28,8 @@ const gradientLabels: Record<AccentColor, string | undefined> = {
   berry: 'Berry',
   aurora: 'Aurora',
   peach: 'Soft Orange / Peach / Pink',
+  meadow: 'Meadow',
+  twilight: 'Twilight',
 };
 
 interface ColorOrbitPickerProps {
