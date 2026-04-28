@@ -116,12 +116,17 @@ export function Button({
   );
 
   const buttonStyle = getButtonStyle();
+  const gradientButtonStyle = hasGradient && !disabled ? {
+    ...buttonStyle,
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+  } : buttonStyle;
 
   return (
     <PremiumPressable
       style={[
         styles.button,
-        buttonStyle,
+        gradientButtonStyle,
         variant !== 'secondary' && !disabled ? { shadowColor: theme.shadow } : null,
       ]}
       onPress={onPress}
@@ -140,7 +145,9 @@ export function Button({
             style={[styles.absoluteGradient, { borderRadius: radius }]}
           />
           <View style={[styles.borderOverlay, { borderRadius: radius, borderColor: theme.accent }]} />
-          {buttonContent}
+          <View style={[buttonStyle, styles.contentWrapper]}>
+            {buttonContent}
+          </View>
         </>
       ) : (
         buttonContent
@@ -171,6 +178,12 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     borderWidth: 1,
+  },
+  contentWrapper: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
   },
   icon: {
     alignItems: 'center',
