@@ -121,7 +121,7 @@ export function Button({
     <PremiumPressable
       style={[
         styles.button,
-        hasGradient && !disabled ? { ...buttonStyle, borderWidth: 0 } : buttonStyle,
+        hasGradient && !disabled ? { ...buttonStyle, borderWidth: 1, borderColor: theme.accent } : buttonStyle,
         variant !== 'secondary' && !disabled ? { shadowColor: theme.shadow } : null,
       ]}
       onPress={onPress}
