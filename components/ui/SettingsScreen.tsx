@@ -15,6 +15,10 @@ interface SettingsScreenProps {
   onClose: () => void;
 }
 
+const accentColorLabels: Record<string, string> = {
+  peach: 'Soft Orange / Peach / Pink',
+};
+
 export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
   const { theme } = useAppTheme();
   const { playTestSound } = useTestAudio();
@@ -664,7 +668,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
                         Accent Color
                       </Text>
                       <Text style={[styles.settingHint, { color: theme.text.secondary }]}>
-                        {accentColor.charAt(0).toUpperCase() + accentColor.slice(1)}
+                        {accentColorLabels[accentColor] ?? accentColor.charAt(0).toUpperCase() + accentColor.slice(1)}
                       </Text>
                     </View>
                   </View>

@@ -12,7 +12,23 @@ const ORBIT_RADIUS = Math.min(SCREEN_WIDTH * 0.32, 140);
 const COLOR_SIZE = 36;
 
 const classicColors: AccentColor[] = ['red', 'blue', 'green', 'purple', 'orange', 'pink', 'teal', 'indigo'];
-const gradientColors: AccentColor[] = ['sunset', 'ocean', 'forest', 'berry', 'aurora', 'midnight', 'fire'];
+const gradientColors: AccentColor[] = ['sunset', 'ocean', 'forest', 'berry', 'aurora', 'peach'];
+const gradientLabels: Record<AccentColor, string | undefined> = {
+  red: undefined,
+  blue: undefined,
+  green: undefined,
+  purple: undefined,
+  orange: undefined,
+  pink: undefined,
+  teal: undefined,
+  indigo: undefined,
+  sunset: 'Sunset',
+  ocean: 'Ocean',
+  forest: 'Forest',
+  berry: 'Berry',
+  aurora: 'Aurora',
+  peach: 'Soft Orange / Peach / Pink',
+};
 
 interface ColorOrbitPickerProps {
   selectedColor: AccentColor;
@@ -117,6 +133,9 @@ export function ColorOrbitPicker({ selectedColor, onSelect }: ColorOrbitPickerPr
       const gradient = getAccentGradient(color);
       const isSelected = selectedColor === color;
       const isExpanded = expandedGradient === color;
+      const colors = (gradient && gradient.length >= 2
+        ? gradient
+        : [getAccentColor(color), getAccentColor(color)]) as any;
 
       return (
         <Animated.View
@@ -137,24 +156,31 @@ export function ColorOrbitPicker({ selectedColor, onSelect }: ColorOrbitPickerPr
               {
                 borderWidth: isSelected ? 2 : 1,
                 borderColor: isSelected ? theme.accent : theme.border,
-                height: isExpanded ? 140 : 120,
+                height: isExpanded ? 86 : 62,
               },
             ]}
           >
             <LinearGradient
-              colors={(gradient && gradient.length >= 2 ? gradient : [getAccentColor(color), getAccentColor(color)]) as any}
+              colors={colors}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.gradientInner}
             >
-              {isExpanded && (
-                <View style={styles.gradientPreview}>
-                  <View style={[styles.previewDot, { backgroundColor: getAccentColor(color) }]} />
-                  <Text style={[styles.previewLabel, { color: theme.text.primary }]}>
-                    {color.charAt(0).toUpperCase() + color.slice(1)}
-                  </Text>
+              <View style={styles.gradientPreview}>
+                <View style={styles.gradientStops}>
+                  {colors.map((stop: string, index: number) => (
+                    <View
+                      key={`${color}-${stop}-${index}`}
+                      style={[styles.previewDot, { backgroundColor: stop }]}
+                    />
+                  ))}
                 </View>
-              )}
+                {isExpanded ? (
+                  <Text style={[styles.previewLabel, { color: '#FFFFFF' }]}>
+                    {gradientLabels[color] ?? color.charAt(0).toUpperCase() + color.slice(1)}
+                  </Text>
+                ) : null}
+              </View>
             </LinearGradient>
           </Pressable>
         </Animated.View>
@@ -301,7 +327,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   gradientCard: {
-    borderRadius: borderRadius.md,
+    borderRadius: 12,
     overflow: 'hidden',
     elevation: 2,
   },
@@ -309,7 +335,8 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
   },
   gradientIndicator: {
     flexDirection: 'row',
@@ -321,16 +348,29 @@ const styles = StyleSheet.create({
   },
   gradientPreview: {
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
+  },
+  gradientStops: {
+    flexDirection: 'row',
+    gap: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 5,
+    borderRadius: 999,
+    backgroundColor: 'rgba(0,0,0,0.18)',
   },
   previewDot: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.42)',
   },
   previewLabel: {
     fontFamily: typography.fontFamily,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
+    textShadowColor: 'rgba(0,0,0,0.35)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
 });

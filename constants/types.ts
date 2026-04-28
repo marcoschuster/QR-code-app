@@ -101,8 +101,7 @@ export type AccentColor =
   | 'forest'
   | 'berry'
   | 'aurora'
-  | 'midnight'
-  | 'fire';
+  | 'peach';
 
 export interface SettingsState {
   appearance: AppearanceMode;

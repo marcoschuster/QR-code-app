@@ -14,16 +14,15 @@ export const accentColors: Record<AccentColor, { primary: string; gradient?: str
   forest: { primary: '#228B22', gradient: ['#228B22', '#32CD32', '#7CFC00'] },
   berry: { primary: '#8A2BE2', gradient: ['#8A2BE2', '#9400D3', '#DA70D6'] },
   aurora: { primary: '#00F5D4', gradient: ['#00CED1', '#00F5D4', '#7FFF00'] },
-  midnight: { primary: '#4169E1', gradient: ['#4169E1', '#1E90FF', '#87CEEB'] },
-  fire: { primary: '#FF4500', gradient: ['#FF4500', '#FF6B35', '#FFA500'] },
+  peach: { primary: '#FF8A4C', gradient: ['#FF8A4C', '#FFC3A0', '#FF6FAE'] },
 };
 
 export const getAccentColor = (accentColor: AccentColor): string => {
-  return accentColors[accentColor].primary;
+  return accentColors[accentColor]?.primary ?? accentColors.red.primary;
 };
 
 export const getAccentGradient = (accentColor: AccentColor): string[] | undefined => {
-  return accentColors[accentColor].gradient;
+  return accentColors[accentColor]?.gradient;
 };
 
 // Stronger gradients for small UI elements (chips, sort buttons, navigation icons, etc.)
@@ -42,8 +41,7 @@ export const getStrongAccentGradient = (accentColor: AccentColor): string[] | un
     forest: ['#003300', '#00FF00', '#FFFF00'],
     berry: ['#2E0854', '#9400D3', '#FF69B4'],
     aurora: ['#006666', '#00FFFF', '#00FF00'],
-    midnight: ['#000022', '#4169E1', '#87CEEB'],
-    fire: ['#4A0000', '#FF4500', '#FFD700'],
+    peach: ['#D94A1F', '#FF9F72', '#FF3D8E'],
   };
   return strongGradients[accentColor];
 };
