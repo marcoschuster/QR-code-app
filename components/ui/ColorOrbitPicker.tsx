@@ -27,7 +27,7 @@ const gradientLabels: Record<AccentColor, string | undefined> = {
   forest: 'Forest',
   berry: 'Berry',
   aurora: 'Aurora',
-  peach: 'Golden Hour',
+  peach: 'Beach Peach',
   meadow: 'Meadow',
   twilight: 'Twilight',
 };

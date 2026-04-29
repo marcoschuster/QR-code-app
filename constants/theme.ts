@@ -14,9 +14,9 @@ export const accentColors: Record<AccentColor, { primary: string; gradient?: str
   forest: { primary: '#228B22', gradient: ['#228B22', '#32CD32', '#7CFC00'] },
   berry: { primary: '#8A2BE2', gradient: ['#8A2BE2', '#9400D3', '#DA70D6'] },
   aurora: { primary: '#00F5D4', gradient: ['#00CED1', '#00F5D4', '#7FFF00'] },
-  peach: { primary: '#FF7E5F', gradient: ['#FF7E5F', '#FEB47B', '#FF9A8B'] },
+  peach: { primary: '#FF6B35', gradient: ['#FF6B35', '#FFB347', '#FF4F9A'] },
   meadow: { primary: '#8FAF7A', gradient: ['#8FAF7A', '#F6D365'] },
-  twilight: { primary: '#312E81', gradient: ['#312E81', '#8B5CF6'] },
+  twilight: { primary: '#7209B7', gradient: ['#3A0CA3', '#7209B7', '#B5179E'] },
 };
 
 export const getAccentColor = (accentColor: AccentColor): string => {
@@ -43,9 +43,9 @@ export const getStrongAccentGradient = (accentColor: AccentColor): string[] | un
     forest: ['#003300', '#00FF00', '#FFFF00'],
     berry: ['#2E0854', '#9400D3', '#FF69B4'],
     aurora: ['#006666', '#00FFFF', '#00FF00'],
-    peach: ['#E95F45', '#F9A061', '#F2777E'],
+    peach: ['#FF4E1F', '#FF8A00', '#F72585'],
     meadow: ['#5F7F4E', '#C9B84F'],
-    twilight: ['#17134F', '#6D28D9'],
+    twilight: ['#2A0878', '#5B079A', '#92107F'],
   };
   return strongGradients[accentColor];
 };
