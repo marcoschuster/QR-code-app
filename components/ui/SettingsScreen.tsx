@@ -16,7 +16,7 @@ interface SettingsScreenProps {
 }
 
 const accentColorLabels: Record<string, string> = {
-  peach: 'Soft Orange / Peach / Pink',
+  peach: 'Golden Hour',
 };
 
 export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
