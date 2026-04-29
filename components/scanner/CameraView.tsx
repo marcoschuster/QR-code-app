@@ -602,10 +602,6 @@ function ZoomControl({
     outputRange: pointCenters,
     extrapolate: 'clamp',
   });
-  const fineTuneTrackOpacity = fineTuneAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 1],
-  });
   const dotsOpacity = fineTuneAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [1, 0.35],
@@ -641,8 +637,6 @@ function ZoomControl({
               ))}
             </View>
           ) : null}
-
-          <Animated.View style={[s.zoomFineTuneTrack, { opacity: fineTuneTrackOpacity }]} />
 
           <Animated.View style={[s.zoomDotsRow, { opacity: dotsOpacity }]}>
             {points.map((point, index) => (
@@ -710,9 +704,9 @@ const s = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.18,
+    shadowOpacity: 0,
     shadowRadius: 24,
-    elevation: 10,
+    elevation: 0,
   },
   zoomControl: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   zoomStepButton: {
@@ -743,14 +737,6 @@ const s = StyleSheet.create({
   },
   zoomTapZone: {
     flex: 1,
-  },
-  zoomFineTuneTrack: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    height: 4,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.2)',
   },
   zoomDotsRow: {
     position: 'absolute',
