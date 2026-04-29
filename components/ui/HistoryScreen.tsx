@@ -427,7 +427,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
     title: '',
     message: '',
   });
-  const { theme } = useAppTheme();
+  const { theme, isDark } = useAppTheme();
   const lastScrollY = useRef(0);
   const tabBarHidden = useRef(false);
   const searchVisibility = useRef(new Animated.Value(1)).current;
@@ -989,6 +989,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
           {
             backgroundColor: theme.background,
             borderBottomColor: theme.border,
+            borderBottomWidth: isDark ? 2 : 1,
           },
         ]}
       >
