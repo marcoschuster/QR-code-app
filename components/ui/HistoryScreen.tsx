@@ -457,6 +457,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
   });
   const primaryAction = selectedItem ? getHistoryPrimaryAction(selectedItem) : null;
   const insights = buildHistoryInsights(groupedItems);
+  const insightSurfaceColor = isDark ? 'rgba(15, 15, 22, 0.5)' : theme.surface;
   const searchTranslateY = searchVisibility.interpolate({
     inputRange: [0, 1],
     outputRange: [-22, 0],
@@ -1003,7 +1004,13 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
         </View>
         <View style={s.headerControlsRow}>
           <View
-            style={[s.sortControl, { backgroundColor: theme.surfaceStrong }]}
+            style={[
+              s.sortControl,
+              {
+                backgroundColor: theme.surfaceStrong,
+                borderColor: isDark ? theme.border : 'transparent',
+              },
+            ]}
             onLayout={(event) => setSortControlWidth(event.nativeEvent.layout.width)}
           >
             <Animated.View
@@ -1196,7 +1203,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
               {!historyInsightsCollapsed && (
                 <>
                   <View style={s.insightsGrid}>
-                    <View style={[s.insightTile, { backgroundColor: 'rgba(15, 15, 22, 0.5)', borderColor: theme.border }]}>
+                    <View style={[s.insightTile, { backgroundColor: insightSurfaceColor, borderColor: theme.border }]}>
                       <Text style={[s.insightValue, { color: theme.text.primary }]}>
                         {insights.totalScans}
                       </Text>
@@ -1204,7 +1211,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
                         Total Scans
                       </Text>
                     </View>
-                    <View style={[s.insightTile, { backgroundColor: 'rgba(15, 15, 22, 0.5)', borderColor: theme.border }]}>
+                    <View style={[s.insightTile, { backgroundColor: insightSurfaceColor, borderColor: theme.border }]}>
                       <Text style={[s.insightValue, { color: theme.text.primary }]}>
                         {insights.uniqueCodes}
                       </Text>
@@ -1212,7 +1219,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
                         Unique QR Codes
                       </Text>
                     </View>
-                    <View style={[s.insightTile, { backgroundColor: 'rgba(15, 15, 22, 0.5)', borderColor: theme.border }]}>
+                    <View style={[s.insightTile, { backgroundColor: insightSurfaceColor, borderColor: theme.border }]}>
                       <Text style={[s.insightValue, { color: theme.text.primary }]}>
                         {insights.favorites}
                       </Text>
@@ -1220,7 +1227,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
                         Favorites
                       </Text>
                     </View>
-                    <View style={[s.insightTile, { backgroundColor: 'rgba(15, 15, 22, 0.5)', borderColor: theme.border }]}>
+                    <View style={[s.insightTile, { backgroundColor: insightSurfaceColor, borderColor: theme.border }]}>
                       <Text style={[s.insightValue, { color: theme.text.primary }]}>
                         {insights.thisWeekScans}
                       </Text>
@@ -1231,25 +1238,25 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
                   </View>
 
                   <View style={s.insightHighlights}>
-                    <View style={[s.insightChip, { backgroundColor: 'rgba(15, 15, 22, 0.5)', borderColor: theme.border }]}>
+                    <View style={[s.insightChip, { backgroundColor: insightSurfaceColor, borderColor: theme.border }]}>
                       <Ionicons name="layers-outline" size={15} color={theme.accent} />
                       <Text style={[s.insightChipText, { color: theme.text.primary }]}>
                         Top type: {insights.topTypeLabel}
                       </Text>
                     </View>
-                    <View style={[s.insightChip, { backgroundColor: 'rgba(15, 15, 22, 0.5)', borderColor: theme.border }]}>
+                    <View style={[s.insightChip, { backgroundColor: insightSurfaceColor, borderColor: theme.border }]}>
                       <Ionicons name="repeat-outline" size={15} color={theme.accent} />
                       <Text style={[s.insightChipText, { color: theme.text.primary }]}>
                         Repeats: {insights.repeatedCodes}
                       </Text>
                     </View>
-                    <View style={[s.insightChip, { backgroundColor: 'rgba(15, 15, 22, 0.5)', borderColor: theme.border }]}>
+                    <View style={[s.insightChip, { backgroundColor: insightSurfaceColor, borderColor: theme.border }]}>
                       <Ionicons name="shield-checkmark-outline" size={15} color={theme.success} />
                       <Text style={[s.insightChipText, { color: theme.text.primary }]}>
                         Safe links: {insights.safeLinks}
                       </Text>
                     </View>
-                    <View style={[s.insightChip, { backgroundColor: 'rgba(15, 15, 22, 0.5)', borderColor: theme.border }]}>
+                    <View style={[s.insightChip, { backgroundColor: insightSurfaceColor, borderColor: theme.border }]}>
                       <Ionicons name="warning-outline" size={15} color={theme.danger} />
                       <Text style={[s.insightChipText, { color: theme.text.primary }]}>
                         Flagged: {insights.riskyLinks}
@@ -1930,6 +1937,7 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     flex: 1,
     borderRadius: 16,
+    borderWidth: 1,
     padding: 2,
     position: 'relative',
     overflow: 'hidden',
