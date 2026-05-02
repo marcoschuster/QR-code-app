@@ -18,6 +18,16 @@ export default {
           "cameraPermission": "Allow QR Scanner to access your camera to scan codes."
         }
       ],
+      [
+        "react-native-vision-camera",
+        {
+          "cameraPermissionText": "Allow QR Scanner to access your camera to scan codes.",
+          "enableFrameProcessors": true,
+          "enableCodeScanner": false,
+          "enableMicrophonePermission": false,
+          "enableLocation": false
+        }
+      ],
       "expo-audio"
     ],
     ios: {

@@ -13,6 +13,7 @@
   "dependencies": {
     "@expo/ngrok": "^4.1.3",
     "@expo/vector-icons": "^15.1.1",
+    "@mgcrea/vision-camera-barcode-scanner": "^0.12.3",
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@shopify/react-native-skia": "^2.6.2",
     "expo": "~55.0.14",
@@ -43,6 +44,8 @@
     "react-native-screens": "~4.23.0",
     "react-native-sound": "^0.13.0",
     "react-native-svg": "~15.15.3",
+    "react-native-vision-camera": "^4.7.3",
+    "react-native-worklets-core": "^1.6.3",
     "toqr": "^0.1.1",
     "zustand": "^5.0.12"
   },
