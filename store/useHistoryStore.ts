@@ -16,6 +16,10 @@ interface HistoryStore {
     saved: boolean;
     itemId?: string;
   };
+  addScan: (item: Omit<HistoryItem, 'id' | 'timestamp' | 'hours' | 'minutes' | 'groupId' | 'scanCount' | 'scanIds'>) => {
+    saved: boolean;
+    itemId?: string;
+  };
   removeItem: (id: string) => void;
   removeScanId: (itemId: string, scanId: string) => void;
   clearAll: () => void;
@@ -93,6 +97,7 @@ export const useHistoryStore = create<HistoryStore>()(
           };
         }
       },
+      addScan: (item) => get().addItem(item),
       removeItem: (id) => set((state) => ({ items: state.items.filter((i) => i.id !== id) })),
       removeScanId: (itemId, scanId) => {
         set((state) => ({

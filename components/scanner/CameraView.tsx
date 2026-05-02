@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,22 @@ import {
   Animated,
   type LayoutChangeEvent,
 } from 'react-native';
-import { CameraView, useCameraPermissions } from 'expo-camera';
+import {
+  Camera,
+  useCameraDevice,
+  useCameraFormat,
+  useCameraPermission,
+  type CameraPermissionStatus,
+  type CameraPosition,
+} from 'react-native-vision-camera';
+import {
+  useBarcodeScanner,
+  type Barcode,
+  type BarcodeType,
+  type Highlight,
+  type Point,
+} from '@mgcrea/vision-camera-barcode-scanner';
+import { useRunOnJS } from 'react-native-worklets-core';
 import { Ionicons } from '@expo/vector-icons';
 import { Reticle } from './Reticle';
 import { PhotoScanner } from './PhotoScanner';
@@ -37,8 +52,45 @@ interface ScannerScreenProps {
 let lastKnownCameraPermissionGranted = false;
 const ZOOM_CONTROL_POINTS: number[] = [0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9];
 const MAX_ZOOM = ZOOM_CONTROL_POINTS[ZOOM_CONTROL_POINTS.length - 1] ?? 0.6;
+const CAMERA_PREVIEW_FPS = 30;
+const DEFAULT_BARCODE_SCAN_FPS = 10;
+const MIN_BARCODE_SCAN_FPS = 5;
+const MAX_BARCODE_SCAN_FPS = 30;
+const BARCODE_TYPES: BarcodeType[] = [
+  'qr',
+  'ean-13',
+  'ean-8',
+  'upc-a',
+  'upc-e',
+  'code-128',
+  'code-39',
+  'aztec',
+  'pdf-417',
+  'data-matrix',
+];
 
 const clampValue = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+const getVisionCameraZoom = (
+  device: ReturnType<typeof useCameraDevice>,
+  normalizedZoom: number
+) => {
+  if (!device) {
+    return 1;
+  }
+
+  const minZoom = Math.max(device.minZoom, device.neutralZoom);
+  const maxZoom = Math.max(minZoom, Math.min(device.maxZoom, device.neutralZoom * 8));
+  const progress = clampValue(normalizedZoom / MAX_ZOOM, 0, 1);
+
+  return minZoom * Math.pow(maxZoom / minZoom, progress);
+};
+
+type NativeScanResult = {
+  value: string;
+  format: BarcodeType | string;
+  cornerPoints: Point[];
+};
+
 const getAutoCopyLinkValue = (parsed: any) => {
   if (!parsed || typeof parsed.rawValue !== 'string' || !/^https?:\/\//i.test(parsed.rawValue)) {
     return null;
@@ -81,8 +133,11 @@ export function ScannerScreen({
   onFineTuneActiveChange,
   tabBarHidden = false,
 }: ScannerScreenProps) {
-  const [permission, requestPermission] = useCameraPermissions();
-  const [cameraFacing, setCameraFacing] = useState<'back' | 'front'>('back');
+  const { hasPermission, requestPermission: requestVisionCameraPermission } = useCameraPermission();
+  const [permissionStatus, setPermissionStatus] = useState<CameraPermissionStatus>(() =>
+    Camera.getCameraPermissionStatus()
+  );
+  const [cameraFacing, setCameraFacing] = useState<CameraPosition>('back');
   const [scanned, setScanned] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
   const [targetBounds, setTargetBounds] = useState<{origin: {x: number; y: number}; size: {width: number; height: number}} | null>(null);
@@ -92,17 +147,65 @@ export function ScannerScreen({
   const [showLimitReached, setShowLimitReached] = useState(false);
   const [zoom, setZoom] = useState(0);
   const photoScanSucceededRef = useRef(false);
+  const scannedRef = useRef(false);
   const bottomOffset = useRef(new Animated.Value(tabBarHidden ? 84 : 160)).current;
   const { theme } = useAppTheme();
-  const { addItem } = useHistoryStore();
+  const { addScan } = useHistoryStore();
   const { saveToHistory, beepOnScan, vibrateOnScan, urlThreatScanning, autoCopyScanned } = useSettingsStore();
   const { playScanSound } = useScanAudio();
+  const scanRuntimeRef = useRef({
+    addScan,
+    autoCopyScanned,
+    beepOnScan,
+    onResult,
+    playScanSound,
+    saveToHistory,
+    urlThreatScanning,
+    vibrateOnScan,
+  });
+  const device = useCameraDevice(cameraFacing);
+  const format = useCameraFormat(device, [
+    { fps: CAMERA_PREVIEW_FPS },
+    { videoResolution: { width: 1920, height: 1080 } },
+  ]);
+  const cameraZoom = useMemo(() => getVisionCameraZoom(device, zoom), [device, zoom]);
+  const barcodeScanFps = clampValue(DEFAULT_BARCODE_SCAN_FPS, MIN_BARCODE_SCAN_FPS, MAX_BARCODE_SCAN_FPS);
 
   useEffect(() => {
-    if (permission?.granted) {
+    setPermissionStatus(Camera.getCameraPermissionStatus());
+  }, [hasPermission]);
+
+  useEffect(() => {
+    if (hasPermission) {
       lastKnownCameraPermissionGranted = true;
     }
-  }, [permission?.granted]);
+  }, [hasPermission]);
+
+  useEffect(() => {
+    scannedRef.current = scanned;
+  }, [scanned]);
+
+  useEffect(() => {
+    scanRuntimeRef.current = {
+      addScan,
+      autoCopyScanned,
+      beepOnScan,
+      onResult,
+      playScanSound,
+      saveToHistory,
+      urlThreatScanning,
+      vibrateOnScan,
+    };
+  }, [
+    addScan,
+    autoCopyScanned,
+    beepOnScan,
+    onResult,
+    playScanSound,
+    saveToHistory,
+    urlThreatScanning,
+    vibrateOnScan,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -120,19 +223,37 @@ export function ScannerScreen({
     }).start();
   }, [bottomOffset, tabBarHidden]);
 
+  const requestPermission = useCallback(async () => {
+    const granted = await requestVisionCameraPermission();
+    setPermissionStatus(Camera.getCameraPermissionStatus());
+
+    if (granted) {
+      lastKnownCameraPermissionGranted = true;
+    }
+  }, [requestVisionCameraPermission]);
+
   // ── Barcode scan handler ───────────────────────────────────────────────────
-  const handleBarcodeScanned = async (result: { data: string; raw?: string; bounds?: {origin: {x: number; y: number}; size: {width: number; height: number}} }) => {
-    if (scanned) return;
-    const encodedValue = result.raw || result.data;
+  const handleBarcodeScanned = useCallback(async (result: NativeScanResult) => {
+    if (scannedRef.current) return;
+    scannedRef.current = true;
+    const encodedValue = result.value;
+    const {
+      addScan,
+      autoCopyScanned,
+      beepOnScan,
+      onResult,
+      playScanSound,
+      saveToHistory,
+      urlThreatScanning,
+      vibrateOnScan,
+    } = scanRuntimeRef.current;
 
     // 1. Start the lock animation FIRST
-    if (result.bounds) {
-      setTargetBounds(result.bounds);
-      setIsLocking(true);
-      
-      // 2. Wait for animation to complete before showing result
-      await new Promise(resolve => setTimeout(resolve, 450));
-    }
+    setTargetBounds(null);
+    setIsLocking(true);
+
+    // 2. Wait for animation to complete before showing result
+    await new Promise(resolve => setTimeout(resolve, 450));
 
     // 3. Now set scanned to true (hides camera, shows result)
     setScanned(true);
@@ -175,7 +296,7 @@ export function ScannerScreen({
 
     if (saveToHistory) {
       try {
-        const saveResult = addItem({
+        const saveResult = addScan({
           kind: 'scanned',
           type: parsed.type,
           rawValue: encodedValue,
@@ -210,7 +331,38 @@ export function ScannerScreen({
     } catch (e) {
       console.error('[Scanner] onResult crashed:', e);
     }
-  };
+  }, []);
+
+  const handleBarcodeScannedOnJS = useRunOnJS(handleBarcodeScanned, [handleBarcodeScanned]);
+  const { props: barcodeScannerProps, highlights: scannerHighlights } = useBarcodeScanner({
+    fps: barcodeScanFps,
+    barcodeTypes: BARCODE_TYPES,
+    resizeMode: 'cover',
+    disableHighlighting: scanned || showPhotoScanner,
+    onBarcodeScanned: (barcodes: Barcode[]) => {
+      'worklet';
+
+      const results: NativeScanResult[] = [];
+
+      for (const barcode of barcodes) {
+        if (!barcode.value) {
+          continue;
+        }
+
+        results.push({
+          value: barcode.value,
+          format: barcode.type,
+          cornerPoints: barcode.cornerPoints,
+        });
+      }
+
+      if (results.length > 0) {
+        handleBarcodeScannedOnJS(results[0]);
+      }
+
+      return results;
+    },
+  });
 
   // ── Photo scan handler ──
   const handleScanFromPhotos = async () => {
@@ -223,6 +375,7 @@ export function ScannerScreen({
       if (result.canceled) return;
       
       photoScanSucceededRef.current = false;
+      scannedRef.current = true;
       setScanned(true);
       setTargetBounds(null);
       setIsLocking(false);
@@ -234,7 +387,7 @@ export function ScannerScreen({
   };
 
   // ── Permission loading ─────────────────────────────────────────────────────
-  if (permission === null && !lastKnownCameraPermissionGranted) {
+  if (permissionStatus === 'not-determined' && !hasPermission && !lastKnownCameraPermissionGranted) {
     return (
       <View style={s.container}>
         <StatusBar hidden />
@@ -250,28 +403,33 @@ export function ScannerScreen({
   }
 
   // ── Permission denied ──────────────────────────────────────────────────────
-  if (permission && !permission.granted) {
+  if (!hasPermission && permissionStatus !== 'not-determined') {
     return (
       <View style={s.container}>
         <StatusBar hidden />
         <View style={s.center}>
           <Ionicons name="camera-outline" size={72} color="#FF453A" />
-          <Text style={s.title}>
-            {permission.canAskAgain ? 'Camera Access Needed' : 'Camera Blocked'}
-          </Text>
-          <Text style={s.body}>
-            {permission.canAskAgain
-              ? 'Tap below to allow camera access.'
-              : 'Go to Settings and enable camera access for this app.'}
-          </Text>
+          <Text style={s.title}>Camera Blocked</Text>
+          <Text style={s.body}>Go to Settings and enable camera access for this app.</Text>
           <Pressable
             style={s.btn}
-            onPress={permission.canAskAgain ? requestPermission : () => Linking.openSettings()}
+            onPress={() => Linking.openSettings()}
           >
-            <Text style={s.btnTxt}>
-              {permission.canAskAgain ? 'Allow Camera' : 'Open Settings'}
-            </Text>
+            <Text style={s.btnTxt}>Open Settings</Text>
           </Pressable>
+        </View>
+      </View>
+    );
+  }
+
+  if (!device) {
+    return (
+      <View style={s.container}>
+        <StatusBar hidden />
+        <View style={s.center}>
+          <Ionicons name="camera-outline" size={72} color="rgba(255,255,255,0.3)" />
+          <Text style={s.title}>Camera Unavailable</Text>
+          <Text style={s.body}>No {cameraFacing} camera was found on this device.</Text>
         </View>
       </View>
     );
@@ -282,22 +440,27 @@ export function ScannerScreen({
     <View style={s.container}>
       <StatusBar hidden />
 
-      <CameraView
+      <Camera
         style={StyleSheet.absoluteFill}
-        facing={cameraFacing}
-        zoom={zoom}
-        enableTorch={cameraFacing === 'back' && torchOn}
-        onBarcodeScanned={scanned || showPhotoScanner ? undefined : handleBarcodeScanned}
-        barcodeScannerSettings={{
-          barcodeTypes: [
-            'qr', 'ean13', 'ean8', 'upc_a', 'upc_e',
-            'code128', 'code39', 'aztec', 'pdf417', 'datamatrix',
-          ],
-        }}
+        device={device}
+        isActive={!scanned && !showPhotoScanner}
+        format={format}
+        fps={CAMERA_PREVIEW_FPS}
+        pixelFormat="yuv"
+        resizeMode="cover"
+        zoom={cameraZoom}
+        torch={device.hasTorch && cameraFacing === 'back' && torchOn ? 'on' : 'off'}
+        {...barcodeScannerProps}
       />
 
       {/* Reticle — hidden once scanned so it vanishes when result sheet opens */}
-      {!scanned && !showPhotoScanner && <Reticle targetBounds={targetBounds} isLocking={isLocking} />}
+      {!scanned && !showPhotoScanner && (
+        <Reticle
+          targetBounds={targetBounds}
+          highlights={scannerHighlights as Highlight[]}
+          isLocking={isLocking}
+        />
+      )}
 
       {/* Top bar */}
       <View style={[s.topBar, { paddingTop: Platform.OS === 'ios' ? 56 : 36 }]}>
@@ -305,11 +468,12 @@ export function ScannerScreen({
           <Pressable
             style={[s.pill, { backgroundColor: 'rgba(0,0,0,0.45)', borderColor: theme.border }]}
             onPress={() => setTorchOn(v => !v)}
+            disabled={!device.hasTorch || cameraFacing !== 'back'}
           >
             <Ionicons
               name={torchOn ? 'flash' : 'flash-off'}
               size={22}
-              color={torchOn ? '#FFD60A' : '#FFF'}
+              color={!device.hasTorch || cameraFacing !== 'back' ? 'rgba(255,255,255,0.35)' : torchOn ? '#FFD60A' : '#FFF'}
             />
           </Pressable>
           <Pressable
@@ -369,6 +533,7 @@ export function ScannerScreen({
             style={[s.rescanBtn, { backgroundColor: 'rgba(0,0,0,0.45)', borderColor: theme.border }]}
             onPress={() => {
               setScanned(false);
+              scannedRef.current = false;
               setTargetBounds(null);
               setIsLocking(false);
               onReset?.();
@@ -387,6 +552,7 @@ export function ScannerScreen({
           setShowPhotoScanner(false);
           setSelectedImage(null);
           if (!photoScanSucceededRef.current) {
+            scannedRef.current = false;
             setScanned(false);
             setTargetBounds(null);
             setIsLocking(false);
@@ -394,6 +560,7 @@ export function ScannerScreen({
         }}
         onResult={(data) => {
           photoScanSucceededRef.current = true;
+          scannedRef.current = true;
           setScanned(true);
           onResult(data);
         }}

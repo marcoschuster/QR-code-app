@@ -43,6 +43,7 @@ interface Bounds {
 
 interface ReticleProps {
   targetBounds: Bounds | null;
+  highlights?: Bounds[];
   isLocking: boolean;
 }
 
@@ -96,7 +97,7 @@ function getModeEasing(mode: IdleMode) {
   }
 }
 
-export function Reticle({ targetBounds, isLocking }: ReticleProps) {
+export function Reticle({ targetBounds, highlights = [], isLocking }: ReticleProps) {
   const animatedTop = useRef(new Animated.Value(DEFAULT_TOP)).current;
   const animatedLeft = useRef(new Animated.Value(DEFAULT_LEFT)).current;
   const animatedSize = useRef(new Animated.Value(DEFAULT_SIZE)).current;
@@ -108,6 +109,7 @@ export function Reticle({ targetBounds, isLocking }: ReticleProps) {
   const lockingRef = useRef(isLocking);
   const mountedRef = useRef(true);
   const [idleMode, setIdleMode] = useState<IdleMode | null>(null);
+  const activeTargetBounds = isLocking ? targetBounds ?? highlights[0] ?? null : targetBounds;
 
   const clearIdleTimer = () => {
     if (idleTimeoutRef.current) {
@@ -182,10 +184,10 @@ export function Reticle({ targetBounds, isLocking }: ReticleProps) {
   }, [isLocking]);
 
   useEffect(() => {
-    if (isLocking && targetBounds) {
+    if (isLocking && activeTargetBounds) {
       stopIdleAnimation();
 
-      const { origin, size } = targetBounds;
+      const { origin, size } = activeTargetBounds;
       const targetSize = Math.max(size.width, size.height) + 16;
 
       Animated.parallel([
@@ -250,7 +252,7 @@ export function Reticle({ targetBounds, isLocking }: ReticleProps) {
     return () => {
       stopIdleAnimation();
     };
-  }, [animatedColor, animatedLeft, animatedSize, animatedTop, idleProgress, isLocking, targetBounds]);
+  }, [activeTargetBounds, animatedColor, animatedLeft, animatedSize, animatedTop, idleProgress, isLocking]);
 
   const borderColor = animatedColor.interpolate({
     inputRange: [0, 1],
