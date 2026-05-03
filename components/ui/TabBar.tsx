@@ -170,7 +170,6 @@ export function TabBar({ activeTab, onTabChange, hidden = false, onToggleHidden 
                   <View style={styles.activePillLightHighlight} />
                   <View style={styles.activePillLightCenterSheen} />
                   <View style={styles.activePillLightSideSheen} />
-                  <View style={styles.activePillLightBottomRim} />
                 </>
               )}
             </Animated.View>
@@ -332,15 +331,6 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: 'rgba(255,255,255,0.24)',
     transform: [{ rotate: '9deg' }],
-  },
-  activePillLightBottomRim: {
-    position: 'absolute',
-    left: 12,
-    right: 12,
-    bottom: 3,
-    height: 2,
-    borderRadius: 999,
-    backgroundColor: 'rgba(48,64,96,0.08)',
   },
   label: {
     marginTop: 2,
