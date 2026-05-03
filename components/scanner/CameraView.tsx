@@ -16,6 +16,7 @@ import {
   useCameraDevice,
   useCameraFormat,
   useCameraPermission,
+  type CameraRuntimeError,
   type CameraPermissionStatus,
   type CameraPosition,
 } from 'react-native-vision-camera';
@@ -91,6 +92,11 @@ type NativeScanResult = {
   cornerPoints: Point[];
 };
 
+type CameraRuntimeIssue = {
+  code: string;
+  message: string;
+};
+
 const getAutoCopyLinkValue = (parsed: any) => {
   if (!parsed || typeof parsed.rawValue !== 'string' || !/^https?:\/\//i.test(parsed.rawValue)) {
     return null;
@@ -146,6 +152,7 @@ export function ScannerScreen({
   const [showPhotoScanner, setShowPhotoScanner] = useState(false);
   const [showLimitReached, setShowLimitReached] = useState(false);
   const [zoom, setZoom] = useState(0);
+  const [cameraRuntimeIssue, setCameraRuntimeIssue] = useState<CameraRuntimeIssue | null>(null);
   const photoScanSucceededRef = useRef(false);
   const scannedRef = useRef(false);
   const bottomOffset = useRef(new Animated.Value(tabBarHidden ? 84 : 160)).current;
@@ -174,6 +181,10 @@ export function ScannerScreen({
   useEffect(() => {
     setPermissionStatus(Camera.getCameraPermissionStatus());
   }, [hasPermission]);
+
+  useEffect(() => {
+    setCameraRuntimeIssue(null);
+  }, [cameraFacing, hasPermission]);
 
   useEffect(() => {
     if (hasPermission) {
@@ -231,6 +242,14 @@ export function ScannerScreen({
       lastKnownCameraPermissionGranted = true;
     }
   }, [requestVisionCameraPermission]);
+
+  const handleCameraError = useCallback((error: CameraRuntimeError) => {
+    console.warn('[Scanner] camera runtime error:', error);
+    setCameraRuntimeIssue({
+      code: error.code,
+      message: error.message,
+    });
+  }, []);
 
   // ── Barcode scan handler ───────────────────────────────────────────────────
   const handleBarcodeScanned = useCallback(async (result: NativeScanResult) => {
@@ -403,6 +422,34 @@ export function ScannerScreen({
   }
 
   // ── Permission denied ──────────────────────────────────────────────────────
+  if (permissionStatus === 'restricted' || cameraRuntimeIssue?.code === 'system/camera-is-restricted') {
+    return (
+      <View style={s.container}>
+        <StatusBar hidden />
+        <View style={s.center}>
+          <Ionicons name="camera-outline" size={72} color="#FF9F0A" />
+          <Text style={s.title}>Camera Restricted</Text>
+          <Text style={s.body}>
+            Camera access is restricted by this device or operating system policy. Try another device, emulator image, or disable the camera restriction in device policy settings.
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (cameraRuntimeIssue) {
+    return (
+      <View style={s.container}>
+        <StatusBar hidden />
+        <View style={s.center}>
+          <Ionicons name="camera-outline" size={72} color="#FF453A" />
+          <Text style={s.title}>Camera Error</Text>
+          <Text style={s.body}>{cameraRuntimeIssue.message}</Text>
+        </View>
+      </View>
+    );
+  }
+
   if (!hasPermission && permissionStatus !== 'not-determined') {
     return (
       <View style={s.container}>
@@ -450,6 +497,7 @@ export function ScannerScreen({
         resizeMode="cover"
         zoom={cameraZoom}
         torch={device.hasTorch && cameraFacing === 'back' && torchOn ? 'on' : 'off'}
+        onError={handleCameraError}
         {...barcodeScannerProps}
       />
 
