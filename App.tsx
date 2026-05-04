@@ -167,7 +167,7 @@ export default function App() {
     }
   };
 
-  const tabs = ['scan', 'generate', 'history'];
+  const tabs = ['scan', 'history', 'generate'];
   const currentTabIndex = tabs.indexOf(activeTab);
 
   const canHandleVerticalTabBarSwipe = activeTab !== 'history' && !showResult && !showSettings;
