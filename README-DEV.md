@@ -69,3 +69,38 @@ If the editor still closes:
 4. Restart with elevated permissions if needed
 
 The configuration should now keep your development environment stable during idle periods and battery save mode.
+
+## Support Email Setup
+
+The app sends bug reports to the server-side `/api/support` route. Do not send mail from the client and do not expose SMTP2GO or Brevo keys in `EXPO_PUBLIC_*` variables.
+
+### Environment
+
+Copy `.env.example` to `.env.local` for the serverless deployment and set:
+
+- `SMTP2GO_API_KEY` for the primary provider.
+- `BREVO_API_KEY` only as the fallback when SMTP2GO is not configured.
+- `RECAPTCHA_SECRET_KEY` for server-side Google reCAPTCHA v3 checks.
+- `EXPO_PUBLIC_RECAPTCHA_SITE_KEY` for the client-side reCAPTCHA v3 token.
+- `SUPPORT_FROM_EMAIL`, default `noreply@ourdomain.de`.
+- `SUPPORT_TO_EMAIL`, default `support@ourdomain.de`. Set this to a Gmail address if support mail should land there directly.
+
+### SMTP2GO Deliverability
+
+1. Verify `ourdomain.de` in SMTP2GO.
+2. Add the SPF record requested by SMTP2GO.
+3. Add the DKIM CNAME/TXT records requested by SMTP2GO.
+4. Add a DMARC record, for example `v=DMARC1; p=quarantine; rua=mailto:dmarc@ourdomain.de`.
+5. Disable custom tracking domains and open/click tracking for this transactional flow to avoid extra cookies.
+6. Configure SMTP2GO for the EU data region if it is available on the account.
+
+### GDPR/DPA
+
+1. Sign the SMTP2GO data processing agreement before production use.
+2. If Brevo fallback is enabled, sign Brevo's DPA too.
+3. Keep support logs minimal. The route logs only timestamp, hashed user id, and ticket id.
+4. Make sure the privacy policy covers support request processing, retention, and subprocessors.
+
+### Deployment Notes
+
+Deploy either the root `api/support.ts` serverless route or the Expo Router `app/api/support+api.ts` route, depending on the host. Native app builds need `EXPO_PUBLIC_SUPPORT_API_URL` to point to the deployed route.
