@@ -29,6 +29,7 @@ import { ConfirmDialog } from './ConfirmDialog';
 import { LiquidGlassSurface } from './LiquidGlassSurface';
 import { PremiumPressable } from './PremiumPressable';
 import { SuccessDialog } from './SuccessDialog';
+import { SupportDialog } from './SupportDialog';
 
 const getDomainFromUrl = (url: string) => {
   try {
@@ -403,6 +404,7 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
   const [isSortReversed, setIsSortReversed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [supportDialogVisible, setSupportDialogVisible] = useState(false);
   const [sortControlWidth, setSortControlWidth] = useState(0);
   const [confirmDialog, setConfirmDialog] = useState<{
     visible: boolean;
@@ -969,7 +971,13 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
     return (
       <View style={[s.container, { backgroundColor: theme.background }]}>
         <View style={[s.header, { borderBottomColor: theme.border }]}>
-          <Text style={[s.headerTitle, { color: theme.text.primary }]}>History</Text>
+          <View style={s.headerTopRow}>
+            <Text style={[s.headerTitle, { color: theme.text.primary }]}>History</Text>
+            <SupportIconButton
+              theme={theme}
+              onPress={() => setSupportDialogVisible(true)}
+            />
+          </View>
         </View>
         <View style={s.empty}>
           <Text style={s.emptyIcon}>📋</Text>
@@ -978,6 +986,10 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
             Your scan history will appear here
           </Text>
         </View>
+        <SupportDialog
+          visible={supportDialogVisible}
+          onClose={() => setSupportDialogVisible(false)}
+        />
       </View>
     );
   }
@@ -996,11 +1008,17 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
       >
         <View style={s.headerTopRow}>
           <Text style={[s.headerTitle, { color: theme.text.primary }]}>History</Text>
-          <PremiumPressable onPress={handleClearAll} borderRadius={14} shadowColor='transparent' pressScale={0.985} pressTranslateY={1}>
-            <View style={s.clearButtonInner}>
-              <Text style={[s.clearBtn, { color: theme.danger }]}>Clear All</Text>
-            </View>
-          </PremiumPressable>
+          <View style={s.headerActions}>
+            <SupportIconButton
+              theme={theme}
+              onPress={() => setSupportDialogVisible(true)}
+            />
+            <PremiumPressable onPress={handleClearAll} borderRadius={14} shadowColor='transparent' pressScale={0.985} pressTranslateY={1}>
+              <View style={s.clearButtonInner}>
+                <Text style={[s.clearBtn, { color: theme.danger }]}>Clear All</Text>
+              </View>
+            </PremiumPressable>
+          </View>
         </View>
         <View style={s.headerControlsRow}>
           <View
@@ -1298,6 +1316,11 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
         onClose={() => setSuccessDialog(prev => ({ ...prev, visible: false }))}
       />
 
+      <SupportDialog
+        visible={supportDialogVisible}
+        onClose={() => setSupportDialogVisible(false)}
+      />
+
       {menuItem ? (
         <HistoryItemMenu
           item={menuItem}
@@ -1541,6 +1564,32 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
         </Modal>
       )}
     </View>
+  );
+}
+
+function SupportIconButton({
+  theme,
+  onPress,
+}: {
+  theme: ThemeColors;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      style={({ pressed }) => [
+        s.supportIconButton,
+        {
+          backgroundColor: theme.surfaceStrong,
+          borderColor: theme.border,
+          opacity: pressed ? 0.78 : 1,
+        },
+      ]}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel="Report a bug"
+    >
+      <Ionicons name="bug-outline" size={18} color={theme.accent} />
+    </Pressable>
   );
 }
 
@@ -1877,6 +1926,19 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  supportIconButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 32,
