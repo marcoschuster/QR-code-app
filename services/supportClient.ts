@@ -1,6 +1,6 @@
 import Constants from 'expo-constants';
 import * as SecureStore from 'expo-secure-store';
-import { Platform } from 'react-native';
+import { sendSupport } from '../lib/support';
 
 const SUPPORT_USER_ID_KEY = 'support_user_id';
 
@@ -10,14 +10,6 @@ type SupportRequestFields = {
   subject: string;
   message: string;
 };
-
-type Grecaptcha = {
-  ready: (callback: () => void) => void;
-  execute: (siteKey: string, options: { action: string }) => Promise<string>;
-};
-
-const getPublicEnv = (key: string) =>
-  ((globalThis as any).process?.env?.[key] as string | undefined) || '';
 
 const createSupportUserId = () => {
   const randomId = globalThis.crypto?.randomUUID?.();
@@ -49,66 +41,21 @@ export async function getOrCreateSupportUserId() {
   }
 }
 
-function getSupportApiUrl() {
-  const configuredUrl = getPublicEnv('EXPO_PUBLIC_SUPPORT_API_URL');
-
-  if (configuredUrl) {
-    return configuredUrl;
-  }
-
-  if (Platform.OS === 'web') {
-    return '/api/support';
-  }
-
-  throw new Error('Support API URL is not configured for this build.');
-}
-
-async function getRecaptchaToken() {
-  const siteKey = getPublicEnv('EXPO_PUBLIC_RECAPTCHA_SITE_KEY');
-
-  if (!siteKey) {
-    throw new Error('Support verification is not configured for this build.');
-  }
-
-  if (Platform.OS !== 'web') {
-    throw new Error('Native reCAPTCHA verification is not configured for this build.');
-  }
-
-  const grecaptcha = (globalThis as any).grecaptcha as Grecaptcha | undefined;
-
-  if (!grecaptcha) {
-    throw new Error('Support verification is not ready yet.');
-  }
-
-  await new Promise<void>((resolve) => grecaptcha.ready(resolve));
-  return grecaptcha.execute(siteKey, { action: 'support' });
-}
-
 export async function submitSupportRequest(fields: SupportRequestFields) {
-  const [userId, recaptchaToken] = await Promise.all([
-    getOrCreateSupportUserId(),
-    getRecaptchaToken(),
-  ]);
+  const userId = await getOrCreateSupportUserId();
 
-  const response = await fetch(getSupportApiUrl(), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      ...fields,
-      app_version: getSupportAppVersion(),
-      user_id: userId,
-      recaptchaToken,
-    }),
+  const result = await sendSupport({
+    name: fields.name,
+    email: fields.email,
+    subject: fields.subject,
+    message: fields.message,
+    appVersion: getSupportAppVersion(),
+    userId,
   });
-  const responseBody = await response.json().catch(() => ({}));
 
-  if (!response.ok) {
-    throw new Error(
-      typeof responseBody.error === 'string'
-        ? responseBody.error
-        : 'Support request could not be sent right now.'
-    );
+  if (!result.success) {
+    throw new Error(result.error || 'Support request could not be sent right now.');
   }
 
-  return responseBody as { ticketId: string };
+  return { ticketId: result.ticketId };
 }
