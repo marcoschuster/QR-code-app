@@ -22,18 +22,24 @@ interface SupportDialogProps {
   onClose: () => void;
 }
 
-type SupportField = 'name' | 'email' | 'subject' | 'message';
+type SupportField = 'name' | 'email' | 'message';
+
+const SUBJECT_OPTIONS = ['Scanning', 'Generator', 'History', 'Settings', 'Privacy'] as const;
+const CUSTOM_SUBJECT = 'Custom';
+type SubjectOption = typeof SUBJECT_OPTIONS[number] | typeof CUSTOM_SUBJECT;
 
 const INITIAL_FORM = {
   name: '',
   email: '',
-  subject: 'Bug report',
   message: '',
 };
 
 export function SupportDialog({ visible, onClose }: SupportDialogProps) {
   const { theme, isDark } = useAppTheme();
   const [form, setForm] = useState(INITIAL_FORM);
+  const [subjectOption, setSubjectOption] = useState<SubjectOption>('Scanning');
+  const [customSubject, setCustomSubject] = useState('');
+  const [subjectPickerExpanded, setSubjectPickerExpanded] = useState(false);
   const [userId, setUserId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -46,6 +52,7 @@ export function SupportDialog({ visible, onClose }: SupportDialogProps) {
 
     setErrorMessage('');
     setTicketId('');
+    setSubjectPickerExpanded(false);
     void getOrCreateSupportUserId().then(setUserId);
   }, [visible]);
 
@@ -67,12 +74,12 @@ export function SupportDialog({ visible, onClose }: SupportDialogProps) {
     const trimmedForm = {
       name: form.name.trim(),
       email: form.email.trim(),
-      subject: form.subject.trim(),
+      subject: subjectOption === CUSTOM_SUBJECT ? customSubject.trim() : subjectOption,
       message: form.message.trim(),
     };
 
     if (!trimmedForm.name || !trimmedForm.email || !trimmedForm.subject || trimmedForm.message.length < 10) {
-      setErrorMessage('Please fill in all fields and include at least 10 characters in the message.');
+      setErrorMessage('Please fill in all fields, choose a subject, and include at least 10 characters in the message.');
       return;
     }
 
@@ -82,8 +89,11 @@ export function SupportDialog({ visible, onClose }: SupportDialogProps) {
 
     try {
       const result = await submitSupportRequest(trimmedForm);
-      setTicketId(result.ticketId);
+      setTicketId(result.ticketId ?? '');
       setForm(INITIAL_FORM);
+      setSubjectOption('Scanning');
+      setCustomSubject('');
+      setSubjectPickerExpanded(false);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
       setErrorMessage(
@@ -123,11 +133,11 @@ export function SupportDialog({ visible, onClose }: SupportDialogProps) {
           >
             <View style={[styles.header, { borderBottomColor: theme.border }]}>
               <View style={[styles.headerIcon, { backgroundColor: theme.accent + '1F' }]}>
-                <Ionicons name="bug-outline" size={20} color={theme.accent} />
+                <Ionicons name="chatbubble-ellipses-outline" size={20} color={theme.accent} />
               </View>
               <View style={styles.headerCopy}>
                 <Text style={[styles.title, { color: theme.text.primary }]}>Contact Support</Text>
-                <Text style={[styles.subtitle, { color: theme.text.secondary }]}>Send a bug report securely.</Text>
+                <Text style={[styles.subtitle, { color: theme.text.secondary }]}>Send us a message.</Text>
               </View>
               <Pressable onPress={handleClose} style={styles.closeButton}>
                 <Ionicons name="close" size={22} color={theme.text.secondary} />
@@ -155,12 +165,95 @@ export function SupportDialog({ visible, onClose }: SupportDialogProps) {
                 autoCapitalize="none"
                 keyboardType="email-address"
               />
-              <SupportInput
-                label="Subject"
-                value={form.subject}
-                onChangeText={(value) => updateField('subject', value)}
-                placeholder="Bug report"
-              />
+              <View style={styles.field}>
+                <Text style={[styles.label, { color: theme.text.primary }]}>Subject</Text>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.subjectButton,
+                    {
+                      backgroundColor: theme.surface,
+                      borderColor: theme.border,
+                      opacity: pressed ? 0.82 : 1,
+                    },
+                  ]}
+                  onPress={() => setSubjectPickerExpanded((expanded) => !expanded)}
+                >
+                  <Text style={[styles.subjectButtonText, { color: theme.text.primary }]}>
+                    {subjectOption === CUSTOM_SUBJECT ? customSubject || CUSTOM_SUBJECT : subjectOption}
+                  </Text>
+                  <Ionicons
+                    name={subjectPickerExpanded ? 'chevron-up-outline' : 'chevron-down-outline'}
+                    size={18}
+                    color={theme.text.secondary}
+                  />
+                </Pressable>
+
+                {subjectPickerExpanded ? (
+                  <View style={[styles.subjectOptions, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                    {([...SUBJECT_OPTIONS, CUSTOM_SUBJECT] as SubjectOption[]).map((option) => {
+                      const isSelected = subjectOption === option;
+
+                      return (
+                        <Pressable
+                          key={option}
+                          style={({ pressed }) => [
+                            styles.subjectOption,
+                            {
+                              backgroundColor: isSelected ? theme.accent + '1F' : 'transparent',
+                              opacity: pressed ? 0.8 : 1,
+                            },
+                          ]}
+                          onPress={() => {
+                            setSubjectOption(option);
+                            setSubjectPickerExpanded(false);
+                            setErrorMessage('');
+                          }}
+                        >
+                          <Text
+                            style={[
+                              styles.subjectOptionText,
+                              { color: isSelected ? theme.accent : theme.text.primary },
+                            ]}
+                          >
+                            {option}
+                          </Text>
+                          {isSelected ? (
+                            <Ionicons name="checkmark-outline" size={18} color={theme.accent} />
+                          ) : null}
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                ) : null}
+
+                {subjectOption === CUSTOM_SUBJECT ? (
+                  <>
+                    <TextInput
+                      value={customSubject}
+                      onChangeText={(value) => {
+                        setCustomSubject(value.slice(0, 20));
+                        setErrorMessage('');
+                      }}
+                      placeholder="Custom subject"
+                      placeholderTextColor={theme.text.tertiary}
+                      autoCapitalize="sentences"
+                      autoCorrect={false}
+                      maxLength={20}
+                      style={[
+                        styles.input,
+                        {
+                          backgroundColor: theme.surface,
+                          borderColor: theme.border,
+                          color: theme.text.primary,
+                        },
+                      ]}
+                    />
+                    <Text style={[styles.characterCount, { color: theme.text.tertiary }]}>
+                      {customSubject.length}/20
+                    </Text>
+                  </>
+                ) : null}
+              </View>
               <SupportInput
                 label="Message"
                 value={form.message}
@@ -370,6 +463,39 @@ const styles = StyleSheet.create({
   multilineInput: {
     minHeight: 128,
     paddingTop: spacing.md,
+  },
+  subjectButton: {
+    minHeight: 48,
+    borderWidth: 1,
+    borderRadius: borderRadius.sm,
+    paddingHorizontal: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  subjectButtonText: {
+    flex: 1,
+    fontFamily: typography.fontFamily,
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.semibold,
+  },
+  subjectOptions: {
+    borderWidth: 1,
+    borderRadius: borderRadius.sm,
+    overflow: 'hidden',
+  },
+  subjectOption: {
+    minHeight: 44,
+    paddingHorizontal: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  subjectOptionText: {
+    fontFamily: typography.fontFamily,
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.medium,
   },
   characterCount: {
     marginTop: -spacing.sm,

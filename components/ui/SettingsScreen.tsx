@@ -774,8 +774,8 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
               style={[styles.supportButton, { borderColor: theme.border, backgroundColor: theme.surface }]} 
               onPress={handleOpenSupport}
             >
-              <Ionicons name="bug-outline" size={18} color={theme.accent} />
-              <Text style={[styles.supportButtonText, { color: theme.text.primary }]}>Report a Bug</Text>
+              <Ionicons name="chatbubble-ellipses-outline" size={18} color={theme.accent} />
+              <Text style={[styles.supportButtonText, { color: theme.text.primary }]}>Contact Support</Text>
             </Pressable>
 
             <Pressable 

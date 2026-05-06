@@ -284,9 +284,9 @@ export function QrGeneratorContent() {
                   ]}
                   onPress={() => setSupportDialogVisible(true)}
                   accessibilityRole="button"
-                  accessibilityLabel="Report a bug"
+                  accessibilityLabel="Contact support"
                 >
-                  <Ionicons name="bug-outline" size={18} color={theme.accent} />
+                  <Ionicons name="chatbubble-ellipses-outline" size={18} color={theme.accent} />
                 </Pressable>
               </View>
               <Text style={[styles.subtitle, { color: theme.text.secondary }]}>

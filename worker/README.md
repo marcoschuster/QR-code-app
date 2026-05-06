@@ -98,7 +98,7 @@ if (result.success) {
 {
   "name": "string (max 120 chars)",
   "email": "string (valid email, max 254 chars)",
-  "subject": "string (3-140 chars)",
+  "subject": "string (3-20 chars)",
   "message": "string (10-2000 chars)",
   "appVersion": "string (max 64 chars)",
   "userId": "string (max 128 chars)"

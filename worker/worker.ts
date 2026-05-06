@@ -200,9 +200,9 @@ export default {
         );
       }
 
-      if (!body.subject || typeof body.subject !== 'string' || body.subject.length < 3 || body.subject.length > 140) {
+      if (!body.subject || typeof body.subject !== 'string' || body.subject.length < 3 || body.subject.length > 20) {
         return new Response(
-          JSON.stringify({ error: 'Subject must be between 3 and 140 characters' }),
+          JSON.stringify({ error: 'Subject must be between 3 and 20 characters' }),
           { status: 400, headers: { ...corsHeaders(), 'Content-Type': 'application/json' } }
         );
       }
