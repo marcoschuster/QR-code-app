@@ -48,6 +48,7 @@ interface ScannerScreenProps {
   onReset?: () => void;
   onFineTuneActiveChange?: (active: boolean) => void;
   tabBarHidden?: boolean;
+  overlayAnimatedStyle?: any;
 }
 
 let lastKnownCameraPermissionGranted = false;
@@ -138,6 +139,7 @@ export function ScannerScreen({
   onReset,
   onFineTuneActiveChange,
   tabBarHidden = false,
+  overlayAnimatedStyle,
 }: ScannerScreenProps) {
   const { hasPermission, requestPermission: requestVisionCameraPermission } = useCameraPermission();
   const [permissionStatus, setPermissionStatus] = useState<CameraPermissionStatus>(() =>
@@ -503,15 +505,20 @@ export function ScannerScreen({
 
       {/* Reticle — hidden once scanned so it vanishes when result sheet opens */}
       {!scanned && !showPhotoScanner && (
-        <Reticle
-          targetBounds={targetBounds}
-          highlights={scannerHighlights as Highlight[]}
-          isLocking={isLocking}
-        />
+        <Animated.View
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFill, overlayAnimatedStyle]}
+        >
+          <Reticle
+            targetBounds={targetBounds}
+            highlights={scannerHighlights as Highlight[]}
+            isLocking={isLocking}
+          />
+        </Animated.View>
       )}
 
       {/* Top bar */}
-      <View style={[s.topBar, { paddingTop: Platform.OS === 'ios' ? 56 : 36 }]}>
+      <Animated.View style={[s.topBar, { paddingTop: Platform.OS === 'ios' ? 56 : 36 }, overlayAnimatedStyle]}>
         <View style={s.topBarLeft}>
           <Pressable
             style={[s.pill, { backgroundColor: 'rgba(0,0,0,0.45)', borderColor: theme.border }]}
@@ -552,44 +559,46 @@ export function ScannerScreen({
             <Ionicons name="settings-outline" size={22} color="#FFF" />
           </Pressable>
         </View>
-      </View>
+      </Animated.View>
 
       {/* Bottom — button sits above the tab bar */}
       <Animated.View style={[s.bottom, { bottom: bottomOffset }]}>
-        {!scanned && !showPhotoScanner ? (
-          <View
-            style={[
-              s.zoomShell,
-              {
-                backgroundColor: 'transparent',
-                borderColor: theme.border,
-                shadowColor: theme.shadow,
-              },
-            ]}
-          >
-            <ZoomControl
-              points={ZOOM_CONTROL_POINTS}
-              value={zoom}
-              onValueChange={setZoom}
-              onFineTuneActiveChange={onFineTuneActiveChange}
-            />
-          </View>
-        ) : null}
+        <Animated.View style={overlayAnimatedStyle}>
+          {!scanned && !showPhotoScanner ? (
+            <View
+              style={[
+                s.zoomShell,
+                {
+                  backgroundColor: 'transparent',
+                  borderColor: theme.border,
+                  shadowColor: theme.shadow,
+                },
+              ]}
+            >
+              <ZoomControl
+                points={ZOOM_CONTROL_POINTS}
+                value={zoom}
+                onValueChange={setZoom}
+                onFineTuneActiveChange={onFineTuneActiveChange}
+              />
+            </View>
+          ) : null}
 
-        {scanned && (
-          <Pressable
-            style={[s.rescanBtn, { backgroundColor: 'rgba(0,0,0,0.45)', borderColor: theme.border }]}
-            onPress={() => {
-              setScanned(false);
-              scannedRef.current = false;
-              setTargetBounds(null);
-              setIsLocking(false);
-              onReset?.();
-            }}
-          >
-            <Text style={s.rescanTxt}>Tap to Scan Again</Text>
-          </Pressable>
-        )}
+          {scanned && (
+            <Pressable
+              style={[s.rescanBtn, { backgroundColor: 'rgba(0,0,0,0.45)', borderColor: theme.border }]}
+              onPress={() => {
+                setScanned(false);
+                scannedRef.current = false;
+                setTargetBounds(null);
+                setIsLocking(false);
+                onReset?.();
+              }}
+            >
+              <Text style={s.rescanTxt}>Tap to Scan Again</Text>
+            </Pressable>
+          )}
+        </Animated.View>
       </Animated.View>
 
       {/* Photo Scanner Modal */}

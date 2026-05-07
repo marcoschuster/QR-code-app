@@ -20,6 +20,7 @@ const MIN_THREAT_CHECK_INDICATOR_MS = 600;
 const MAX_THREAT_CHECK_WAIT_MS = 3500;
 const THREAT_CHECK_TIMEOUT_MESSAGE = 'Could not finish the threat check in time.';
 const TABS = ['scan', 'history', 'generate'];
+type TabTransitionSource = 'tap' | 'swipe';
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -45,6 +46,7 @@ export default function App() {
   const threatCheckRunRef = useRef(0);
   const tabTransition = useRef(new Animated.Value(1)).current;
   const tabTransitionDirection = useRef(1);
+  const tabTransitionSource = useRef<TabTransitionSource>('tap');
 
   const updateItem = useHistoryStore((state) => state.updateItem);
   const { vibrateOnScan, autoOpenUrls, urlThreatScanning, swipeNavigation } = useSettingsStore();
@@ -148,7 +150,7 @@ export default function App() {
     setScannerKey(k => k + 1);
   };
 
-  const handleTabChange = (tab: string) => {
+  const handleTabChange = (tab: string, source: TabTransitionSource = 'tap') => {
     if (tab === activeTab) {
       return;
     }
@@ -157,13 +159,16 @@ export default function App() {
     const currentIndex = TABS.indexOf(activeTab);
     const nextIndex = TABS.indexOf(tab);
     tabTransitionDirection.current = nextIndex > currentIndex ? 1 : -1;
+    tabTransitionSource.current = source;
     tabTransition.stopAnimation();
     tabTransition.setValue(0);
     setActiveTab(tab);
     Animated.timing(tabTransition, {
       toValue: 1,
-      duration: 180,
-      easing: Easing.out(Easing.cubic),
+      duration: source === 'swipe' ? 290 : 180,
+      easing: source === 'swipe'
+        ? Easing.bezier(0.16, 1, 0.3, 1)
+        : Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start();
 
@@ -207,9 +212,9 @@ export default function App() {
 
       if (canHandleHorizontalTabSwipe && absDx > absDy) {
         if (dx > swipeThreshold && currentTabIndex > 0) {
-          handleTabChange(TABS[currentTabIndex - 1]);
+          handleTabChange(TABS[currentTabIndex - 1], 'swipe');
         } else if (dx < -swipeThreshold && currentTabIndex < TABS.length - 1) {
-          handleTabChange(TABS[currentTabIndex + 1]);
+          handleTabChange(TABS[currentTabIndex + 1], 'swipe');
         }
       }
     },
@@ -217,20 +222,67 @@ export default function App() {
 
   console.log('[App Swipe] swipeNavigation setting:', swipeNavigation);
   console.log('[App Swipe] panHandlers exist:', panResponder !== null);
-  const tabAnimatedStyle = {
-    opacity: tabTransition.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0.96, 1],
-    }),
-    transform: [
-      {
-        translateX: tabTransition.interpolate({
-          inputRange: [0, 1],
-          outputRange: [tabTransitionDirection.current * 42, 0],
-        }),
-      },
-    ],
-  };
+  const isSwipeTransition = tabTransitionSource.current === 'swipe';
+  const isScanTapTransition = !isSwipeTransition && activeTab === 'scan';
+  const tabAnimatedStyle = isSwipeTransition
+    ? {
+      opacity: tabTransition.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0.94, 1],
+      }),
+      transform: [
+        {
+          translateX: tabTransition.interpolate({
+            inputRange: [0, 1],
+            outputRange: [tabTransitionDirection.current * 28, 0],
+          }),
+        },
+      ],
+    }
+    : isScanTapTransition
+      ? {}
+    : {
+      opacity: tabTransition.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0.96, 1],
+      }),
+      transform: [
+        {
+          translateY: tabTransition.interpolate({
+            inputRange: [0, 1],
+            outputRange: [4, 0],
+          }),
+        },
+        {
+          scale: tabTransition.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0.995, 1],
+          }),
+        },
+      ],
+    };
+  const scanOverlayAnimatedStyle = isScanTapTransition
+    ? {
+      opacity: tabTransition.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0.96, 1],
+      }),
+      transform: [
+        {
+          translateY: tabTransition.interpolate({
+            inputRange: [0, 1],
+            outputRange: [4, 0],
+          }),
+        },
+        {
+          scale: tabTransition.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0.995, 1],
+          }),
+        },
+      ],
+    }
+    : undefined;
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]} {...(panResponder?.panHandlers || {})}>
@@ -247,6 +299,7 @@ export default function App() {
               onResult={handleScanResult}
               onFineTuneActiveChange={() => {}}
               tabBarHidden={isTabBarHidden}
+              overlayAnimatedStyle={scanOverlayAnimatedStyle}
               onSettingsPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setShowSettings(true);
