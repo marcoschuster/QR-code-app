@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, StatusBar, Linking, PanResponder, Animated, Easing } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { BlurTargetView } from 'expo-blur';
@@ -10,8 +10,10 @@ import { SettingsScreen } from './components/ui/SettingsScreen';
 import { LiquidGlassBackground } from './components/ui/LiquidGlassBackground';
 import { LiquidGlassProvider } from './components/ui/LiquidGlassContext';
 import { QrGeneratorContent } from './components/generator/QrGeneratorContent';
+import { AdBanner } from './components/AdBanner';
 import { QRCodeData, ScanSafetyState } from './constants/types';
 import { checkUrlSafety, getThreatCheckSourceHint } from './services/threatCheck';
+import { initAds } from './lib/ads';
 import { useHistoryStore } from './store/useHistoryStore';
 import { useSettingsStore } from './store/useSettingsStore';
 import { useAppTheme } from './hooks/useAppTheme';
@@ -51,6 +53,12 @@ export default function App() {
   const updateItem = useHistoryStore((state) => state.updateItem);
   const { vibrateOnScan, autoOpenUrls, urlThreatScanning, swipeNavigation } = useSettingsStore();
   const { theme } = useAppTheme();
+
+  useEffect(() => {
+    initAds().catch(() => {
+      // Ads are optional; app startup should continue when ads are unavailable.
+    });
+  }, []);
 
   const handleScanResult = async (data: QRCodeData & { safety?: ScanSafetyState; historyItemId?: string }) => {
     // Haptic feedback - use MEDIUM for successful scan
@@ -324,6 +332,11 @@ export default function App() {
           activeTab={activeTab}
           onTabChange={handleTabChange}
           hidden={isTabBarHidden}
+        />
+
+        <AdBanner
+          visible={activeTab !== 'scan' && !showResult && !showSettings && !isTabBarHidden}
+          bottomOffset={92}
         />
 
         {showResult && scanResult && (

@@ -104,3 +104,60 @@ Copy `.env.example` to `.env.local` for the serverless deployment and set:
 ### Deployment Notes
 
 Deploy either the root `api/support.ts` serverless route or the Expo Router `app/api/support+api.ts` route, depending on the host. Native app builds need `EXPO_PUBLIC_SUPPORT_API_URL` to point to the deployed route.
+
+## AdMob Setup
+
+This app uses `react-native-google-mobile-ads`. Ads require an EAS development build or production build; they do not work in Expo Go.
+
+### AdMob Account
+
+1. Create an AdMob account.
+2. Add the Android app and iOS app separately.
+3. Copy the Android App ID and iOS App ID into environment variables:
+   - `ADMOB_ANDROID_APP_ID`
+   - `ADMOB_IOS_APP_ID`
+4. Create these ad units in AdMob:
+   - 1 adaptive banner
+   - 1 interstitial
+   - 1 rewarded
+5. Put production ad unit IDs in:
+   - `EXPO_PUBLIC_ADMOB_BANNER_AD_UNIT_ID`
+   - `EXPO_PUBLIC_ADMOB_INTERSTITIAL_AD_UNIT_ID`
+   - `EXPO_PUBLIC_ADMOB_REWARDED_AD_UNIT_ID`
+
+Development builds automatically use Google test ad units:
+
+- Banner: `ca-app-pub-3940256099942544/6300978111`
+- Interstitial: `ca-app-pub-3940256099942544/1033173712`
+- Rewarded: `ca-app-pub-3940256099942544/5224354917`
+
+### GDPR Consent
+
+`lib/ads.ts` runs the Google UMP consent flow before initializing the Mobile Ads SDK. Users can revisit consent in Settings > Privacy & Safety > Ad Privacy.
+
+Do not persist real consent as your source of truth; UMP is checked on app start. The local value is informational only.
+
+### Builds
+
+After changing AdMob app IDs or plugin config, rebuild the native app:
+
+```bash
+eas build --profile development
+```
+
+### Store Compliance
+
+- Android Play Console: set "Yes, my app contains ads".
+- iOS App Store Connect: disclose ads and tracking usage where required.
+- The iOS `NSUserTrackingUsageDescription` is configured in Expo config.
+- Configure an ATT message in AdMob/UMP if you use personalized ads.
+
+### Example Usage
+
+The root app shell renders `AdBanner` above the tab bar on non-camera tabs:
+
+```tsx
+<AdBanner visible={activeTab !== 'scan'} bottomOffset={92} />
+```
+
+Use `useInterstitial()` for natural breaks and `useRewarded()` for opt-in rewards. Interstitial display is rate-limited to once every three minutes.

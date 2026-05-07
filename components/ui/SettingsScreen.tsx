@@ -10,6 +10,7 @@ import { useAppTheme } from '../../hooks/useAppTheme';
 import { ConfirmDialog } from './ConfirmDialog';
 import { ColorOrbitPicker } from './ColorOrbitPicker';
 import { SupportDialog, SupportHeadsetIcon } from './SupportDialog';
+import { showAdPrivacyOptions } from '../../lib/ads';
 
 interface SettingsScreenProps {
   visible: boolean;
@@ -85,6 +86,18 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
   const handleOpenSupport = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSupportDialogVisible(true);
+  };
+
+  const handleAdPrivacyOptions = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const result = await showAdPrivacyOptions();
+
+    if (result.error) {
+      Alert.alert('Ad Privacy', result.error);
+      return;
+    }
+
+    Alert.alert('Ad Privacy', 'Your ad privacy choices have been updated.');
   };
 
   const handleClearHistory = () => {
@@ -538,6 +551,28 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
                     <View style={[styles.switchThumb, urlThreatScanning && styles.switchThumbOn]} />
                     </View>
                   )}
+                </Pressable>
+
+                <View style={[styles.divider, { backgroundColor: theme.border }]} />
+
+                <Pressable
+                  style={styles.settingItem}
+                  onPress={handleAdPrivacyOptions}
+                >
+                  <View style={styles.settingLeft}>
+                    <View style={[styles.iconWrapper, { backgroundColor: '#0A84FF20' }]}>
+                      <Ionicons name="megaphone-outline" size={20} color="#0A84FF" />
+                    </View>
+                    <View style={styles.settingTextContainer}>
+                      <Text style={[styles.settingText, { color: theme.text.primary }]}>
+                        Ad Privacy
+                      </Text>
+                      <Text style={[styles.settingHint, { color: theme.text.secondary }]}>
+                        Manage personalized ad choices
+                      </Text>
+                    </View>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={theme.text.tertiary} />
                 </Pressable>
 
                 <View style={[styles.divider, { backgroundColor: theme.border }]} />
