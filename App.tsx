@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, StatusBar, Linking, PanResponder, Animated, Easing } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { BlurTargetView } from 'expo-blur';
 import { ScannerScreen } from './components/scanner/CameraView';
@@ -293,70 +294,72 @@ export default function App() {
     : undefined;
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]} {...(panResponder?.panHandlers || {})}>
-      <StatusBar hidden />
-      <BlurTargetView ref={blurTargetRef} style={StyleSheet.absoluteFill} pointerEvents="none">
-        <LiquidGlassBackground />
-      </BlurTargetView>
+    <SafeAreaProvider>
+      <View style={[styles.container, { backgroundColor: theme.background }]} {...(panResponder?.panHandlers || {})}>
+        <StatusBar hidden />
+        <BlurTargetView ref={blurTargetRef} style={StyleSheet.absoluteFill} pointerEvents="none">
+          <LiquidGlassBackground />
+        </BlurTargetView>
 
-      <LiquidGlassProvider blurTargetRef={blurTargetRef}>
-        {activeTab === 'scan' && !showResult && (
-          <Animated.View style={[styles.tabContent, styles.animatedTabContent, tabAnimatedStyle]}>
-            <ScannerScreen
-              key={scannerKey}
-              onResult={handleScanResult}
-              onFineTuneActiveChange={() => {}}
-              tabBarHidden={isTabBarHidden}
-              overlayAnimatedStyle={scanOverlayAnimatedStyle}
-              onSettingsPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setShowSettings(true);
-              }}
-            />
-          </Animated.View>
-        )}
-        
-        {activeTab === 'generate' && (
-          <Animated.View style={[styles.tabContent, styles.animatedTabContent, tabAnimatedStyle]}>
-            <QrGeneratorContent />
-          </Animated.View>
-        )}
-        
-        {activeTab === 'history' && (
-          <Animated.View style={[styles.tabContent, styles.animatedTabContent, tabAnimatedStyle]}>
-            <HistoryScreen onTabBarVisibilityChange={setIsTabBarHidden} />
-          </Animated.View>
-        )}
+        <LiquidGlassProvider blurTargetRef={blurTargetRef}>
+          {activeTab === 'scan' && !showResult && (
+            <Animated.View style={[styles.tabContent, styles.animatedTabContent, tabAnimatedStyle]}>
+              <ScannerScreen
+                key={scannerKey}
+                onResult={handleScanResult}
+                onFineTuneActiveChange={() => {}}
+                tabBarHidden={isTabBarHidden}
+                overlayAnimatedStyle={scanOverlayAnimatedStyle}
+                onSettingsPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setShowSettings(true);
+                }}
+              />
+            </Animated.View>
+          )}
+          
+          {activeTab === 'generate' && (
+            <Animated.View style={[styles.tabContent, styles.animatedTabContent, tabAnimatedStyle]}>
+              <QrGeneratorContent />
+            </Animated.View>
+          )}
+          
+          {activeTab === 'history' && (
+            <Animated.View style={[styles.tabContent, styles.animatedTabContent, tabAnimatedStyle]}>
+              <HistoryScreen onTabBarVisibilityChange={setIsTabBarHidden} />
+            </Animated.View>
+          )}
 
-        <TabBar
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
-          hidden={isTabBarHidden}
-        />
-
-        <AdBanner
-          visible={activeTab !== 'scan' && !showResult && !showSettings && !isTabBarHidden}
-          bottomOffset={92}
-        />
-
-        {showResult && scanResult && (
-          <View style={[StyleSheet.absoluteFill, styles.resultOverlay, { backgroundColor: theme.backdrop }]}>
-            <ScanResultSheet
-              visible={showResult}
-              onClose={handleCloseResult}
-              data={scanResult}
-            />
-          </View>
-        )}
-
-        {showSettings && (
-          <SettingsScreen 
-            visible={showSettings} 
-            onClose={() => setShowSettings(false)} 
+          <TabBar
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            hidden={isTabBarHidden}
           />
-        )}
-      </LiquidGlassProvider>
-    </View>
+
+          <AdBanner
+            visible={activeTab !== 'scan' && !showResult && !showSettings && !isTabBarHidden}
+            bottomOffset={92}
+          />
+
+          {showResult && scanResult && (
+            <View style={[StyleSheet.absoluteFill, styles.resultOverlay, { backgroundColor: theme.backdrop }]}>
+              <ScanResultSheet
+                visible={showResult}
+                onClose={handleCloseResult}
+                data={scanResult}
+              />
+            </View>
+          )}
+
+          {showSettings && (
+            <SettingsScreen 
+              visible={showSettings} 
+              onClose={() => setShowSettings(false)} 
+            />
+          )}
+        </LiquidGlassProvider>
+      </View>
+    </SafeAreaProvider>
   );
 }
 
