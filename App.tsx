@@ -19,6 +19,7 @@ import { useAppTheme } from './hooks/useAppTheme';
 const MIN_THREAT_CHECK_INDICATOR_MS = 600;
 const MAX_THREAT_CHECK_WAIT_MS = 3500;
 const THREAT_CHECK_TIMEOUT_MESSAGE = 'Could not finish the threat check in time.';
+const TABS = ['scan', 'history', 'generate'];
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -43,6 +44,7 @@ export default function App() {
   const [isTabBarHidden, setIsTabBarHidden] = useState(false);
   const threatCheckRunRef = useRef(0);
   const tabTransition = useRef(new Animated.Value(1)).current;
+  const tabTransitionDirection = useRef(1);
 
   const updateItem = useHistoryStore((state) => state.updateItem);
   const { vibrateOnScan, autoOpenUrls, urlThreatScanning, swipeNavigation } = useSettingsStore();
@@ -152,6 +154,9 @@ export default function App() {
     }
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const currentIndex = TABS.indexOf(activeTab);
+    const nextIndex = TABS.indexOf(tab);
+    tabTransitionDirection.current = nextIndex > currentIndex ? 1 : -1;
     tabTransition.stopAnimation();
     tabTransition.setValue(0);
     setActiveTab(tab);
@@ -167,8 +172,7 @@ export default function App() {
     }
   };
 
-  const tabs = ['scan', 'history', 'generate'];
-  const currentTabIndex = tabs.indexOf(activeTab);
+  const currentTabIndex = TABS.indexOf(activeTab);
 
   const canHandleVerticalTabBarSwipe = activeTab !== 'history' && !showResult && !showSettings;
   const canHandleHorizontalTabSwipe = swipeNavigation && !showResult && !showSettings;
@@ -203,9 +207,9 @@ export default function App() {
 
       if (canHandleHorizontalTabSwipe && absDx > absDy) {
         if (dx > swipeThreshold && currentTabIndex > 0) {
-          handleTabChange(tabs[currentTabIndex - 1]);
-        } else if (dx < -swipeThreshold && currentTabIndex < tabs.length - 1) {
-          handleTabChange(tabs[currentTabIndex + 1]);
+          handleTabChange(TABS[currentTabIndex - 1]);
+        } else if (dx < -swipeThreshold && currentTabIndex < TABS.length - 1) {
+          handleTabChange(TABS[currentTabIndex + 1]);
         }
       }
     },
@@ -220,15 +224,9 @@ export default function App() {
     }),
     transform: [
       {
-        translateY: tabTransition.interpolate({
+        translateX: tabTransition.interpolate({
           inputRange: [0, 1],
-          outputRange: [4, 0],
-        }),
-      },
-      {
-        scale: tabTransition.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0.995, 1],
+          outputRange: [tabTransitionDirection.current * 42, 0],
         }),
       },
     ],
