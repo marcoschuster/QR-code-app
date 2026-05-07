@@ -969,7 +969,9 @@ export function HistoryScreen({ onTabBarVisibilityChange }: HistoryScreenProps) 
     return (
       <View style={[s.container, { backgroundColor: theme.background }]}>
         <View style={[s.header, { borderBottomColor: theme.border }]}>
-          <Text style={[s.headerTitle, { color: theme.text.primary }]}>History</Text>
+          <View style={s.headerTopRow}>
+            <Text style={[s.headerTitle, { color: theme.text.primary }]}>History</Text>
+          </View>
         </View>
         <View style={s.empty}>
           <Text style={s.emptyIcon}>📋</Text>

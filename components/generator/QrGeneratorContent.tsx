@@ -18,6 +18,7 @@ import { Chip } from '../ui/Chip';
 import { NoticeDialog } from '../ui/NoticeDialog';
 import { SuccessDialog } from '../ui/SuccessDialog';
 import { LiquidProgress } from '../ui/LiquidProgress';
+import { SupportDialog, SupportHeadsetIcon } from '../ui/SupportDialog';
 import {
   borderRadius,
   spacing,
@@ -94,6 +95,7 @@ export function QrGeneratorContent() {
   const [clipboardSuggestion, setClipboardSuggestion] = useState<GeneratorQuickStartSuggestion | null>(null);
   const [isCheckingClipboard, setIsCheckingClipboard] = useState(false);
   const [generationProgress, setGenerationProgress] = useState(0);
+  const [supportDialogVisible, setSupportDialogVisible] = useState(false);
 
   // 6 most important/most used types
   const importantTypes: GeneratorTemplateId[] = ['website', 'plain-text', 'phone', 'sms', 'email', 'wifi'];
@@ -269,7 +271,22 @@ export function QrGeneratorContent() {
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.header}>
-              <Text style={[styles.title, { color: theme.text.primary }]}>Generate Codes</Text>
+              <View style={styles.headerTopRow}>
+                <Text style={[styles.title, { color: theme.text.primary }]}>Generate Codes</Text>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.supportIconButton,
+                    {
+                      opacity: pressed ? 0.78 : 1,
+                    },
+                  ]}
+                  onPress={() => setSupportDialogVisible(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Contact support"
+                >
+                  <SupportHeadsetIcon size={21} color={theme.accent} />
+                </Pressable>
+              </View>
               <Text style={[styles.subtitle, { color: theme.text.secondary }]}>
                 Pick a format, fill in the details, and export the generated code as a PNG image.
               </Text>
@@ -540,6 +557,10 @@ export function QrGeneratorContent() {
         message={noticeDialog.message}
         onClose={() => setNoticeDialog(prev => ({ ...prev, visible: false }))}
       />
+      <SupportDialog
+        visible={supportDialogVisible}
+        onClose={() => setSupportDialogVisible(false)}
+      />
     </>
   );
 }
@@ -696,6 +717,19 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: spacing.lg,
     gap: spacing.sm,
+  },
+  headerTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  supportIconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   smartStartHeader: {
     flexDirection: 'row',

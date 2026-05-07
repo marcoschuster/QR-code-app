@@ -9,6 +9,7 @@ import { spacing, typography } from '../../constants/theme';
 import { useAppTheme } from '../../hooks/useAppTheme';
 import { ConfirmDialog } from './ConfirmDialog';
 import { ColorOrbitPicker } from './ColorOrbitPicker';
+import { SupportDialog, SupportHeadsetIcon } from './SupportDialog';
 
 interface SettingsScreenProps {
   visible: boolean;
@@ -23,6 +24,7 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
   const { theme } = useAppTheme();
   const { playTestSound } = useTestAudio();
   const [accentColorExpanded, setAccentColorExpanded] = useState(false);
+  const [supportDialogVisible, setSupportDialogVisible] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
     visible: boolean;
     title: string;
@@ -78,6 +80,11 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
   const handleOpenSystemSettings = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     Linking.openSettings();
+  };
+
+  const handleOpenSupport = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSupportDialogVisible(true);
   };
 
   const handleClearHistory = () => {
@@ -764,6 +771,14 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
 
             {/* Reset Button */}
             <Pressable 
+              style={styles.supportButton} 
+              onPress={handleOpenSupport}
+            >
+              <SupportHeadsetIcon size={21} color={theme.accent} />
+              <Text style={[styles.supportButtonText, { color: theme.text.primary }]}>Contact Support</Text>
+            </Pressable>
+
+            <Pressable 
               style={[styles.resetButton, { borderColor: theme.danger }]} 
               onPress={handleResetSettings}
             >
@@ -783,6 +798,10 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
           onConfirm={confirmDialog.onConfirm}
           onCancel={() => setConfirmDialog(prev => ({ ...prev, visible: false }))}
           isDestructive={confirmDialog.isDestructive}
+        />
+        <SupportDialog
+          visible={supportDialogVisible}
+          onClose={() => setSupportDialogVisible(false)}
         />
       </View>
     </Modal>
@@ -951,6 +970,21 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
     borderWidth: 1,
+  },
+  supportButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginHorizontal: 16,
+    marginTop: 24,
+    paddingVertical: 14,
+    borderRadius: 12,
+  },
+  supportButtonText: {
+    fontFamily: typography.fontFamily,
+    fontSize: 15,
+    fontWeight: '600',
   },
   resetButtonText: {
     fontFamily: typography.fontFamily,

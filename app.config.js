@@ -60,6 +60,9 @@ export default {
           }
         }
       }
+    },
+    extra: {
+      supportWorkerUrl: process.env.EXPO_PUBLIC_SUPPORT_WORKER_URL || 'https://your-worker.workers.dev'
     }
   }
 };
