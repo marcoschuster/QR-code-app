@@ -28,10 +28,20 @@ export default {
           "enableLocation": false
         }
       ],
+      [
+        "react-native-google-mobile-ads",
+        {
+          androidAppId: process.env.ADMOB_ANDROID_APP_ID || "ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY",
+          iosAppId: process.env.ADMOB_IOS_APP_ID || "ca-app-pub-XXXXXXXXXXXXXXXX~ZZZZZZZZZZ"
+        }
+      ],
       "expo-audio"
     ],
     ios: {
-      supportsTablet: true
+      supportsTablet: true,
+      infoPlist: {
+        NSUserTrackingUsageDescription: "This identifier will be used to deliver personalized ads to you."
+      }
     },
     android: {
       adaptiveIcon: {
@@ -62,7 +72,10 @@ export default {
       }
     },
     extra: {
-      supportWorkerUrl: process.env.EXPO_PUBLIC_SUPPORT_WORKER_URL || 'https://your-worker.workers.dev'
+      supportWorkerUrl: process.env.EXPO_PUBLIC_SUPPORT_WORKER_URL || 'https://your-worker.workers.dev',
+      adMobBannerAdUnitId: process.env.EXPO_PUBLIC_ADMOB_BANNER_AD_UNIT_ID || '',
+      adMobInterstitialAdUnitId: process.env.EXPO_PUBLIC_ADMOB_INTERSTITIAL_AD_UNIT_ID || '',
+      adMobRewardedAdUnitId: process.env.EXPO_PUBLIC_ADMOB_REWARDED_AD_UNIT_ID || ''
     }
   }
 };
