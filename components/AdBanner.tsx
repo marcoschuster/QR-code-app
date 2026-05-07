@@ -1,12 +1,7 @@
-import React, { useRef } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { AppState, Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  BannerAd,
-  BannerAdSize,
-  useForeground,
-} from 'react-native-google-mobile-ads';
-import { useBanner } from '../lib/ads';
+import { getGoogleMobileAdsModule, useBanner } from '../lib/ads';
 
 interface AdBannerProps {
   visible?: boolean;
@@ -14,21 +9,32 @@ interface AdBannerProps {
 }
 
 export function AdBanner({ visible = true, bottomOffset = 0 }: AdBannerProps) {
-  const bannerRef = useRef<BannerAd>(null);
+  const bannerRef = useRef<any>(null);
   const insets = useSafeAreaInsets();
   const { adUnitId, canShow, requestOptions } = useBanner();
+  const googleAds = getGoogleMobileAdsModule();
+  const BannerAd = googleAds?.BannerAd;
+  const bannerSize = googleAds?.BannerAdSize?.LARGE_ANCHORED_ADAPTIVE_BANNER;
 
-  useForeground(() => {
-    if (Platform.OS === 'ios') {
-      try {
-        bannerRef.current?.load();
-      } catch {
-        // Banner reloads are best effort when returning from background.
-      }
+  useEffect(() => {
+    if (Platform.OS !== 'ios') {
+      return undefined;
     }
-  });
 
-  if (!visible || !canShow || !adUnitId || Platform.OS === 'web') {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        try {
+          bannerRef.current?.load();
+        } catch {
+          // Banner reloads are best effort when returning from background.
+        }
+      }
+    });
+
+    return () => subscription.remove();
+  }, []);
+
+  if (!visible || !canShow || !adUnitId || !BannerAd || !bannerSize || Platform.OS === 'web') {
     return null;
   }
 
@@ -46,7 +52,7 @@ export function AdBanner({ visible = true, bottomOffset = 0 }: AdBannerProps) {
       <BannerAd
         ref={bannerRef}
         unitId={adUnitId}
-        size={BannerAdSize.LARGE_ANCHORED_ADAPTIVE_BANNER}
+        size={bannerSize}
         requestOptions={requestOptions}
         onAdFailedToLoad={() => {
           // Ad fill is not guaranteed; keep UI quiet on failures.

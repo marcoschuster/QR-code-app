@@ -1,15 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
-import mobileAds, {
-  AdsConsent,
-  AdsConsentDebugGeography,
-  MaxAdContentRating,
-  useInterstitialAd as useGoogleInterstitialAd,
-  useRewardedAd as useGoogleRewardedAd,
-  type RequestOptions,
-  type RewardedAdReward,
-} from 'react-native-google-mobile-ads';
+import type { RequestOptions, RewardedAdReward } from 'react-native-google-mobile-ads';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ADS_CONSENT_STATUS_KEY = 'ads_consent_status';
@@ -39,6 +31,32 @@ const DEFAULT_ADS_STATE: AdsInitState = {
 let adsInitializationPromise: Promise<AdsInitState> | null = null;
 let currentAdsState: AdsInitState = DEFAULT_ADS_STATE;
 let lastInterstitialShownAt = 0;
+let cachedGoogleMobileAdsModule: any | null | undefined;
+
+export function getGoogleMobileAdsModule() {
+  if (Platform.OS === 'web') {
+    return null;
+  }
+
+  if (cachedGoogleMobileAdsModule !== undefined) {
+    return cachedGoogleMobileAdsModule;
+  }
+
+  try {
+    cachedGoogleMobileAdsModule = require('react-native-google-mobile-ads');
+  } catch {
+    cachedGoogleMobileAdsModule = null;
+  }
+
+  return cachedGoogleMobileAdsModule;
+}
+
+function getAdsUnavailableState(): AdsInitState {
+  return {
+    ...DEFAULT_ADS_STATE,
+    error: 'AdMob native module is unavailable. Rebuild the development app after installing react-native-google-mobile-ads.',
+  };
+}
 
 function getExpoExtra() {
   return Constants.expoConfig?.extra ?? {};
@@ -68,14 +86,20 @@ export function getAdUnitId(kind: AdUnitKind) {
 }
 
 async function getNonPersonalizedAdPreference() {
+  const googleAds = getGoogleMobileAdsModule();
+
+  if (!googleAds?.AdsConsent) {
+    return false;
+  }
+
   try {
-    const gdprApplies = await AdsConsent.getGdprApplies();
+    const gdprApplies = await googleAds.AdsConsent.getGdprApplies();
 
     if (!gdprApplies) {
       return false;
     }
 
-    const choices = await AdsConsent.getUserChoices();
+    const choices = await googleAds.AdsConsent.getUserChoices();
     return choices.selectPersonalisedAds === false || choices.storeAndAccessInformationOnDevice === false;
   } catch {
     return false;
@@ -94,8 +118,17 @@ async function persistConsentState(state: AdsInitState) {
 }
 
 async function initializeMobileAds(requestNonPersonalizedAdsOnly: boolean) {
+  const googleAds = getGoogleMobileAdsModule();
+  const mobileAds = googleAds?.default;
+
+  if (!mobileAds) {
+    currentAdsState = getAdsUnavailableState();
+    await persistConsentState(currentAdsState);
+    return currentAdsState;
+  }
+
   await mobileAds().setRequestConfiguration({
-    maxAdContentRating: MaxAdContentRating.PG,
+    maxAdContentRating: googleAds.MaxAdContentRating.PG,
     tagForChildDirectedTreatment: false,
     tagForUnderAgeOfConsent: false,
   });
@@ -122,15 +155,23 @@ export async function initAds(): Promise<AdsInitState> {
   }
 
   adsInitializationPromise = (async () => {
+    const googleAds = getGoogleMobileAdsModule();
+
+    if (!googleAds?.AdsConsent) {
+      currentAdsState = getAdsUnavailableState();
+      await persistConsentState(currentAdsState);
+      return currentAdsState;
+    }
+
     try {
-      const consentInfo = await AdsConsent.gatherConsent(
+      const consentInfo = await googleAds.AdsConsent.gatherConsent(
         __DEV__
-          ? { debugGeography: AdsConsentDebugGeography.EEA }
+          ? { debugGeography: googleAds.AdsConsentDebugGeography.EEA }
           : undefined
       );
       const latestConsentInfo = consentInfo.canRequestAds
         ? consentInfo
-        : await AdsConsent.getConsentInfo();
+        : await googleAds.AdsConsent.getConsentInfo();
 
       if (!latestConsentInfo.canRequestAds) {
         currentAdsState = {
@@ -145,7 +186,7 @@ export async function initAds(): Promise<AdsInitState> {
       return initializeMobileAds(await getNonPersonalizedAdPreference());
     } catch (error) {
       try {
-        const fallbackConsentInfo = await AdsConsent.getConsentInfo();
+        const fallbackConsentInfo = await googleAds.AdsConsent.getConsentInfo();
 
         if (!fallbackConsentInfo.canRequestAds) {
           currentAdsState = {
@@ -227,7 +268,13 @@ export function useInterstitial() {
   const adsState = useAdsReady();
   const adUnitId = adsState.canRequestAds ? getAdUnitId('interstitial') : null;
   const requestOptions = useMemo(() => getRequestOptions(adsState), [adsState]);
-  const interstitial = useGoogleInterstitialAd(adUnitId, requestOptions);
+  const googleAds = getGoogleMobileAdsModule();
+  const interstitial = googleAds?.useInterstitialAd?.(adUnitId, requestOptions) ?? {
+    isLoaded: false,
+    isClosed: false,
+    load: () => {},
+    show: () => {},
+  };
 
   useEffect(() => {
     if (adUnitId) {
@@ -276,7 +323,14 @@ export function useRewarded(onUserEarnedReward?: (reward: RewardedAdReward) => v
   const adsState = useAdsReady();
   const adUnitId = adsState.canRequestAds ? getAdUnitId('rewarded') : null;
   const requestOptions = useMemo(() => getRequestOptions(adsState), [adsState]);
-  const rewarded = useGoogleRewardedAd(adUnitId, requestOptions);
+  const googleAds = getGoogleMobileAdsModule();
+  const rewarded = googleAds?.useRewardedAd?.(adUnitId, requestOptions) ?? {
+    isLoaded: false,
+    isEarnedReward: false,
+    reward: undefined,
+    load: () => {},
+    show: () => {},
+  };
   const lastRewardRef = useRef<RewardedAdReward | undefined>(undefined);
 
   useEffect(() => {
@@ -321,8 +375,14 @@ export function useRewarded(onUserEarnedReward?: (reward: RewardedAdReward) => v
 }
 
 export async function showAdPrivacyOptions() {
+  const googleAds = getGoogleMobileAdsModule();
+
+  if (!googleAds?.AdsConsent) {
+    return getAdsUnavailableState();
+  }
+
   try {
-    const consentInfo = await AdsConsent.showPrivacyOptionsForm();
+    const consentInfo = await googleAds.AdsConsent.showPrivacyOptionsForm();
     currentAdsState = {
       ...currentAdsState,
       canRequestAds: consentInfo.canRequestAds,
