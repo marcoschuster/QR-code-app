@@ -18,7 +18,7 @@ import { Chip } from '../ui/Chip';
 import { NoticeDialog } from '../ui/NoticeDialog';
 import { SuccessDialog } from '../ui/SuccessDialog';
 import { LiquidProgress } from '../ui/LiquidProgress';
-import { SupportDialog } from '../ui/SupportDialog';
+import { SupportDialog, SupportHeadsetIcon } from '../ui/SupportDialog';
 import {
   borderRadius,
   spacing,
@@ -277,8 +277,6 @@ export function QrGeneratorContent() {
                   style={({ pressed }) => [
                     styles.supportIconButton,
                     {
-                      backgroundColor: theme.surfaceStrong,
-                      borderColor: theme.border,
                       opacity: pressed ? 0.78 : 1,
                     },
                   ]}
@@ -286,7 +284,7 @@ export function QrGeneratorContent() {
                   accessibilityRole="button"
                   accessibilityLabel="Contact support"
                 >
-                  <Ionicons name="chatbubble-ellipses-outline" size={18} color={theme.accent} />
+                  <SupportHeadsetIcon size={21} color={theme.accent} />
                 </Pressable>
               </View>
               <Text style={[styles.subtitle, { color: theme.text.secondary }]}>
@@ -727,10 +725,9 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   supportIconButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    borderWidth: 1,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },

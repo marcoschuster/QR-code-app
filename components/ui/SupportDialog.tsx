@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -16,6 +17,8 @@ import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '../../hooks/useAppTheme';
 import { borderRadius, spacing, typography } from '../../constants/theme';
 import { getOrCreateSupportUserId, getSupportAppVersion, submitSupportRequest } from '../../services/supportClient';
+
+const SUPPORT_AGENT_ICON = require('../../assets/support-agent-outline.png');
 
 interface SupportDialogProps {
   visible: boolean;
@@ -133,7 +136,7 @@ export function SupportDialog({ visible, onClose }: SupportDialogProps) {
           >
             <View style={[styles.header, { borderBottomColor: theme.border }]}>
               <View style={[styles.headerIcon, { backgroundColor: theme.accent + '1F' }]}>
-                <Ionicons name="chatbubble-ellipses-outline" size={20} color={theme.accent} />
+                <SupportHeadsetIcon size={24} color={theme.accent} />
               </View>
               <View style={styles.headerCopy}>
                 <Text style={[styles.title, { color: theme.text.primary }]}>Contact Support</Text>
@@ -327,6 +330,22 @@ export function SupportDialog({ visible, onClose }: SupportDialogProps) {
         </KeyboardAvoidingView>
       </View>
     </Modal>
+  );
+}
+
+export function SupportHeadsetIcon({
+  size = 20,
+  color,
+}: {
+  size?: number;
+  color: string;
+}) {
+  return (
+    <Image
+      source={SUPPORT_AGENT_ICON}
+      style={{ width: size, height: size, tintColor: color }}
+      resizeMode="contain"
+    />
   );
 }
 

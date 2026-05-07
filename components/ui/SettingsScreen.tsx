@@ -9,7 +9,7 @@ import { spacing, typography } from '../../constants/theme';
 import { useAppTheme } from '../../hooks/useAppTheme';
 import { ConfirmDialog } from './ConfirmDialog';
 import { ColorOrbitPicker } from './ColorOrbitPicker';
-import { SupportDialog } from './SupportDialog';
+import { SupportDialog, SupportHeadsetIcon } from './SupportDialog';
 
 interface SettingsScreenProps {
   visible: boolean;
@@ -771,10 +771,10 @@ export function SettingsScreen({ visible, onClose }: SettingsScreenProps) {
 
             {/* Reset Button */}
             <Pressable 
-              style={[styles.supportButton, { borderColor: theme.border, backgroundColor: theme.surface }]} 
+              style={styles.supportButton} 
               onPress={handleOpenSupport}
             >
-              <Ionicons name="chatbubble-ellipses-outline" size={18} color={theme.accent} />
+              <SupportHeadsetIcon size={21} color={theme.accent} />
               <Text style={[styles.supportButtonText, { color: theme.text.primary }]}>Contact Support</Text>
             </Pressable>
 
@@ -980,7 +980,6 @@ const styles = StyleSheet.create({
     marginTop: 24,
     paddingVertical: 14,
     borderRadius: 12,
-    borderWidth: 1,
   },
   supportButtonText: {
     fontFamily: typography.fontFamily,
