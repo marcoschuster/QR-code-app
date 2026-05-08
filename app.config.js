@@ -1,3 +1,14 @@
+const TEST_ADMOB_ANDROID_APP_ID = "ca-app-pub-3940256099942544~3347511713";
+const TEST_ADMOB_IOS_APP_ID = "ca-app-pub-3940256099942544~1458002511";
+
+function getAdMobAppId(value, fallback) {
+  if (!value || value.includes("XXXX") || value.includes("YYYY") || value.includes("ZZZZ")) {
+    return fallback;
+  }
+
+  return value;
+}
+
 export default {
   expo: {
     name: "qr-scanner-app",
@@ -31,8 +42,8 @@ export default {
       [
         "react-native-google-mobile-ads",
         {
-          androidAppId: process.env.ADMOB_ANDROID_APP_ID || "ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY",
-          iosAppId: process.env.ADMOB_IOS_APP_ID || "ca-app-pub-XXXXXXXXXXXXXXXX~ZZZZZZZZZZ"
+          androidAppId: getAdMobAppId(process.env.ADMOB_ANDROID_APP_ID, TEST_ADMOB_ANDROID_APP_ID),
+          iosAppId: getAdMobAppId(process.env.ADMOB_IOS_APP_ID, TEST_ADMOB_IOS_APP_ID)
         }
       ],
       "expo-audio"

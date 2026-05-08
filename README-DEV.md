@@ -125,7 +125,7 @@ This app uses `react-native-google-mobile-ads`. Ads require an EAS development b
    - `EXPO_PUBLIC_ADMOB_INTERSTITIAL_AD_UNIT_ID`
    - `EXPO_PUBLIC_ADMOB_REWARDED_AD_UNIT_ID`
 
-Development builds automatically use Google test ad units:
+When `ADMOB_ANDROID_APP_ID` and `ADMOB_IOS_APP_ID` are blank, the native config uses Google's test App IDs so development builds do not crash on startup. Development builds also automatically use Google test ad units:
 
 - Banner: `ca-app-pub-3940256099942544/6300978111`
 - Interstitial: `ca-app-pub-3940256099942544/1033173712`
