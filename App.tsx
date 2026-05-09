@@ -340,7 +340,7 @@ export default function App() {
           />
 
           <AdBanner
-            visible={shouldShowBanner}
+            visible={shouldShowBanner && activeTab === 'scan'}
             compact={activeTab === 'scan'}
           />
 

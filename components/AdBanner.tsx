@@ -7,9 +7,15 @@ interface AdBannerProps {
   visible?: boolean;
   topOffset?: number;
   compact?: boolean;
+  placement?: 'overlayTop' | 'inline';
 }
 
-export function AdBanner({ visible = true, topOffset = 0, compact = false }: AdBannerProps) {
+export function AdBanner({
+  visible = true,
+  topOffset = 0,
+  compact = false,
+  placement = 'overlayTop',
+}: AdBannerProps) {
   const bannerRef = useRef<any>(null);
   const insets = useSafeAreaInsets();
   const { adUnitId, canShow, requestOptions } = useBanner();
@@ -45,11 +51,13 @@ export function AdBanner({ visible = true, topOffset = 0, compact = false }: AdB
     <View
       pointerEvents="box-none"
       style={[
-        styles.container,
-        {
-          paddingTop: Math.max(insets.top, 8),
-          top: topOffset,
-        },
+        placement === 'inline' ? styles.inlineContainer : styles.overlayTopContainer,
+        placement === 'overlayTop'
+          ? {
+              paddingTop: Math.max(insets.top, 8),
+              top: topOffset,
+            }
+          : null,
       ]}
     >
       <BannerAd
@@ -73,12 +81,16 @@ export function AdBanner({ visible = true, topOffset = 0, compact = false }: AdB
 }
 
 const styles = StyleSheet.create({
-  container: {
+  overlayTopContainer: {
     position: 'absolute',
     left: 0,
     right: 0,
     alignItems: 'center',
     zIndex: 20,
     elevation: 20,
+  },
+  inlineContainer: {
+    width: '100%',
+    alignItems: 'center',
   },
 });

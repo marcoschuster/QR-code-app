@@ -154,10 +154,11 @@ eas build --profile development
 
 ### Example Usage
 
-The root app shell renders `AdBanner` at the top of the main app screens:
+The scan tab renders a compact top overlay banner. Generate and History render large inline banners inside their scroll content:
 
 ```tsx
-<AdBanner visible={!showResult && !showSettings} />
+<AdBanner compact />
+<AdBanner placement="inline" />
 ```
 
 Use `useInterstitial()` for natural breaks and `useRewarded()` for opt-in rewards. Interstitial display is rate-limited to once every three minutes.

@@ -19,6 +19,7 @@ import { NoticeDialog } from '../ui/NoticeDialog';
 import { SuccessDialog } from '../ui/SuccessDialog';
 import { LiquidProgress } from '../ui/LiquidProgress';
 import { SupportDialog, SupportHeadsetIcon } from '../ui/SupportDialog';
+import { AdBanner } from '../AdBanner';
 import {
   borderRadius,
   spacing,
@@ -542,6 +543,10 @@ export function QrGeneratorContent() {
               </View>
             </Card>
           )}
+
+          <View style={styles.adBlock}>
+            <AdBanner placement="inline" />
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -848,6 +853,13 @@ const styles = StyleSheet.create({
   },
   sectionCard: {
     marginBottom: spacing.lg,
+  },
+  adBlock: {
+    marginTop: spacing.sm,
+    marginBottom: spacing.lg,
+    minHeight: 90,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sectionHeader: {
     flexDirection: 'row',
