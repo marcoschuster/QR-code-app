@@ -54,8 +54,15 @@ export function AdBanner({ visible = true, topOffset = 0 }: AdBannerProps) {
         unitId={adUnitId}
         size={bannerSize}
         requestOptions={requestOptions}
-        onAdFailedToLoad={() => {
-          // Ad fill is not guaranteed; keep UI quiet on failures.
+        onAdFailedToLoad={(error: unknown) => {
+          if (__DEV__) {
+            console.warn('[AdBanner] Failed to load banner ad', error);
+          }
+        }}
+        onAdLoaded={() => {
+          if (__DEV__) {
+            console.log('[AdBanner] Banner ad loaded');
+          }
         }}
       />
     </View>

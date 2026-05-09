@@ -129,6 +129,7 @@ async function initializeMobileAds(requestNonPersonalizedAdsOnly: boolean) {
 
   await mobileAds().setRequestConfiguration({
     maxAdContentRating: googleAds.MaxAdContentRating.PG,
+    ...(__DEV__ ? { testDeviceIdentifiers: ['EMULATOR'] } : {}),
     tagForChildDirectedTreatment: false,
     tagForUnderAgeOfConsent: false,
   });
@@ -142,6 +143,14 @@ async function initializeMobileAds(requestNonPersonalizedAdsOnly: boolean) {
   };
   await persistConsentState(currentAdsState);
   return currentAdsState;
+}
+
+async function initializeDevTestAds() {
+  if (!__DEV__) {
+    return null;
+  }
+
+  return initializeMobileAds(true);
 }
 
 export async function initAds(): Promise<AdsInitState> {
@@ -174,6 +183,12 @@ export async function initAds(): Promise<AdsInitState> {
         : await googleAds.AdsConsent.getConsentInfo();
 
       if (!latestConsentInfo.canRequestAds) {
+        const devTestAdsState = await initializeDevTestAds();
+
+        if (devTestAdsState) {
+          return devTestAdsState;
+        }
+
         currentAdsState = {
           initialized: false,
           canRequestAds: false,
@@ -189,6 +204,12 @@ export async function initAds(): Promise<AdsInitState> {
         const fallbackConsentInfo = await googleAds.AdsConsent.getConsentInfo();
 
         if (!fallbackConsentInfo.canRequestAds) {
+          const devTestAdsState = await initializeDevTestAds();
+
+          if (devTestAdsState) {
+            return devTestAdsState;
+          }
+
           currentAdsState = {
             initialized: false,
             canRequestAds: false,
@@ -201,6 +222,12 @@ export async function initAds(): Promise<AdsInitState> {
 
         return initializeMobileAds(await getNonPersonalizedAdPreference());
       } catch (fallbackError) {
+        const devTestAdsState = await initializeDevTestAds();
+
+        if (devTestAdsState) {
+          return devTestAdsState;
+        }
+
         currentAdsState = {
           initialized: false,
           canRequestAds: false,
