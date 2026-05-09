@@ -337,8 +337,7 @@ export default function App() {
           />
 
           <AdBanner
-            visible={activeTab !== 'scan' && !showResult && !showSettings && !isTabBarHidden}
-            bottomOffset={92}
+            visible={!showResult && !showSettings && !isTabBarHidden}
           />
 
           {showResult && scanResult && (

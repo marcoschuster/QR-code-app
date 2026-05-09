@@ -154,10 +154,10 @@ eas build --profile development
 
 ### Example Usage
 
-The root app shell renders `AdBanner` above the tab bar on non-camera tabs:
+The root app shell renders `AdBanner` at the top of the main app screens:
 
 ```tsx
-<AdBanner visible={activeTab !== 'scan'} bottomOffset={92} />
+<AdBanner visible={!showResult && !showSettings} />
 ```
 
 Use `useInterstitial()` for natural breaks and `useRewarded()` for opt-in rewards. Interstitial display is rate-limited to once every three minutes.

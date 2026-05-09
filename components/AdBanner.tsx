@@ -5,10 +5,10 @@ import { getGoogleMobileAdsModule, useBanner } from '../lib/ads';
 
 interface AdBannerProps {
   visible?: boolean;
-  bottomOffset?: number;
+  topOffset?: number;
 }
 
-export function AdBanner({ visible = true, bottomOffset = 0 }: AdBannerProps) {
+export function AdBanner({ visible = true, topOffset = 0 }: AdBannerProps) {
   const bannerRef = useRef<any>(null);
   const insets = useSafeAreaInsets();
   const { adUnitId, canShow, requestOptions } = useBanner();
@@ -44,8 +44,8 @@ export function AdBanner({ visible = true, bottomOffset = 0 }: AdBannerProps) {
       style={[
         styles.container,
         {
-          paddingBottom: Math.max(insets.bottom, 8),
-          bottom: bottomOffset,
+          paddingTop: Math.max(insets.top, 8),
+          top: topOffset,
         },
       ]}
     >
