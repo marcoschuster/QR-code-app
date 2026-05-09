@@ -23,6 +23,7 @@ const MIN_THREAT_CHECK_INDICATOR_MS = 600;
 const MAX_THREAT_CHECK_WAIT_MS = 3500;
 const THREAT_CHECK_TIMEOUT_MESSAGE = 'Could not finish the threat check in time.';
 const TABS = ['scan', 'history', 'generate'];
+const SCAN_AD_TOP_CONTROLS_OFFSET = 64;
 type TabTransitionSource = 'tap' | 'swipe';
 
 function sleep(ms: number) {
@@ -233,6 +234,7 @@ export default function App() {
   console.log('[App Swipe] panHandlers exist:', panResponder !== null);
   const isSwipeTransition = tabTransitionSource.current === 'swipe';
   const isScanTapTransition = !isSwipeTransition && activeTab === 'scan';
+  const shouldShowBanner = !showResult && !showSettings && !isTabBarHidden;
   const tabAnimatedStyle = isSwipeTransition
     ? {
       opacity: tabTransition.interpolate({
@@ -310,6 +312,7 @@ export default function App() {
                 onFineTuneActiveChange={() => {}}
                 tabBarHidden={isTabBarHidden}
                 overlayAnimatedStyle={scanOverlayAnimatedStyle}
+                topControlsOffset={shouldShowBanner ? SCAN_AD_TOP_CONTROLS_OFFSET : 0}
                 onSettingsPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   setShowSettings(true);
@@ -337,7 +340,8 @@ export default function App() {
           />
 
           <AdBanner
-            visible={!showResult && !showSettings && !isTabBarHidden}
+            visible={shouldShowBanner}
+            compact={activeTab === 'scan'}
           />
 
           {showResult && scanResult && (

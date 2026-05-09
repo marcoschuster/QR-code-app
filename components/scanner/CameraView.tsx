@@ -49,6 +49,7 @@ interface ScannerScreenProps {
   onFineTuneActiveChange?: (active: boolean) => void;
   tabBarHidden?: boolean;
   overlayAnimatedStyle?: any;
+  topControlsOffset?: number;
 }
 
 let lastKnownCameraPermissionGranted = false;
@@ -140,6 +141,7 @@ export function ScannerScreen({
   onFineTuneActiveChange,
   tabBarHidden = false,
   overlayAnimatedStyle,
+  topControlsOffset = 0,
 }: ScannerScreenProps) {
   const { hasPermission, requestPermission: requestVisionCameraPermission } = useCameraPermission();
   const [permissionStatus, setPermissionStatus] = useState<CameraPermissionStatus>(() =>
@@ -157,7 +159,7 @@ export function ScannerScreen({
   const [cameraRuntimeIssue, setCameraRuntimeIssue] = useState<CameraRuntimeIssue | null>(null);
   const photoScanSucceededRef = useRef(false);
   const scannedRef = useRef(false);
-  const bottomOffset = useRef(new Animated.Value(tabBarHidden ? 84 : 160)).current;
+  const bottomOffset = useRef(new Animated.Value(tabBarHidden ? 72 : 138)).current;
   const { theme } = useAppTheme();
   const { addScan } = useHistoryStore();
   const { saveToHistory, beepOnScan, vibrateOnScan, urlThreatScanning, autoCopyScanned } = useSettingsStore();
@@ -230,7 +232,7 @@ export function ScannerScreen({
 
   useEffect(() => {
     Animated.timing(bottomOffset, {
-      toValue: tabBarHidden ? 84 : 160,
+      toValue: tabBarHidden ? 72 : 138,
       duration: 220,
       useNativeDriver: false,
     }).start();
@@ -518,7 +520,7 @@ export function ScannerScreen({
       )}
 
       {/* Top bar */}
-      <Animated.View style={[s.topBar, { paddingTop: Platform.OS === 'ios' ? 56 : 36 }, overlayAnimatedStyle]}>
+      <Animated.View style={[s.topBar, { paddingTop: (Platform.OS === 'ios' ? 56 : 36) + topControlsOffset }, overlayAnimatedStyle]}>
         <View style={s.topBarLeft}>
           <Pressable
             style={[s.pill, { backgroundColor: 'rgba(0,0,0,0.45)', borderColor: theme.border }]}

@@ -6,15 +6,18 @@ import { getGoogleMobileAdsModule, useBanner } from '../lib/ads';
 interface AdBannerProps {
   visible?: boolean;
   topOffset?: number;
+  compact?: boolean;
 }
 
-export function AdBanner({ visible = true, topOffset = 0 }: AdBannerProps) {
+export function AdBanner({ visible = true, topOffset = 0, compact = false }: AdBannerProps) {
   const bannerRef = useRef<any>(null);
   const insets = useSafeAreaInsets();
   const { adUnitId, canShow, requestOptions } = useBanner();
   const googleAds = getGoogleMobileAdsModule();
   const BannerAd = googleAds?.BannerAd;
-  const bannerSize = googleAds?.BannerAdSize?.LARGE_ANCHORED_ADAPTIVE_BANNER;
+  const bannerSize = compact
+    ? googleAds?.BannerAdSize?.BANNER
+    : googleAds?.BannerAdSize?.LARGE_ANCHORED_ADAPTIVE_BANNER;
 
   useEffect(() => {
     if (Platform.OS !== 'ios') {
