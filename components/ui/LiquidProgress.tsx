@@ -5,11 +5,12 @@ import { useAppTheme } from '../../hooks/useAppTheme';
 
 interface LiquidProgressProps {
   value: number;
+  complete?: boolean;
 }
 
 const clamp = (value: number) => Math.max(0, Math.min(100, value));
 
-export function LiquidProgress({ value }: LiquidProgressProps) {
+export function LiquidProgress({ value, complete = false }: LiquidProgressProps) {
   const { isDark } = useAppTheme();
   const progress = useRef(new Animated.Value(0)).current;
   const shimmer = useRef(new Animated.Value(0)).current;
@@ -74,9 +75,17 @@ export function LiquidProgress({ value }: LiquidProgressProps) {
         widthRef.current = event.nativeEvent.layout.width;
       }}
     >
-      <Animated.View style={[styles.fillShell, { width: animatedWidth }]}>
+      <Animated.View
+        style={[
+          styles.fillShell,
+          {
+            width: animatedWidth,
+            shadowColor: complete ? '#22c55e' : '#7c3aed',
+          },
+        ]}
+      >
         <LinearGradient
-          colors={['#06b6d4', '#4f46e5', '#7c3aed'] as any}
+          colors={(complete ? ['#16a34a', '#22c55e', '#86efac'] : ['#06b6d4', '#4f46e5', '#7c3aed']) as any}
           start={{ x: 0, y: 0.5 }}
           end={{ x: 1, y: 0.5 }}
           style={StyleSheet.absoluteFillObject}

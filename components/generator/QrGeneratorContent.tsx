@@ -1,9 +1,13 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Animated,
+  Easing,
   Image,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  type LayoutChangeEvent,
   ScrollView,
   StyleSheet,
   Text,
@@ -65,6 +69,10 @@ export function QrGeneratorContent() {
   const { theme, isDark } = useAppTheme();
   const { recentPresets, savePreset, removePreset } = useGeneratorStore();
   const { showSmartStart } = useSettingsStore();
+  const scrollViewRef = useRef<ScrollView | null>(null);
+  const previewYRef = useRef(0);
+  const pendingPreviewScrollRef = useRef(false);
+  const completeIconProgress = useRef(new Animated.Value(0)).current;
 
   const [selectedTemplateId, setSelectedTemplateId] = useState<GeneratorTemplateId>('website');
   const [formValues, setFormValues] = useState<Record<string, string>>(() =>
@@ -112,6 +120,7 @@ export function QrGeneratorContent() {
 
   const qrCodeTemplates = displayedTemplates.filter(t => !barcodeTypes.includes(t.id));
   const barcodeTemplates = displayedTemplates.filter(t => barcodeTypes.includes(t.id));
+  const generationComplete = Boolean(generatedCode && generationProgress >= 100 && !errorMessage);
 
   const selectedTemplate = useMemo(
     () => getGeneratorTemplate(selectedTemplateId),
@@ -122,6 +131,15 @@ export function QrGeneratorContent() {
     void refreshClipboardSuggestion();
   }, []);
 
+  useEffect(() => {
+    Animated.timing(completeIconProgress, {
+      toValue: generationComplete ? 1 : 0,
+      duration: generationComplete ? 260 : 140,
+      easing: generationComplete ? Easing.out(Easing.back(1.4)) : Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [completeIconProgress, generationComplete]);
+
   const applyTemplateSetup = (templateId: GeneratorTemplateId, values: Record<string, string>) => {
     setSelectedTemplateId(templateId);
     setFormValues({
@@ -130,6 +148,7 @@ export function QrGeneratorContent() {
     });
     setErrorMessage('');
     setGeneratedCode(null);
+    setGenerationProgress(0);
   };
 
   const refreshClipboardSuggestion = async () => {
@@ -156,6 +175,7 @@ export function QrGeneratorContent() {
     }));
     setErrorMessage('');
     setGeneratedCode(null);
+    setGenerationProgress(0);
   };
 
   const handlePaste = async () => {
@@ -181,6 +201,8 @@ export function QrGeneratorContent() {
 
   const handleGenerate = () => {
     try {
+      Keyboard.dismiss();
+      pendingPreviewScrollRef.current = true;
       setGenerationProgress(8);
       const content = buildGeneratorContent(selectedTemplateId, formValues);
       const barcodeSymbology = getBarcodeSymbologyForTemplate(selectedTemplateId, content);
@@ -190,7 +212,9 @@ export function QrGeneratorContent() {
 
       setGeneratedCode(generatedImage);
       setErrorMessage('');
-      setGenerationProgress(100);
+      setTimeout(() => {
+        setGenerationProgress(100);
+      }, 180);
       savePreset({
         templateId: selectedTemplateId,
         templateTitle: selectedTemplate.title,
@@ -199,6 +223,7 @@ export function QrGeneratorContent() {
         content,
       });
     } catch (error) {
+      pendingPreviewScrollRef.current = false;
       setGeneratedCode(null);
       setErrorMessage(
         error instanceof Error ? error.message : 'The code image could not be generated.'
@@ -206,6 +231,31 @@ export function QrGeneratorContent() {
       setGenerationProgress(0);
     }
   };
+
+  const scrollToPreview = () => {
+    if (!pendingPreviewScrollRef.current || previewYRef.current <= 0) {
+      return;
+    }
+
+    pendingPreviewScrollRef.current = false;
+    setTimeout(() => {
+      scrollViewRef.current?.scrollTo({
+        y: Math.max(0, previewYRef.current - spacing.md),
+        animated: true,
+      });
+    }, 120);
+  };
+
+  const handlePreviewLayout = (event: LayoutChangeEvent) => {
+    previewYRef.current = event.nativeEvent.layout.y;
+    scrollToPreview();
+  };
+
+  useEffect(() => {
+    if (generatedCode) {
+      scrollToPreview();
+    }
+  }, [generatedCode]);
 
   const handleCopyLink = async () => {
     if (!generatedCode) {
@@ -266,6 +316,7 @@ export function QrGeneratorContent() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
           <ScrollView
+            ref={scrollViewRef}
             style={styles.container}
             contentContainerStyle={styles.content}
             keyboardShouldPersistTaps="handled"
@@ -466,8 +517,32 @@ export function QrGeneratorContent() {
             </Text>
 
             <View style={styles.progressBlock}>
-              <Text style={[styles.progressLabel, { color: theme.text.secondary }]}>Generation Progress</Text>
-              <LiquidProgress value={generatedCode ? generationProgress : 0} />
+              <View style={styles.progressHeader}>
+                <Text style={[styles.progressLabel, { color: generationComplete ? theme.success : theme.text.secondary }]}>
+                  Generation Progress
+                </Text>
+                <Animated.View
+                  pointerEvents="none"
+                  style={[
+                    styles.progressCompleteBadge,
+                    {
+                      opacity: completeIconProgress,
+                      backgroundColor: theme.success,
+                      transform: [
+                        {
+                          scale: completeIconProgress.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0.72, 1],
+                          }),
+                        },
+                      ],
+                    },
+                  ]}
+                >
+                  <Ionicons name="checkmark" size={14} color="#FFFFFF" />
+                </Animated.View>
+              </View>
+              <LiquidProgress value={generatedCode ? generationProgress : 0} complete={generationComplete} />
             </View>
 
             <View style={styles.actionsRow}>
@@ -490,58 +565,60 @@ export function QrGeneratorContent() {
           </Card>
 
           {generatedCode && (
-            <Card style={styles.sectionCard} padding={spacing.lg}>
-              <Text style={[styles.sectionLabel, { color: theme.text.secondary }]}>Preview</Text>
-              <Text style={[styles.previewTitle, { color: theme.text.primary }]}>
-                {selectedTemplate.title}
-              </Text>
+            <View onLayout={handlePreviewLayout}>
+              <Card style={styles.sectionCard} padding={spacing.lg}>
+                <Text style={[styles.sectionLabel, { color: theme.text.secondary }]}>Preview</Text>
+                <Text style={[styles.previewTitle, { color: theme.text.primary }]}>
+                  {selectedTemplate.title}
+                </Text>
 
-              <View
-                style={[
-                  styles.previewSurface,
-                  {
-                    backgroundColor: theme.surface,
-                    borderColor: theme.border,
-                  },
-                ]}
-              >
-                <Image
-                  source={{ uri: generatedCode.imageUri }}
+                <View
                   style={[
-                    styles.previewImage,
-                    generatedCode.kind === 'barcode' && styles.barcodePreviewImage,
+                    styles.previewSurface,
+                    {
+                      backgroundColor: theme.surface,
+                      borderColor: theme.border,
+                    },
                   ]}
-                  resizeMode="contain"
-                />
-              </View>
+                >
+                  <Image
+                    source={{ uri: generatedCode.imageUri }}
+                    style={[
+                      styles.previewImage,
+                      generatedCode.kind === 'barcode' && styles.barcodePreviewImage,
+                    ]}
+                    resizeMode="contain"
+                  />
+                </View>
 
-              <Text style={[styles.previewLabel, { color: theme.text.secondary }]}>
-                {generatedCode.kind === 'barcode' ? 'Barcode Data' : 'Encoded Content'}
-              </Text>
-              <Text style={[styles.previewLink, { color: theme.text.secondary }]}>
-                {generatedCode.content}
-              </Text>
+                <Text style={[styles.previewLabel, { color: theme.text.secondary }]}>
+                  {generatedCode.kind === 'barcode' ? 'Barcode Data' : 'Encoded Content'}
+                </Text>
+                <Text style={[styles.previewLink, { color: theme.text.secondary }]}>
+                  {generatedCode.content}
+                </Text>
 
-              <View style={styles.actionsRow}>
-                <ActionButton
-                  title="Copy Text"
-                  icon="copy-outline"
-                  onPress={handleCopyLink}
-                  theme={theme}
-                  isDark={isDark}
-                  variant="secondary"
-                  disabled={!generatedCode}
-                />
-                <ActionButton
-                  title={isSaving ? 'Saving...' : 'Download PNG'}
-                  icon="download-outline"
-                  onPress={handleDownload}
-                  theme={theme}
-                  isDark={isDark}
-                  disabled={!generatedCode || isSaving}
-                />
-              </View>
-            </Card>
+                <View style={styles.actionsRow}>
+                  <ActionButton
+                    title="Copy Text"
+                    icon="copy-outline"
+                    onPress={handleCopyLink}
+                    theme={theme}
+                    isDark={isDark}
+                    variant="secondary"
+                    disabled={!generatedCode}
+                  />
+                  <ActionButton
+                    title={isSaving ? 'Saving...' : 'Download PNG'}
+                    icon="download-outline"
+                    onPress={handleDownload}
+                    theme={theme}
+                    isDark={isDark}
+                    disabled={!generatedCode || isSaving}
+                  />
+                </View>
+              </Card>
+            </View>
           )}
 
           <View style={styles.adBlock}>
@@ -954,12 +1031,25 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     gap: spacing.sm,
   },
+  progressHeader: {
+    minHeight: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
   progressLabel: {
     fontFamily: typography.fontFamily,
     fontSize: typography.sizes.xs,
     fontWeight: typography.weights.semibold,
     textTransform: 'uppercase',
     letterSpacing: typography.letterSpacing.wide,
+  },
+  progressCompleteBadge: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   actionsRow: {
     flexDirection: 'row',
