@@ -545,7 +545,7 @@ export function QrGeneratorContent() {
           )}
 
           <View style={styles.adBlock}>
-            <AdBanner placement="inline" />
+            <AdBanner placement="inline" size="medium" />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

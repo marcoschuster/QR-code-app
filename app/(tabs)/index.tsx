@@ -6,6 +6,7 @@ import { ScanResultSheet } from '../../components/scanner/ScanResultSheet';
 import { TabBar } from '../../components/ui/TabBar';
 import { HistoryScreen } from '../../components/ui/HistoryScreen';
 import { QrGeneratorContent } from '../../components/generator/QrGeneratorContent';
+import { AdBanner } from '../../components/AdBanner';
 import { ScanSafetyState } from '../../constants/types';
 import { useHistoryStore } from '../../store/useHistoryStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
@@ -222,6 +223,8 @@ export default function ScannerTab() {
           onResult={handleScanResult}
           onFineTuneActiveChange={handleFineTuneActiveChange}
           onReset={handleReset}
+          tabBarHidden={tabBarHidden}
+          topControlsOffset={64}
           onSettingsPress={() => router.push('/settings')}
         />
       )}
@@ -248,6 +251,8 @@ export default function ScannerTab() {
       </Modal>
 
       <TabBar activeTab={activeTab} onTabChange={handleTabChange} hidden={tabBarHidden} onToggleHidden={handleToggleTabBar} />
+
+      <AdBanner visible={activeTab === 'scan' && !showResult} compact />
     </View>
   );
 }

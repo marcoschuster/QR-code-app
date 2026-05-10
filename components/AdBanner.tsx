@@ -8,6 +8,7 @@ interface AdBannerProps {
   topOffset?: number;
   compact?: boolean;
   placement?: 'overlayTop' | 'inline';
+  size?: 'banner' | 'medium';
 }
 
 export function AdBanner({
@@ -15,15 +16,18 @@ export function AdBanner({
   topOffset = 0,
   compact = false,
   placement = 'overlayTop',
+  size = 'banner',
 }: AdBannerProps) {
   const bannerRef = useRef<any>(null);
   const insets = useSafeAreaInsets();
   const { adUnitId, canShow, requestOptions } = useBanner();
   const googleAds = getGoogleMobileAdsModule();
   const BannerAd = googleAds?.BannerAd;
-  const bannerSize = compact
-    ? googleAds?.BannerAdSize?.BANNER
-    : googleAds?.BannerAdSize?.LARGE_ANCHORED_ADAPTIVE_BANNER;
+  const bannerSize = size === 'medium'
+    ? googleAds?.BannerAdSize?.MEDIUM_RECTANGLE
+    : compact
+      ? googleAds?.BannerAdSize?.BANNER
+      : googleAds?.BannerAdSize?.LARGE_ANCHORED_ADAPTIVE_BANNER;
 
   useEffect(() => {
     if (Platform.OS !== 'ios') {

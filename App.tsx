@@ -234,7 +234,7 @@ export default function App() {
   console.log('[App Swipe] panHandlers exist:', panResponder !== null);
   const isSwipeTransition = tabTransitionSource.current === 'swipe';
   const isScanTapTransition = !isSwipeTransition && activeTab === 'scan';
-  const shouldShowBanner = !showResult && !showSettings && !isTabBarHidden;
+  const shouldShowScanBanner = activeTab === 'scan' && !showResult && !showSettings;
   const tabAnimatedStyle = isSwipeTransition
     ? {
       opacity: tabTransition.interpolate({
@@ -312,7 +312,7 @@ export default function App() {
                 onFineTuneActiveChange={() => {}}
                 tabBarHidden={isTabBarHidden}
                 overlayAnimatedStyle={scanOverlayAnimatedStyle}
-                topControlsOffset={shouldShowBanner ? SCAN_AD_TOP_CONTROLS_OFFSET : 0}
+                topControlsOffset={shouldShowScanBanner ? SCAN_AD_TOP_CONTROLS_OFFSET : 0}
                 onSettingsPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   setShowSettings(true);
@@ -340,8 +340,8 @@ export default function App() {
           />
 
           <AdBanner
-            visible={shouldShowBanner && activeTab === 'scan'}
-            compact={activeTab === 'scan'}
+            visible={shouldShowScanBanner}
+            compact
           />
 
           {showResult && scanResult && (
